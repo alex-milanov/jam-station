@@ -1,0 +1,114 @@
+
+.sequencer
+	margin: 0px 20px
+	display: inline-block
+	border: 1px solid #bbb
+	background: #fefefe
+	background: linear-gradient(-30deg, rgba(255,255,255,0.5) 0%,rgba(243,243,243,0.5) 50%,rgba(237,237,237,0.5) 51%,rgba(255,255,255,0.5) 100%)
+	box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5)
+	.toolbox
+		cursor: pointer
+		margin: 0px
+		height: 38px
+		line-height: 34px
+		border-bottom: 1px solid #ddd
+		> *
+			margin: 7px 4px
+			padding: 0px 4px
+			height: 24px
+			line-height: 24px
+			font-size: 16px
+			display: inline-block
+			float: left
+		input, button
+			outline: none
+			text-align: center
+			border: 0px solid #333
+			background: inherit
+		input
+			box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+			color: #555
+			text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5)
+			border-radius: 4px
+			// background: #cff5da
+			background: #dfe
+		button
+			width: 30px
+			text-align: center
+			padding: 0px
+			cursor: pointer
+			transition: box-shadow .5s, text-shadow .5s
+			outline: none
+			border-radius: 4px
+			&.on
+				box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+				background: #dfe
+			&:hover
+				text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5)
+				outline: none
+			&:active, &:focus, &::-moz-focus-inner
+				outline: none
+				border-image: none
+				border: 0px
+	.grid
+		margin: 0px
+		padding: 0px
+		border-top: 1px solid #fff
+		.head
+			margin: 2px
+			padding: 0px
+			padding-left: 106px
+			height: 12px
+			line-height: 12px
+			.cell
+				display: inline-block
+				margin: 3px
+				height: 6px
+				line-height: 6px
+				width: 16px
+				padding: 0px
+				border-radius: 4px
+				border: 0px solid #333
+				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
+				&.tick
+					background: #dfe
+		.row
+			margin: 2px
+			padding: 0px
+			height: 32px
+			line-height: 32px
+			> *
+				height: 26px
+				line-height: 26px
+				margin: 3px
+				padding: 0px
+				border-radius: 4px
+				border: 0px solid #333
+				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
+				display: inline-block
+				cursor: pointer
+				background: #fafafa
+				transition: box-shadow .1s
+				box-sizing: border-box
+				float: left
+				&:hover
+					box-shadow: inset 0px 0px 7px rgba(33, 33, 33, 0.5)
+					margin: 2px
+					height: 28px
+					line-height: 28px
+			.instr
+				font-size: 14px
+				width: 100px
+				text-align: center
+				&:hover
+					width: 102px
+			.bar
+				width: 16px
+				&:hover
+					width: 18px
+				&:nth-child(2n-1)
+					background: #f5f5f5
+				&.on
+					background: #c0cacf
+				&.tick
+					background: #dfe

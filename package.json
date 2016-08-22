@@ -1,0 +1,40 @@
+{
+  "name": "jam-station",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "node bin/move-assets.js",
+    "build": "npm run build:js && npm run build:sass && npm run build:pug",
+    "build:js": "browserify src/js/index.js -o dist/js/app.js",
+    "build:sass": "node-sass --include-path=$(node bin/sass-paths.js) src/sass/style.sass dist/css/style.css",
+    "build:pug": "pug --out dist --pretty src/pug/index.pug",
+    "watch": "npm run watch:js & npm run watch:sass & npm run watch:pug & npm run livereload",
+    "watch:js": "nodemon --watch 'src/js' --exec 'npm run build:js'",
+    "watch:sass": "npm run build:sass -- --watch src/sass/**/*",
+    "watch:pug": "npm run build:pug -- --watch",
+    "livereload": "livereload dist",
+    "start": "npm run build && serve --path dist & npm run watch"
+  },
+  "author": "Alex Milanov <alex@i4web.biz>",
+  "license": "ISC",
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "coffeeify": "^2.0.1",
+    "eslint": "^3.3.1",
+    "eslint-config-google": "^0.6.0",
+    "fs-extra": "^0.30.0",
+    "livereload": "^0.5.0",
+    "node-sass": "^3.8.0",
+    "nodemon": "^1.10.0",
+    "pug-cli": "^1.0.0-alpha6"
+  },
+  "dependencies": {
+    "bourbon": "^4.2.7",
+    "bourbon-neat": "^1.8.0",
+    "font-awesome": "^4.6.3",
+    "rx": "^4.1.0",
+    "snabbdom": "^0.5.1",
+    "superagent": "^2.2.0"
+  }
+}

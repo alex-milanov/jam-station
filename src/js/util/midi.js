@@ -14,7 +14,7 @@ const numberToNote = number => {
 	};
 };
 
-const MIDIMessageEventHandler = event => {
+const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
 	if (event.data[1]) {
@@ -24,45 +24,83 @@ const MIDIMessageEventHandler = event => {
 		switch (event.data[0] & 0xf0) {
 			case 0x90:
 				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
+					return {
+						state: 'keyDown',
+						note
+					};
 					// scope.onKeyDown(note);
 				}
 				break;
 				// if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
 			case 0x80:
 				// scope.onKeyUp(note);
-				break;
+				return {
+					state: 'keyUp',
+					note
+				};
 			default:
 				break;
 		}
 		return;
 	}
 };
+//
+// const hookUpMIDIInput = midiAccess => {
+// 	var haveAtLeastOneDevice = false;
+// 	var inputs = midiAccess.inputs.values();
+// 	for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+// 		input.value.onmidimessage = MIDIMessageEventHandler;
+// 		haveAtLeastOneDevice = true;
+// 	}
+// };
 
-const hookUpMIDIInput = midiAccess => {
-	var haveAtLeastOneDevice = false;
-	var inputs = midiAccess.inputs.values();
-	for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-		input.value.onmidimessage = MIDIMessageEventHandler;
-		haveAtLeastOneDevice = true;
-	}
-};
+// const onMIDIInit = midi => {
+// 	hookUpMIDIInput(midi);
+// 	midi.onstatechange = hookUpMIDIInput;
+// };
 
-const onMIDIInit = midi => {
-	hookUpMIDIInput(midi);
-	midi.onstatechange = hookUpMIDIInput;
-};
+// const onMIDIReject = err =>
+// 	console.log(err, 'The MIDI system failed to start.');
 
-const onMIDIReject = err =>
-	console.log(err, 'The MIDI system failed to start.');
-
-//(navigator.requestMIDIAccess)
+// (navigator.requestMIDIAccess)
 //		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
 
-const init = () => {
-	const midiAccess$ = $.fromPromise(navigator.requestMIDIAccess());
-	
-}
-
-module.exports = {
-	init
+const getInputs = access => {
+	let inputs = access.inputs.values();
+	let inputsArr = [];
+	for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+		inputsArr.push(input);
+	}
+	return inputsArr;
 };
+
+const init = () => {
+	const access$ = $.fromPromise(navigator.requestMIDIAccess());
+
+	const state$ = access$.flatMap(
+		access => $.fromEvent(access, 'onstatechange')
+			.map(state => ({access, state}))
+	);
+
+	const msg$ = access$.flatMap(
+		access => getInputs(access)
+			.map(input => (console.log(input), input))
+			.reduce(
+				(msgStream, input) => msgStream.merge(
+					$.fromEventPattern(h => {
+						input.value.onmidimessage = h;
+					})
+					.map(msg => ({access, input, msg}))
+				), $.just({access, input: null, msg: null})
+			)
+	);
+
+	return {
+		parseMidiMsg,
+		access$,
+		state$,
+		msg$
+	};
+};
+
+module.exports = init;

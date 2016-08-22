@@ -15,6 +15,7 @@ const init = () => {
 	let playLoop = false;
 
 	return {
+		context,
 		refresh: ({state, actions}) => {
 			if (state.playing) {
 				if (playLoop) {

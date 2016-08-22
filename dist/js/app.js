@@ -13144,14 +13144,14 @@ const init = () => stream.onNext(state => ({
 }));
 
 module.exports = {
-	stream: stream.merge(studio.stream, sequencer.stream, midiMap.stream),
+	stream: $.merge(stream, studio.stream, sequencer.stream, midiMap.stream),
 	studio,
 	sequencer,
 	midiMap,
 	init
 };
 
-},{"../util/data":23,"../util/math":24,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
+},{"../util/data":24,"../util/math":25,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13167,7 +13167,7 @@ module.exports = {
 	stream
 };
 
-},{"../../util/data":23,"../../util/math":24,"rx":2}],14:[function(require,module,exports){
+},{"../../util/data":24,"../../util/math":25,"rx":2}],14:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13201,7 +13201,7 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/data":23,"../../util/math":24,"rx":2}],15:[function(require,module,exports){
+},{"../../util/data":24,"../../util/math":25,"rx":2}],15:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13234,13 +13234,16 @@ module.exports = {
 	tick
 };
 
-},{"../../util/data":23,"../../util/math":24,"rx":2}],16:[function(require,module,exports){
+},{"../../util/data":24,"../../util/math":25,"rx":2}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
 const $ = Rx.Observable;
 const vdom = require('./util/vdom');
 const {h, div, input, hr, p, button} = vdom;
+
+const midi = require('./util/midi')();
+const BasicSynth = require('./instr/basic-synth');
 
 const studio = require('./services/studio').init();
 
@@ -13260,10 +13263,130 @@ const ui$ = state$.map(state => ui({state, actions}));
 // services
 state$.map(state => studio.refresh({state, actions})).subscribe();
 
+// midi map
+const basicSynth = new BasicSynth(studio.context, 'C1');
+
+midi.access$.subscribe(data => console.log('access', data));
+midi.state$.subscribe(data => console.log('state', data));
+midi.msg$.subscribe(data => {
+	console.log('msg', data);
+	if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
+		console.log(data.msg);
+		basicSynth.clone().play(midi.parseMidiMsg(data.msg).note.pitch);
+	}
+});
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
 
-},{"./actions":12,"./services/studio":18,"./ui":19,"./util/vdom":25,"rx":2}],17:[function(require,module,exports){
+},{"./actions":12,"./instr/basic-synth":17,"./services/studio":19,"./ui":20,"./util/midi":26,"./util/vdom":27,"rx":2}],17:[function(require,module,exports){
+'use strict';
+/**
+ * BasicSynth instrument.
+ * @param {object} context: instance of the audio context.
+ * @param {int} note: default note to be played.
+ */
+function BasicSynth(context, note) {
+	this.context = context;
+	this.note = note;
+
+	this.vco = this.context.createOscillator();
+	this.lfo = this.context.createOscillator();
+	this.lfoGain = this.context.createGain();
+	this.vcf = this.context.createBiquadFilter();
+	this.output = this.context.createGain();
+	this.vco.connect(this.vcf);
+	this.lfo.connect(this.lfoGain);
+	this.lfoGain.connect(this.vcf.frequency);
+	this.vcf.connect(this.output);
+	this.output.gain.value = 0;
+	this.vco.type = 'sawtooth';
+	this.lfo.type = 'sawtooth';
+	this.vco.start(this.context.currentTime);
+	this.lfo.start(this.context.currentTime);
+	this.volume = this.context.createGain();
+	this.volume.gain.value = 0.4;
+	this.output.connect(this.volume);
+	this.volume.connect(this.context.destination);
+}
+
+BasicSynth.prototype.noteToFrequency = function(note) {
+	var notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+	var keyNumber;
+	var octave;
+
+	if (note.length === 3) {
+		octave = note.charAt(2);
+	} else {
+		octave = note.charAt(1);
+	}
+
+	keyNumber = notes.indexOf(note.slice(0, -1));
+
+	if (keyNumber < 3) {
+		keyNumber = keyNumber + 12 + ((octave - 1) * 12) + 1;
+	} else {
+		keyNumber = keyNumber + ((octave - 1) * 12) + 1;
+	}
+
+	return 440 * Math.pow(2, (keyNumber - 49) / 12);
+};
+
+BasicSynth.prototype.setup = function(note) {
+
+	/*
+	this.osc = this.context.createOscillator();
+
+	this.osc.frequency.value = this.noteToFrequency(note);
+
+	this.gain = this.context.createGain();
+	this.osc.connect(this.gain);
+	this.gain.connect(this.context.destination)
+	*/
+};
+
+BasicSynth.prototype.trigger = function(time, duration, note) {
+	duration = duration || 0.5;
+	note = note || this.note || 'C';
+
+	console.log(time, duration, note);
+
+	this.setup(note);
+
+	var frequency = this.noteToFrequency(note);
+
+	this.vco.frequency.setValueAtTime(frequency, time);
+	this.output.gain.linearRampToValueAtTime(1.0, time + 0.01);
+
+	this.output.gain.linearRampToValueAtTime(0.0, time + duration - 0.01);
+
+	this.vco.stop(time + duration);
+
+	/*
+	this.gain.gain.setValueAtTime(0.1, time);
+	//this.gain.gain.setValueAtTime(0.01, time + duration);
+	this.gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+
+	this.osc.start(time);
+
+	this.osc.stop(time + duration);
+	*/
+};
+
+BasicSynth.prototype.play = function(note) {
+	let duration = 0.5;
+	note = note || this.note || 'C';
+	var now = this.context.currentTime;
+	this.trigger(now, duration, note);
+};
+
+BasicSynth.prototype.clone = function() {
+	var synth = new BasicSynth(this.context, this.note);
+	return synth;
+};
+
+module.exports = BasicSynth;
+
+},{}],18:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13308,7 +13431,7 @@ Sampler.prototype.play = function(duration) {
 
 module.exports = Sampler;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 const {AudioContext} = require('../util/context');
@@ -13326,6 +13449,7 @@ const init = () => {
 	let playLoop = false;
 
 	return {
+		context,
 		refresh: ({state, actions}) => {
 			if (state.playing) {
 				if (playLoop) {
@@ -13348,7 +13472,7 @@ module.exports = {
 	init
 };
 
-},{"../instr/sampler":17,"../util/context":22}],19:[function(require,module,exports){
+},{"../instr/sampler":18,"../util/context":23}],20:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, i} = require('../util/vdom');
@@ -13361,7 +13485,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	midiMap({state, actions})
 ]);
 
-},{"../util/vdom":25,"./midi-map":20,"./sequencer":21}],20:[function(require,module,exports){
+},{"../util/vdom":27,"./midi-map":21,"./sequencer":22}],21:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
@@ -13376,7 +13500,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"../../util/vdom":25}],21:[function(require,module,exports){
+},{"../../util/vdom":27}],22:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
@@ -13427,7 +13551,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"../../util/vdom":25}],22:[function(require,module,exports){
+},{"../../util/vdom":27}],23:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -13438,7 +13562,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 const assignPropVal = (o, p, v) => {
@@ -13451,7 +13575,7 @@ module.exports = {
 	assignPropVal
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -13462,7 +13586,115 @@ module.exports = {
 	measureToBeatLength
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+
+const numberToNote = number => {
+	var notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+	var octave = parseInt(number / 12, 10);
+	var step = number - octave * 12;
+	var pitch = notes[step];
+	return {
+		pitch: `${pitch}${octave}`,
+		midi: number
+	};
+};
+
+const parseMidiMsg = event => {
+	// Mask off the lower nibble (MIDI channel, which we don't care about)
+
+	if (event.data[1]) {
+		var number = event.data[1];
+		var note = numberToNote(number);
+
+		switch (event.data[0] & 0xf0) {
+			case 0x90:
+				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
+					return {
+						state: 'keyDown',
+						note
+					};
+					// scope.onKeyDown(note);
+				}
+				break;
+				// if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
+			case 0x80:
+				// scope.onKeyUp(note);
+				return {
+					state: 'keyUp',
+					note
+				};
+			default:
+				break;
+		}
+		return;
+	}
+};
+//
+// const hookUpMIDIInput = midiAccess => {
+// 	var haveAtLeastOneDevice = false;
+// 	var inputs = midiAccess.inputs.values();
+// 	for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+// 		input.value.onmidimessage = MIDIMessageEventHandler;
+// 		haveAtLeastOneDevice = true;
+// 	}
+// };
+
+// const onMIDIInit = midi => {
+// 	hookUpMIDIInput(midi);
+// 	midi.onstatechange = hookUpMIDIInput;
+// };
+
+// const onMIDIReject = err =>
+// 	console.log(err, 'The MIDI system failed to start.');
+
+// (navigator.requestMIDIAccess)
+//		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
+
+const getInputs = access => {
+	let inputs = access.inputs.values();
+	let inputsArr = [];
+	for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+		inputsArr.push(input);
+	}
+	return inputsArr;
+};
+
+const init = () => {
+	const access$ = $.fromPromise(navigator.requestMIDIAccess());
+
+	const state$ = access$.flatMap(
+		access => $.fromEvent(access, 'onstatechange')
+			.map(state => ({access, state}))
+	);
+
+	const msg$ = access$.flatMap(
+		access => getInputs(access)
+			.map(input => (console.log(input), input))
+			.reduce(
+				(msgStream, input) => msgStream.merge(
+					$.fromEventPattern(h => {
+						input.value.onmidimessage = h;
+					})
+					.map(msg => ({access, input, msg}))
+				), $.just({access, input: null, msg: null})
+			)
+	);
+
+	return {
+		parseMidiMsg,
+		access$,
+		state$,
+		msg$
+	};
+};
+
+module.exports = init;
+
+},{"rx":2}],27:[function(require,module,exports){
 'use strict';
 
 const snabbdom = require('snabbdom');

@@ -39,7 +39,7 @@ const init = () => stream.onNext(state => ({
 }));
 
 module.exports = {
-	stream: stream.merge(studio.stream, sequencer.stream, midiMap.stream),
+	stream: $.merge(stream, studio.stream, sequencer.stream, midiMap.stream),
 	studio,
 	sequencer,
 	midiMap,

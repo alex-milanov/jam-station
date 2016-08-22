@@ -64,7 +64,6 @@ BasicSynth.prototype.setup = function(note) {
 };
 
 BasicSynth.prototype.trigger = function(time, duration, note) {
-	note = note || this.note;
 	duration = duration || 0.5;
 	note = note || this.note || 'C';
 
@@ -92,9 +91,11 @@ BasicSynth.prototype.trigger = function(time, duration, note) {
 	*/
 };
 
-BasicSynth.prototype.play = function() {
+BasicSynth.prototype.play = function(note) {
+	let duration = 0.5;
+	note = note || this.note || 'C';
 	var now = this.context.currentTime;
-	this.trigger(now);
+	this.trigger(now, duration, note);
 };
 
 BasicSynth.prototype.clone = function() {

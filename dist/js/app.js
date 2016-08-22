@@ -13109,16 +13109,13 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
-// util
-const assignPropVal = (o, p, v) => {
-	let t = {};
-	t[p] = v;
-	return Object.assign({}, o, t);
-};
+const studio = require('./studio');
+const sequencer = require('./sequencer');
+const midiMap = require('./midi-map');
 
-const parseMeasure = measure => measure.split('/')
-	.map(v => parseInt(v, 10))
-	.reduce((p, v, i) => (i === 0) ? p * v : p / v, 16);
+// util
+const {assignPropVal} = require('../util/data');
+const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();
 
@@ -13139,14 +13136,55 @@ const init = () => stream.onNext(state => ({
 		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 	],
 	playing: false,
-	tickIndex: -1
+	tickIndex: -1,
+	midi: {
+		inputs: [],
+		outputs: []
+	}
 }));
+
+module.exports = {
+	stream: stream.merge(studio.stream, sequencer.stream, midiMap.stream),
+	studio,
+	sequencer,
+	midiMap,
+	init
+};
+
+},{"../util/data":23,"../util/math":24,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
+'use strict';
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+// util
+const {assignPropVal} = require('../../util/data');
+const {measureToBeatLength} = require('../../util/math');
+
+const stream = new Subject();
+
+module.exports = {
+	stream
+};
+
+},{"../../util/data":23,"../../util/math":24,"rx":2}],14:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+// util
+const {assignPropVal} = require('../../util/data');
+const {measureToBeatLength} = require('../../util/math');
+
+const stream = new Subject();
 
 const change = (prop, val) =>
 	stream.onNext(state => [assignPropVal(state, prop, val)].map(
 		state => (prop !== 'measure')
 			? state
-			: Object.assign({}, state, {beatLength: parseMeasure(state.measure)})
+			: Object.assign({}, state, {beatLength: measureToBeatLength(state.measure)})
 		).pop());
 
 const toggle = (r, c) =>
@@ -13156,6 +13194,25 @@ const toggle = (r, c) =>
 		pattern[r][c] = pattern[r][c] ? 0 : 1;
 		return Object.assign({}, state, {pattern});
 	});
+
+module.exports = {
+	stream,
+	change,
+	toggle
+};
+
+},{"../../util/data":23,"../../util/math":24,"rx":2}],15:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+// util
+const {assignPropVal} = require('../../util/data');
+const {measureToBeatLength} = require('../../util/math');
+
+const stream = new Subject();
 
 const tick = () => stream.onNext(
 	state => assignPropVal(state, 'tickIndex',
@@ -13172,15 +13229,12 @@ const stop = () => stream.onNext(state => Object.assign({}, state, {
 
 module.exports = {
 	stream,
-	init,
-	change,
-	toggle,
 	play,
 	stop,
 	tick
 };
 
-},{"rx":2}],13:[function(require,module,exports){
+},{"../../util/data":23,"../../util/math":24,"rx":2}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13209,7 +13263,7 @@ state$.map(state => studio.refresh({state, actions})).subscribe();
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
 
-},{"./actions":12,"./services/studio":15,"./ui":16,"./util/vdom":19,"rx":2}],14:[function(require,module,exports){
+},{"./actions":12,"./services/studio":18,"./ui":19,"./util/vdom":25,"rx":2}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13254,7 +13308,7 @@ Sampler.prototype.play = function(duration) {
 
 module.exports = Sampler;
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 const {AudioContext} = require('../util/context');
@@ -13278,7 +13332,7 @@ const init = () => {
 					state.pattern.forEach((row, i) => (row[state.tickIndex]) && kit[i].play());
 				} else {
 					playLoop = setInterval(
-						() => actions.tick(),
+						() => actions.studio.tick(),
 						60 / parseInt(state.bpm, 10) * 1000 / 4
 					);
 				}
@@ -13294,18 +13348,35 @@ module.exports = {
 	init
 };
 
-},{"../instr/sampler":14,"../util/context":18}],16:[function(require,module,exports){
+},{"../instr/sampler":17,"../util/context":22}],19:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, i} = require('../util/vdom');
 const sequencer = require('./sequencer');
+const midiMap = require('./midi-map');
 
 module.exports = ({state, actions}) => div('#ui', [
 	header([h1([i('.fa.fa-music'), ' Jam Station'])]),
-	sequencer({state, actions})
+	sequencer({state, actions}),
+	midiMap({state, actions})
 ]);
 
-},{"../util/vdom":19,"./sequencer":17}],17:[function(require,module,exports){
+},{"../util/vdom":25,"./midi-map":20,"./sequencer":21}],20:[function(require,module,exports){
+'use strict';
+
+const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
+
+module.exports = ({state, actions}) => div('.midi-map', [
+	div('.header', [
+		h2('MIDI Map')
+	]),
+	div('.body', [
+		p('Inputs:'),
+		p('Outputs:')
+	])
+]);
+
+},{"../../util/vdom":25}],21:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
@@ -13313,25 +13384,25 @@ const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 module.exports = ({state, actions}) => div('.sequencer', [
-	div('.toolbox', [
+	div('.header', [
 		h2('Sequencer'),
 		button('.fa.fa-play', {
 			class: {on: state.playing},
-			on: {click: () => actions.play()}
+			on: {click: () => actions.studio.play()}
 		}),
-		button('.fa.fa-stop', {on: {click: () => actions.stop()}}),
+		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
 		label('BPM'),
 		input('.bpm', {
 			props: {value: state.bpm || 120, size: 6},
-			on: {input: ev => actions.change('bpm', ev.target.value)}
+			on: {input: ev => actions.sequencer.change('bpm', ev.target.value)}
 		}),
 		label('MSR'),
 		input('.measure', {
 			props: {value: state.measure || '4/4', size: 6},
-			on: {input: ev => actions.change('measure', ev.target.value)}
+			on: {input: ev => actions.sequencer.change('measure', ev.target.value)}
 		})
 	]),
-	div('.grid', [
+	div('.body', [
 		div('.head', loop(state.beatLength, c =>
 			div('.cell', {
 				class: {
@@ -13349,14 +13420,14 @@ module.exports = ({state, actions}) => div('.sequencer', [
 					tick: (state.pattern[r] && state.pattern[r][c] && state.tickIndex === c)
 				},
 				on: {
-					click: ev => actions.toggle(r, c)
+					click: ev => actions.sequencer.toggle(r, c)
 				}
 			})))
 		)))
 	)
 ]);
 
-},{"../../util/vdom":19}],18:[function(require,module,exports){
+},{"../../util/vdom":25}],22:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -13367,7 +13438,31 @@ module.exports = {
 	AudioContext
 };
 
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
+'use strict';
+
+const assignPropVal = (o, p, v) => {
+	let t = {};
+	t[p] = v;
+	return Object.assign({}, o, t);
+};
+
+module.exports = {
+	assignPropVal
+};
+
+},{}],24:[function(require,module,exports){
+'use strict';
+
+const measureToBeatLength = measure => measure.split('/')
+	.map(v => parseInt(v, 10))
+	.reduce((p, v, i) => (i === 0) ? p * v : p / v, 16);
+
+module.exports = {
+	measureToBeatLength
+};
+
+},{}],25:[function(require,module,exports){
 'use strict';
 
 const snabbdom = require('snabbdom');
@@ -13420,4 +13515,4 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}]},{},[13]);
+},{"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}]},{},[16]);

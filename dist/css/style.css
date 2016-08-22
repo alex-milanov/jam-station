@@ -2230,19 +2230,21 @@ header {
     font-size: 18px; }
 
 .sequencer {
-  margin: 0px 20px;
+  position: absolute;
+  left: 20px;
+  top: 50px;
   display: inline-block;
   border: 1px solid #bbb;
   background: #fefefe;
   background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
   box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5); }
-  .sequencer .toolbox {
+  .sequencer .header {
     cursor: pointer;
     margin: 0px;
     height: 38px;
     line-height: 34px;
     border-bottom: 1px solid #ddd; }
-    .sequencer .toolbox > * {
+    .sequencer .header > * {
       margin: 7px 4px;
       padding: 0px 4px;
       height: 24px;
@@ -2250,18 +2252,18 @@ header {
       font-size: 16px;
       display: inline-block;
       float: left; }
-    .sequencer .toolbox input, .sequencer .toolbox button {
+    .sequencer .header input, .sequencer .header button {
       outline: none;
       text-align: center;
       border: 0px solid #333;
       background: inherit; }
-    .sequencer .toolbox input {
+    .sequencer .header input {
       box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
       color: #555;
       text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
       border-radius: 4px;
       background: #dfe; }
-    .sequencer .toolbox button {
+    .sequencer .header button {
       width: 30px;
       text-align: center;
       padding: 0px;
@@ -2269,75 +2271,135 @@ header {
       transition: box-shadow .5s, text-shadow .5s;
       outline: none;
       border-radius: 4px; }
-      .sequencer .toolbox button.on {
+      .sequencer .header button.on {
         box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
         background: #dfe; }
-      .sequencer .toolbox button:hover {
+      .sequencer .header button:hover {
         text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
         outline: none; }
-      .sequencer .toolbox button:active, .sequencer .toolbox button:focus, .sequencer .toolbox button::-moz-focus-inner {
+      .sequencer .header button:active, .sequencer .header button:focus, .sequencer .header button::-moz-focus-inner {
         outline: none;
         border-image: none;
         border: 0px; }
-  .sequencer .grid {
+  .sequencer .body {
     margin: 0px;
     padding: 0px;
     border-top: 1px solid #fff; }
-    .sequencer .grid .head {
-      margin: 2px;
+  .sequencer .body .head {
+    margin: 2px;
+    padding: 0px;
+    padding-left: 106px;
+    height: 12px;
+    line-height: 12px; }
+    .sequencer .body .head .cell {
+      display: inline-block;
+      margin: 3px;
+      height: 6px;
+      line-height: 6px;
+      width: 16px;
       padding: 0px;
-      padding-left: 106px;
-      height: 12px;
-      line-height: 12px; }
-      .sequencer .grid .head .cell {
-        display: inline-block;
-        margin: 3px;
-        height: 6px;
-        line-height: 6px;
-        width: 16px;
-        padding: 0px;
-        border-radius: 4px;
-        border: 0px solid #333;
-        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
-        .sequencer .grid .head .cell.tick {
-          background: #dfe; }
-    .sequencer .grid .row {
-      margin: 2px;
+      border-radius: 4px;
+      border: 0px solid #333;
+      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
+      .sequencer .body .head .cell.tick {
+        background: #dfe; }
+  .sequencer .body .row {
+    margin: 2px;
+    padding: 0px;
+    height: 32px;
+    line-height: 32px; }
+    .sequencer .body .row > * {
+      height: 26px;
+      line-height: 26px;
+      margin: 3px;
       padding: 0px;
-      height: 32px;
-      line-height: 32px; }
-      .sequencer .grid .row > * {
-        height: 26px;
-        line-height: 26px;
-        margin: 3px;
-        padding: 0px;
-        border-radius: 4px;
-        border: 0px solid #333;
-        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
-        display: inline-block;
-        cursor: pointer;
-        background: #fafafa;
-        transition: box-shadow .1s;
-        box-sizing: border-box;
-        float: left; }
-        .sequencer .grid .row > *:hover {
-          box-shadow: inset 0px 0px 7px rgba(33, 33, 33, 0.5);
-          margin: 2px;
-          height: 28px;
-          line-height: 28px; }
-      .sequencer .grid .row .instr {
-        font-size: 14px;
-        width: 100px;
-        text-align: center; }
-        .sequencer .grid .row .instr:hover {
-          width: 102px; }
-      .sequencer .grid .row .bar {
-        width: 16px; }
-        .sequencer .grid .row .bar:hover {
-          width: 18px; }
-        .sequencer .grid .row .bar:nth-child(2n-1) {
-          background: #f5f5f5; }
-        .sequencer .grid .row .bar.on {
-          background: #c0cacf; }
-        .sequencer .grid .row .bar.tick {
-          background: #dfe; }
+      border-radius: 4px;
+      border: 0px solid #333;
+      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
+      display: inline-block;
+      cursor: pointer;
+      background: #fafafa;
+      transition: box-shadow .1s;
+      box-sizing: border-box;
+      float: left; }
+      .sequencer .body .row > *:hover {
+        box-shadow: inset 0px 0px 7px rgba(33, 33, 33, 0.5);
+        margin: 2px;
+        height: 28px;
+        line-height: 28px; }
+    .sequencer .body .row .instr {
+      font-size: 14px;
+      width: 100px;
+      text-align: center; }
+      .sequencer .body .row .instr:hover {
+        width: 102px; }
+    .sequencer .body .row .bar {
+      width: 16px; }
+      .sequencer .body .row .bar:hover {
+        width: 18px; }
+      .sequencer .body .row .bar:nth-child(2n-1) {
+        background: #f5f5f5; }
+      .sequencer .body .row .bar.on {
+        background: #c0cacf; }
+      .sequencer .body .row .bar.tick {
+        background: #dfe; }
+
+.midi-map {
+  position: absolute;
+  left: 500px;
+  top: 50px;
+  display: inline-block;
+  border: 1px solid #bbb;
+  background: #fefefe;
+  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
+  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
+  min-width: 300px; }
+  .midi-map .header {
+    cursor: pointer;
+    margin: 0px;
+    height: 38px;
+    line-height: 34px;
+    border-bottom: 1px solid #ddd; }
+    .midi-map .header > * {
+      margin: 7px 4px;
+      padding: 0px 4px;
+      height: 24px;
+      line-height: 24px;
+      font-size: 16px;
+      display: inline-block;
+      float: left; }
+    .midi-map .header input, .midi-map .header button {
+      outline: none;
+      text-align: center;
+      border: 0px solid #333;
+      background: inherit; }
+    .midi-map .header input {
+      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+      color: #555;
+      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      border-radius: 4px;
+      background: #dfe; }
+    .midi-map .header button {
+      width: 30px;
+      text-align: center;
+      padding: 0px;
+      cursor: pointer;
+      transition: box-shadow .5s, text-shadow .5s;
+      outline: none;
+      border-radius: 4px; }
+      .midi-map .header button.on {
+        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        background: #dfe; }
+      .midi-map .header button:hover {
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        outline: none; }
+      .midi-map .header button:active, .midi-map .header button:focus, .midi-map .header button::-moz-focus-inner {
+        outline: none;
+        border-image: none;
+        border: 0px; }
+  .midi-map .body {
+    margin: 0px;
+    padding: 0px;
+    border-top: 1px solid #fff; }
+  .midi-map .body > * {
+    margin: 10px; }

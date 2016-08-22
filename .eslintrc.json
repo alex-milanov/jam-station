@@ -9,9 +9,9 @@
 		"indent": ["error", "tab", {"SwitchCase": 1}],
 		"max-len": ["warn", 100],
 		"no-nested-ternary": 0,
-		"operator-linebreak": ["error", "after", { "overrides": { "?": "before", ":": "before" } }],
+		"operator-linebreak": ["error", "after", { "overrides": { "?": "before", ":": "before", "&&": "before", "||": "before" } }],
 		"no-return-assign": ["error", "except-parens"],
-		"no-sequences": 1,
+		"no-sequences": 0,
 		"dot-notation": 0,
 		"no-negated-condition": 0,
 		"no-unused-vars": 0

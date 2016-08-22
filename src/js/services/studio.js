@@ -21,7 +21,7 @@ const init = () => {
 					state.pattern.forEach((row, i) => (row[state.tickIndex]) && kit[i].play());
 				} else {
 					playLoop = setInterval(
-						() => actions.tick(),
+						() => actions.studio.tick(),
 						60 / parseInt(state.bpm, 10) * 1000 / 4
 					);
 				}

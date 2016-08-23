@@ -8,12 +8,11 @@ const {h, div, input, hr, p, button} = vdom;
 const midi = require('./util/midi')();
 const BasicSynth = require('./instr/basic-synth');
 
-const studio = require('./services/studio').init();
-
+// app
 const actions = require('./actions');
 window.actions = actions;
-
 const ui = require('./ui');
+const services = require('./services');
 
 // reduce actions to state
 const state$ = actions.stream
@@ -23,13 +22,17 @@ const state$ = actions.stream
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 
+// patch stream to dom
+vdom.patchStream(ui$, '#ui');
+
 // services
-state$.map(state => studio.refresh({state, actions})).subscribe();
+services.init({actions});
+state$.map(state => services.refresh({state, actions})).subscribe();
 
 // midi map
-const basicSynth = new BasicSynth(studio.context, 'C1');
+const basicSynth = new BasicSynth(services.studio.context, 'C1');
 
-midi.access$.subscribe(data => console.log('access', data));
+midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.subscribe(data => {
 	console.log('msg', data);
@@ -38,5 +41,3 @@ midi.msg$.subscribe(data => {
 		basicSynth.clone().play(midi.parseMidiMsg(data.msg).note.pitch);
 	}
 });
-// patch stream to dom
-vdom.patchStream(ui$, '#ui');

@@ -2229,9 +2229,69 @@ header {
   header h1 {
     font-size: 18px; }
 
-.sequencer {
+.media-library {
   position: absolute;
   left: 20px;
+  top: 50px;
+  display: inline-block;
+  border: 1px solid #bbb;
+  background: #fefefe;
+  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
+  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
+  min-width: 200px; }
+  .media-library .header {
+    cursor: pointer;
+    margin: 0px;
+    height: 38px;
+    line-height: 34px;
+    border-bottom: 1px solid #ddd; }
+    .media-library .header > * {
+      margin: 7px 4px;
+      padding: 0px 4px;
+      height: 24px;
+      line-height: 24px;
+      font-size: 16px;
+      display: inline-block;
+      float: left; }
+    .media-library .header input, .media-library .header button {
+      outline: none;
+      text-align: center;
+      border: 0px solid #333;
+      background: inherit; }
+    .media-library .header input {
+      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+      color: #555;
+      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      border-radius: 4px;
+      background: #dfe; }
+    .media-library .header button {
+      width: 30px;
+      text-align: center;
+      padding: 0px;
+      cursor: pointer;
+      transition: box-shadow .5s, text-shadow .5s;
+      outline: none;
+      border-radius: 4px; }
+      .media-library .header button.on {
+        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        background: #dfe; }
+      .media-library .header button:hover {
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        outline: none; }
+      .media-library .header button:active, .media-library .header button:focus, .media-library .header button::-moz-focus-inner {
+        outline: none;
+        border-image: none;
+        border: 0px; }
+  .media-library .body {
+    margin: 0px;
+    padding: 0px;
+    border-top: 1px solid #fff; }
+  .media-library .body {
+    padding: 0px 10px; }
+
+.sequencer {
+  position: absolute;
+  left: 240px;
   top: 50px;
   display: inline-block;
   border: 1px solid #bbb;
@@ -2346,7 +2406,7 @@ header {
 
 .midi-map {
   position: absolute;
-  left: 500px;
+  left: 760px;
   top: 50px;
   display: inline-block;
   border: 1px solid #bbb;

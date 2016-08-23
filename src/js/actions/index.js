@@ -18,7 +18,7 @@ const init = () => stream.onNext(state => ({
 	bpm: '120',
 	measure: '4/4',
 	beatLength: 16,
-	instr: [
+	channels: [
 		'Kick',
 		'HiHat',
 		'Snare',

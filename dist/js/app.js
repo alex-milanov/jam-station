@@ -13123,7 +13123,7 @@ const init = () => stream.onNext(state => ({
 	bpm: '120',
 	measure: '4/4',
 	beatLength: 16,
-	instr: [
+	channels: [
 		'Kick',
 		'HiHat',
 		'Snare',
@@ -13151,7 +13151,7 @@ module.exports = {
 	init
 };
 
-},{"../util/data":24,"../util/math":25,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
+},{"../util/data":28,"../util/math":29,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13163,11 +13163,16 @@ const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
+const connect = midi => stream.onNext(
+	state => Object.assign({}, state, {midi})
+);
+
 module.exports = {
-	stream
+	stream,
+	connect
 };
 
-},{"../../util/data":24,"../../util/math":25,"rx":2}],14:[function(require,module,exports){
+},{"../../util/data":28,"../../util/math":29,"rx":2}],14:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13201,7 +13206,7 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/data":24,"../../util/math":25,"rx":2}],15:[function(require,module,exports){
+},{"../../util/data":28,"../../util/math":29,"rx":2}],15:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13234,7 +13239,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/data":24,"../../util/math":25,"rx":2}],16:[function(require,module,exports){
+},{"../../util/data":28,"../../util/math":29,"rx":2}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13245,12 +13250,11 @@ const {h, div, input, hr, p, button} = vdom;
 const midi = require('./util/midi')();
 const BasicSynth = require('./instr/basic-synth');
 
-const studio = require('./services/studio').init();
-
+// app
 const actions = require('./actions');
 window.actions = actions;
-
 const ui = require('./ui');
+const services = require('./services');
 
 // reduce actions to state
 const state$ = actions.stream
@@ -13260,13 +13264,17 @@ const state$ = actions.stream
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 
+// patch stream to dom
+vdom.patchStream(ui$, '#ui');
+
 // services
-state$.map(state => studio.refresh({state, actions})).subscribe();
+services.init({actions});
+state$.map(state => services.refresh({state, actions})).subscribe();
 
 // midi map
-const basicSynth = new BasicSynth(studio.context, 'C1');
+const basicSynth = new BasicSynth(services.studio.context, 'C1');
 
-midi.access$.subscribe(data => console.log('access', data));
+midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.subscribe(data => {
 	console.log('msg', data);
@@ -13275,10 +13283,8 @@ midi.msg$.subscribe(data => {
 		basicSynth.clone().play(midi.parseMidiMsg(data.msg).note.pitch);
 	}
 });
-// patch stream to dom
-vdom.patchStream(ui$, '#ui');
 
-},{"./actions":12,"./instr/basic-synth":17,"./services/studio":19,"./ui":20,"./util/midi":26,"./util/vdom":27,"rx":2}],17:[function(require,module,exports){
+},{"./actions":12,"./instr/basic-synth":17,"./services":19,"./ui":23,"./util/midi":30,"./util/vdom":31,"rx":2}],17:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13434,73 +13440,158 @@ module.exports = Sampler;
 },{}],19:[function(require,module,exports){
 'use strict';
 
+const studio = require('./studio');
+const midi = require('./midi');
+const layout = require('./layout');
+
+const services = [studio, midi, layout];
+
+const init = ({actions}) =>
+	services.forEach(service => service.init({actions}));
+const refresh = ({state, actions}) =>
+	services.forEach(service => service.refresh({state, actions}));
+
+module.exports = {
+	init,
+	refresh,
+	studio,
+	midi,
+	layout
+};
+
+},{"./layout":20,"./midi":21,"./studio":22}],20:[function(require,module,exports){
+'use strict';
+
+const init = () => {};
+const refresh = ({state, actions}) => {
+	const mediaLibrary = document.querySelector('.media-library');
+	const sequencer = document.querySelector('.sequencer');
+	const midiMap = document.querySelector('.midi-map');
+	if (mediaLibrary && sequencer && midiMap) {
+		sequencer.style.left = mediaLibrary.offsetWidth + 40 + 'px';
+		midiMap.style.left = mediaLibrary.offsetWidth + sequencer.offsetWidth + 60 + 'px';
+		// console.log(midiMap.style.left, sequencer.offsetWidth);
+	}
+	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
+};
+
+module.exports = {
+	init,
+	refresh
+};
+
+},{}],21:[function(require,module,exports){
+'use strict';
+
+const init = () => {};
+const refresh = ({state, actions}) => {};
+
+module.exports = {
+	init,
+	refresh
+};
+
+},{}],22:[function(require,module,exports){
+'use strict';
+
 const {AudioContext} = require('../util/context');
 const Sampler = require('../instr/sampler');
 
+let context = new AudioContext();
+let kit;
+let playLoop;
+
 const init = () => {
-	let context = new AudioContext();
-	let kit = [
+	kit = [
 		'samples/kick01.ogg',
 		'samples/hihat_opened02.ogg',
 		'samples/snare01.ogg',
 		'samples/clap01.ogg'
 	].map(url => new Sampler(context, url));
 
-	let playLoop = false;
+	playLoop = false;
+};
 
-	return {
-		context,
-		refresh: ({state, actions}) => {
-			if (state.playing) {
-				if (playLoop) {
-					state.pattern.forEach((row, i) => (row[state.tickIndex]) && kit[i].play());
-				} else {
-					playLoop = setInterval(
-						() => actions.studio.tick(),
-						60 / parseInt(state.bpm, 10) * 1000 / 4
-					);
-				}
-			} else if (playLoop) {
-				clearInterval(playLoop);
-				playLoop = false;
-			}
+const refresh = ({state, actions}) => {
+	if (state.playing) {
+		if (playLoop) {
+			state.pattern.forEach((row, i) => (row[state.tickIndex]) && kit[i].play());
+		} else {
+			playLoop = setInterval(
+				() => actions.studio.tick(),
+				60 / parseInt(state.bpm, 10) * 1000 / 4
+			);
 		}
-	};
+	} else if (playLoop) {
+		clearInterval(playLoop);
+		playLoop = false;
+	}
 };
 
 module.exports = {
-	init
+	context,
+	init,
+	refresh
 };
 
-},{"../instr/sampler":18,"../util/context":23}],20:[function(require,module,exports){
+},{"../instr/sampler":18,"../util/context":27}],23:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, i} = require('../util/vdom');
+const mediaLibrary = require('./media-library');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
 module.exports = ({state, actions}) => div('#ui', [
 	header([h1([i('.fa.fa-music'), ' Jam Station'])]),
+	mediaLibrary({state, actions}),
 	sequencer({state, actions}),
 	midiMap({state, actions})
 ]);
 
-},{"../util/vdom":27,"./midi-map":21,"./sequencer":22}],21:[function(require,module,exports){
+},{"../util/vdom":31,"./media-library":24,"./midi-map":25,"./sequencer":26}],24:[function(require,module,exports){
 'use strict';
 
-const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
+const {div, h2, span, p, ul, li, hr, button} = require('../../util/vdom');
+
+module.exports = ({state, actions}) => div('.media-library', [
+	div('.header', [
+		h2('Media Library')
+	]),
+	div('.body', [
+		p('Samples'),
+		ul(state.channels.map(
+			channel => li(channel)
+		)),
+		p('Instruments'),
+		ul([li('BasicSynth')])
+	])
+]);
+
+},{"../../util/vdom":31}],25:[function(require,module,exports){
+'use strict';
+
+const {div, h2, span, p, input, fieldset, legend, label, hr, button} = require('../../util/vdom');
 
 module.exports = ({state, actions}) => div('.midi-map', [
 	div('.header', [
 		h2('MIDI Map')
 	]),
 	div('.body', [
-		p('Inputs:'),
-		p('Outputs:')
+		fieldset([
+			legend('Inputs')
+		].concat(state.midi.inputs.map(inp =>
+			p(inp.name)
+		))),
+		fieldset([
+			legend('Outputs')
+		].concat(state.midi.outputs.map(out =>
+			p(out.name)
+		)))
 	])
 ]);
 
-},{"../../util/vdom":27}],22:[function(require,module,exports){
+},{"../../util/vdom":31}],26:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
@@ -13536,7 +13627,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		))
 	].concat(loop(4, r =>
 		div(`.row`, [
-			div('.instr', [span(state.instr[r])])
+			div('.instr', [span(state.channels[r])])
 		].concat(loop(state.beatLength, c =>
 			div(`.bar`, {
 				class: {
@@ -13551,7 +13642,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"../../util/vdom":27}],23:[function(require,module,exports){
+},{"../../util/vdom":31}],27:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -13562,7 +13653,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],24:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 const assignPropVal = (o, p, v) => {
@@ -13575,7 +13666,7 @@ module.exports = {
 	assignPropVal
 };
 
-},{}],25:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -13586,7 +13677,7 @@ module.exports = {
 	measureToBeatLength
 };
 
-},{}],26:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13654,33 +13745,31 @@ const parseMidiMsg = event => {
 // (navigator.requestMIDIAccess)
 //		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
 
-const getInputs = access => {
-	let inputs = access.inputs.values();
-	let inputsArr = [];
-	for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
-		inputsArr.push(input);
-	}
-	return inputsArr;
+const parseAccess = access => {
+	let inputs = [];
+	let outputs = [];
+	access.inputs.forEach(input => inputs.push(input));
+	access.outputs.forEach(output => outputs.push(output));
+	return {access, inputs, outputs};
 };
 
 const init = () => {
-	const access$ = $.fromPromise(navigator.requestMIDIAccess());
+	const access$ = $.fromPromise(navigator.requestMIDIAccess())
+		.map(parseAccess);
 
 	const state$ = access$.flatMap(
-		access => $.fromEvent(access, 'onstatechange')
+		({access}) => $.fromEvent(access, 'onstatechange')
 			.map(state => ({access, state}))
 	);
 
 	const msg$ = access$.flatMap(
-		access => getInputs(access)
-			.map(input => (console.log(input), input))
-			.reduce(
+		({access, inputs}) => inputs.reduce(
 				(msgStream, input) => msgStream.merge(
 					$.fromEventPattern(h => {
-						input.value.onmidimessage = h;
+						input.onmidimessage = h;
 					})
 					.map(msg => ({access, input, msg}))
-				), $.just({access, input: null, msg: null})
+				), $.empty()
 			)
 	);
 
@@ -13694,7 +13783,7 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":2}],27:[function(require,module,exports){
+},{"rx":2}],31:[function(require,module,exports){
 'use strict';
 
 const snabbdom = require('snabbdom');
@@ -13719,7 +13808,7 @@ const hyperHelpers = [
 	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
 	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
 	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
-	'form', 'legend', 'input', 'label', 'button', 'select', 'option',
+	'form', 'fieldset', 'legend', 'input', 'label', 'button', 'select', 'option',
 	'canvas', 'video'
 ].reduce(
 	(o, tag) => {
@@ -13727,8 +13816,8 @@ const hyperHelpers = [
 			return [Array.prototype.slice.call(arguments)]
 				.map(
 					args => (
-						args[0] && typeof args[0] === 'string' &&
-						args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
+						args[0] && typeof args[0] === 'string'
+						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
 						? [].concat(tag + args[0], args.slice(1))
 						: [tag].concat(args))
 				.map(args => h.apply(this, args))

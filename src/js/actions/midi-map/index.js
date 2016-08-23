@@ -9,6 +9,11 @@ const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
+const connect = midi => stream.onNext(
+	state => Object.assign({}, state, {midi})
+);
+
 module.exports = {
-	stream
+	stream,
+	connect
 };

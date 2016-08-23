@@ -65,33 +65,31 @@ const parseMidiMsg = event => {
 // (navigator.requestMIDIAccess)
 //		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
 
-const getInputs = access => {
-	let inputs = access.inputs.values();
-	let inputsArr = [];
-	for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
-		inputsArr.push(input);
-	}
-	return inputsArr;
+const parseAccess = access => {
+	let inputs = [];
+	let outputs = [];
+	access.inputs.forEach(input => inputs.push(input));
+	access.outputs.forEach(output => outputs.push(output));
+	return {access, inputs, outputs};
 };
 
 const init = () => {
-	const access$ = $.fromPromise(navigator.requestMIDIAccess());
+	const access$ = $.fromPromise(navigator.requestMIDIAccess())
+		.map(parseAccess);
 
 	const state$ = access$.flatMap(
-		access => $.fromEvent(access, 'onstatechange')
+		({access}) => $.fromEvent(access, 'onstatechange')
 			.map(state => ({access, state}))
 	);
 
 	const msg$ = access$.flatMap(
-		access => getInputs(access)
-			.map(input => (console.log(input), input))
-			.reduce(
+		({access, inputs}) => inputs.reduce(
 				(msgStream, input) => msgStream.merge(
 					$.fromEventPattern(h => {
-						input.value.onmidimessage = h;
+						input.onmidimessage = h;
 					})
 					.map(msg => ({access, input, msg}))
-				), $.just({access, input: null, msg: null})
+				), $.empty()
 			)
 	);
 

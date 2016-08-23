@@ -22,7 +22,7 @@ const hyperHelpers = [
 	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
 	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
 	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
-	'form', 'legend', 'input', 'label', 'button', 'select', 'option',
+	'form', 'fieldset', 'legend', 'input', 'label', 'button', 'select', 'option',
 	'canvas', 'video'
 ].reduce(
 	(o, tag) => {
@@ -30,8 +30,8 @@ const hyperHelpers = [
 			return [Array.prototype.slice.call(arguments)]
 				.map(
 					args => (
-						args[0] && typeof args[0] === 'string' &&
-						args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
+						args[0] && typeof args[0] === 'string'
+						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
 						? [].concat(tag + args[0], args.slice(1))
 						: [tag].concat(args))
 				.map(args => h.apply(this, args))

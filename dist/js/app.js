@@ -12588,7 +12588,7 @@ module.exports = function h(sel, b, c) {
   return VNode(sel, data, children, text, undefined);
 };
 
-},{"./is":5,"./vnode":11}],4:[function(require,module,exports){
+},{"./is":5,"./vnode":12}],4:[function(require,module,exports){
 function createElement(tagName){
   return document.createElement(tagName);
 }
@@ -12651,6 +12651,51 @@ module.exports = {
 };
 
 },{}],6:[function(require,module,exports){
+var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
+                "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
+                "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
+                "muted", "nohref", "noresize", "noshade", "novalidate", "nowrap", "open", "pauseonexit", "readonly",
+                "required", "reversed", "scoped", "seamless", "selected", "sortable", "spellcheck", "translate",
+                "truespeed", "typemustmatch", "visible"];
+
+var booleanAttrsDict = {};
+for(var i=0, len = booleanAttrs.length; i < len; i++) {
+  booleanAttrsDict[booleanAttrs[i]] = true;
+}
+
+function updateAttrs(oldVnode, vnode) {
+  var key, cur, old, elm = vnode.elm,
+      oldAttrs = oldVnode.data.attrs, attrs = vnode.data.attrs;
+
+  if (!oldAttrs && !attrs) return;
+  oldAttrs = oldAttrs || {};
+  attrs = attrs || {};
+
+  // update modified attributes, add new attributes
+  for (key in attrs) {
+    cur = attrs[key];
+    old = oldAttrs[key];
+    if (old !== cur) {
+      // TODO: add support to namespaced attributes (setAttributeNS)
+      if(!cur && booleanAttrsDict[key])
+        elm.removeAttribute(key);
+      else
+        elm.setAttribute(key, cur);
+    }
+  }
+  //remove removed attributes
+  // use `in` operator since the previous `for` iteration uses it (.i.e. add even attributes with undefined value)
+  // the other option is to remove all attributes with value == undefined
+  for (key in oldAttrs) {
+    if (!(key in attrs)) {
+      elm.removeAttribute(key);
+    }
+  }
+}
+
+module.exports = {create: updateAttrs, update: updateAttrs};
+
+},{}],7:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class,
@@ -12675,7 +12720,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -12739,7 +12784,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":5}],8:[function(require,module,exports){
+},{"../is":5}],9:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -12764,7 +12809,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -12835,7 +12880,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Node */
 'use strict';
@@ -13095,14 +13140,14 @@ function init(modules, api) {
 
 module.exports = {init: init};
 
-},{"./htmldomapi":4,"./is":5,"./vnode":11}],11:[function(require,module,exports){
+},{"./htmldomapi":4,"./is":5,"./vnode":12}],12:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13110,6 +13155,7 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 const studio = require('./studio');
+const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
@@ -13123,6 +13169,12 @@ const init = () => stream.onNext(state => ({
 	bpm: '120',
 	measure: '4/4',
 	beatLength: 16,
+	instrument: {
+		attack: 0.001,
+		decay: 0.001,
+		sustain: 0.5,
+		release: 0.1
+	},
 	channels: [
 		'Kick',
 		'HiHat',
@@ -13144,14 +13196,35 @@ const init = () => stream.onNext(state => ({
 }));
 
 module.exports = {
-	stream: $.merge(stream, studio.stream, sequencer.stream, midiMap.stream),
+	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream),
 	studio,
+	instrument,
 	sequencer,
 	midiMap,
 	init
 };
 
-},{"../util/data":28,"../util/math":29,"./midi-map":13,"./sequencer":14,"./studio":15,"rx":2}],13:[function(require,module,exports){
+},{"../util/data":31,"../util/math":32,"./instrument":14,"./midi-map":15,"./sequencer":16,"./studio":17,"rx":2}],14:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+const {assignPropVal} = require('../../util/data');
+
+const stream = new Subject();
+
+const updateProp = (prop, value) => stream.onNext(state => Object.assign({}, state, {
+	instrument: assignPropVal(state.instrument, prop, value)
+}));
+
+module.exports = {
+	stream,
+	updateProp
+};
+
+},{"../../util/data":31,"rx":2}],15:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13172,7 +13245,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/data":28,"../../util/math":29,"rx":2}],14:[function(require,module,exports){
+},{"../../util/data":31,"../../util/math":32,"rx":2}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13206,7 +13279,7 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/data":28,"../../util/math":29,"rx":2}],15:[function(require,module,exports){
+},{"../../util/data":31,"../../util/math":32,"rx":2}],17:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13239,7 +13312,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/data":28,"../../util/math":29,"rx":2}],16:[function(require,module,exports){
+},{"../../util/data":31,"../../util/math":32,"rx":2}],18:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13276,15 +13349,16 @@ const basicSynth = new BasicSynth(services.studio.context, 'C1');
 
 midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
-midi.msg$.subscribe(data => {
-	console.log('msg', data);
-	if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
-		console.log(data.msg);
-		basicSynth.clone().play(midi.parseMidiMsg(data.msg).note.pitch);
-	}
-});
+midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
+	.subscribe(({data, state}) => {
+		console.log('msg', data);
+		if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
+			console.log(data.msg);
+			basicSynth.clone(midi.parseMidiMsg(data.msg).note.pitch).play(state.instrument);
+		}
+	});
 
-},{"./actions":12,"./instr/basic-synth":17,"./services":19,"./ui":23,"./util/midi":30,"./util/vdom":31,"rx":2}],17:[function(require,module,exports){
+},{"./actions":13,"./instr/basic-synth":19,"./services":21,"./ui":25,"./util/midi":33,"./util/vdom":34,"rx":2}],19:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13296,6 +13370,7 @@ function BasicSynth(context, note) {
 	this.note = note;
 
 	this.vco = this.context.createOscillator();
+	this.vco.frequency.value = this.noteToFrequency(note);
 	this.lfo = this.context.createOscillator();
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
@@ -13350,22 +13425,30 @@ BasicSynth.prototype.setup = function(note) {
 	*/
 };
 
-BasicSynth.prototype.trigger = function(time, duration, note) {
-	duration = duration || 0.5;
+BasicSynth.prototype.trigger = function(time, props, note) {
 	note = note || this.note || 'C';
 
-	console.log(time, duration, note);
+	console.log(time, props);
 
-	this.setup(note);
+	// this.setup(note);
 
 	var frequency = this.noteToFrequency(note);
 
 	this.vco.frequency.setValueAtTime(frequency, time);
-	this.output.gain.linearRampToValueAtTime(1.0, time + 0.01);
 
-	this.output.gain.linearRampToValueAtTime(0.0, time + duration - 0.01);
+	// attack
+	this.output.gain.setValueCurveAtTime(new Float32Array([0, 1]), time, props.attack);
+	// decay
+	this.output.gain.setValueCurveAtTime(new Float32Array([1, 0.8]),
+		time + props.attack,
+		props.decay);
+	// sustain
+	// relase
+	this.output.gain.setValueCurveAtTime(new Float32Array([0.8, 0]),
+		time + props.attack + props.decay + props.sustain,
+		props.release);
 
-	this.vco.stop(time + duration);
+	this.vco.stop(time + props.attack + props.decay + props.sustain + props.release);
 
 	/*
 	this.gain.gain.setValueAtTime(0.1, time);
@@ -13378,21 +13461,20 @@ BasicSynth.prototype.trigger = function(time, duration, note) {
 	*/
 };
 
-BasicSynth.prototype.play = function(note) {
-	let duration = 0.5;
-	note = note || this.note || 'C';
+BasicSynth.prototype.play = function(props, note) {
+	// note = note || this.note || 'C';
 	var now = this.context.currentTime;
-	this.trigger(now, duration, note);
+	this.trigger(now, props, note);
 };
 
-BasicSynth.prototype.clone = function() {
-	var synth = new BasicSynth(this.context, this.note);
+BasicSynth.prototype.clone = function(note) {
+	var synth = new BasicSynth(this.context, note || this.note);
 	return synth;
 };
 
 module.exports = BasicSynth;
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13437,7 +13519,7 @@ Sampler.prototype.play = function(duration) {
 
 module.exports = Sampler;
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13459,17 +13541,19 @@ module.exports = {
 	layout
 };
 
-},{"./layout":20,"./midi":21,"./studio":22}],20:[function(require,module,exports){
+},{"./layout":22,"./midi":23,"./studio":24}],22:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
 const refresh = ({state, actions}) => {
 	const mediaLibrary = document.querySelector('.media-library');
+	const instrument = document.querySelector('.instrument');
 	const sequencer = document.querySelector('.sequencer');
 	const midiMap = document.querySelector('.midi-map');
 	if (mediaLibrary && sequencer && midiMap) {
-		sequencer.style.left = mediaLibrary.offsetWidth + 40 + 'px';
-		midiMap.style.left = mediaLibrary.offsetWidth + sequencer.offsetWidth + 60 + 'px';
+		instrument.style.left = mediaLibrary.offsetWidth + 40 + 'px';
+		sequencer.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + 60 + 'px';
+		midiMap.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + sequencer.offsetWidth + 80 + 'px';
 		// console.log(midiMap.style.left, sequencer.offsetWidth);
 	}
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
@@ -13480,7 +13564,7 @@ module.exports = {
 	refresh
 };
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13491,7 +13575,7 @@ module.exports = {
 	refresh
 };
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 const {AudioContext} = require('../util/context');
@@ -13534,22 +13618,70 @@ module.exports = {
 	refresh
 };
 
-},{"../instr/sampler":18,"../util/context":27}],23:[function(require,module,exports){
+},{"../instr/sampler":20,"../util/context":30}],25:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, i} = require('../util/vdom');
 const mediaLibrary = require('./media-library');
+const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
 module.exports = ({state, actions}) => div('#ui', [
 	header([h1([i('.fa.fa-music'), ' Jam Station'])]),
 	mediaLibrary({state, actions}),
+	instrument({state, actions}),
 	sequencer({state, actions}),
 	midiMap({state, actions})
 ]);
 
-},{"../util/vdom":31,"./media-library":24,"./midi-map":25,"./sequencer":26}],24:[function(require,module,exports){
+},{"../util/vdom":34,"./instrument":26,"./media-library":27,"./midi-map":28,"./sequencer":29}],26:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button,
+	form, label, input
+} = require('../../util/vdom');
+
+module.exports = ({state, actions}) => div('.instrument', [
+	div('.header', [
+		h2('Instrument')
+	]),
+	div('.body', [
+		form([
+			label(`Attack`),
+			span('.right', `${state.instrument.attack}`),
+			input('[type="range"]', {
+				attrs: {min: 0.001, max: 1, step: 0.05},
+				props: {value: state.instrument.attack},
+				on: {change: ev => actions.instrument.updateProp('attack', parseFloat(ev.target.value))}
+			}),
+			label(`Decay`),
+			span('.right', `${state.instrument.decay}`),
+			input('[type="range"]', {
+				attrs: {min: 0.001, max: 1, step: 0.05},
+				props: {value: state.instrument.decay},
+				on: {change: ev => actions.instrument.updateProp('decay', parseFloat(ev.target.value))}
+			}),
+			label(`Sustain`),
+			span('.right', `${state.instrument.sustain}`),
+			input('[type="range"]', {
+				attrs: {min: 0.001, max: 1, step: 0.05},
+				props: {value: state.instrument.sustain},
+				on: {change: ev => actions.instrument.updateProp('sustain', parseFloat(ev.target.value))}
+			}),
+			label(`Release`),
+			span('.right', `${state.instrument.release}`),
+			input('[type="range"]', {
+				attrs: {min: 0.001, max: 1, step: 0.05},
+				props: {value: state.instrument.release},
+				on: {change: ev => actions.instrument.updateProp('release', parseFloat(ev.target.value))}
+			})
+		])
+	])
+]);
+
+},{"../../util/vdom":34}],27:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, ul, li, hr, button} = require('../../util/vdom');
@@ -13568,7 +13700,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"../../util/vdom":31}],25:[function(require,module,exports){
+},{"../../util/vdom":34}],28:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, fieldset, legend, label, hr, button} = require('../../util/vdom');
@@ -13591,7 +13723,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"../../util/vdom":31}],26:[function(require,module,exports){
+},{"../../util/vdom":34}],29:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
@@ -13642,7 +13774,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"../../util/vdom":31}],27:[function(require,module,exports){
+},{"../../util/vdom":34}],30:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -13653,7 +13785,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],28:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 const assignPropVal = (o, p, v) => {
@@ -13666,7 +13798,7 @@ module.exports = {
 	assignPropVal
 };
 
-},{}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -13677,7 +13809,7 @@ module.exports = {
 	measureToBeatLength
 };
 
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13783,7 +13915,7 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":2}],31:[function(require,module,exports){
+},{"rx":2}],34:[function(require,module,exports){
 'use strict';
 
 const snabbdom = require('snabbdom');
@@ -13792,6 +13924,7 @@ const h = require('snabbdom/h');
 const patch = snabbdom.init([ // Init patch function with choosen modules
 	require('snabbdom/modules/class'), // makes it easy to toggle classes
 	require('snabbdom/modules/props'), // for setting properties on DOM elements
+	require('snabbdom/modules/attributes'), // for setting properties on DOM elements
 	require('snabbdom/modules/style'), // handles styling on elements with support for animations
 	require('snabbdom/modules/eventlisteners') // attaches event listeners
 ]);
@@ -13804,16 +13937,56 @@ const patchStream = (stream, dom) => {
 	).subscribe();
 };
 
+const addKeyValue = (o, k, v) => {
+	o[k] = v;
+	return o;
+};
+
+const processAttrs = args => {
+	let newArgs = args.slice();
+
+	let selector = newArgs[0] && typeof newArgs[0] === 'string' && newArgs[0] || '';
+	if (selector !== '') newArgs = newArgs.slice(1);
+
+	const attrRegExp = /\[[a-z\-0-9]+="[^"]+"\]/ig;
+
+	let attrs = selector && selector.match(attrRegExp);
+	selector = selector.replace(attrRegExp, '');
+
+	attrs = attrs && attrs.map && attrs
+			.map(c => c.replace(/[\[\]"]/g, '').split('='))
+			.reduce((o, attr) => addKeyValue(o, attr[0], attr[1]), {}) || {};
+
+	if (attrs && Object.keys(attrs).length > 0) {
+		if (!newArgs[0] || newArgs[0]
+			&& typeof newArgs[0] === 'object' && !(newArgs[0] instanceof Array)) {
+			attrs = Object.assign({}, newArgs[0] && newArgs[0].attrs || {}, attrs);
+			newArgs[0] = Object.assign({}, newArgs[0] || {}, {attrs});
+		} else {
+			newArgs = [{attrs}].concat(
+				newArgs
+			);
+		}
+	}
+
+	if (selector !== '')
+		newArgs = [selector].concat(newArgs);
+
+	// console.log(args, newArgs);
+	return newArgs;
+};
+
 const hyperHelpers = [
 	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
 	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
-	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
+	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li', 'textarea',
 	'form', 'fieldset', 'legend', 'input', 'label', 'button', 'select', 'option',
 	'canvas', 'video'
 ].reduce(
 	(o, tag) => {
 		o[tag] = function() {
 			return [Array.prototype.slice.call(arguments)]
+				.map(processAttrs)
 				.map(
 					args => (
 						args[0] && typeof args[0] === 'string'
@@ -13836,4 +14009,4 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}]},{},[16]);
+},{"snabbdom":11,"snabbdom/h":3,"snabbdom/modules/attributes":6,"snabbdom/modules/class":7,"snabbdom/modules/eventlisteners":8,"snabbdom/modules/props":9,"snabbdom/modules/style":10}]},{},[18]);

@@ -34,10 +34,11 @@ const basicSynth = new BasicSynth(services.studio.context, 'C1');
 
 midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
-midi.msg$.subscribe(data => {
-	console.log('msg', data);
-	if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
-		console.log(data.msg);
-		basicSynth.clone().play(midi.parseMidiMsg(data.msg).note.pitch);
-	}
-});
+midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
+	.subscribe(({data, state}) => {
+		console.log('msg', data);
+		if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
+			console.log(data.msg);
+			basicSynth.clone(midi.parseMidiMsg(data.msg).note.pitch).play(state.instrument);
+		}
+	});

@@ -1,0 +1,10 @@
+# ref: http://editorconfig.org/
+# plugin: https://github.com/sindresorhus/atom-editorconfig
+
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = tab

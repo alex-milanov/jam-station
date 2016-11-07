@@ -9,6 +9,7 @@ function BasicSynth(context, note) {
 	this.note = note;
 
 	this.vco = this.context.createOscillator();
+	this.vco.frequency.value = this.noteToFrequency(note);
 	this.lfo = this.context.createOscillator();
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
@@ -63,22 +64,30 @@ BasicSynth.prototype.setup = function(note) {
 	*/
 };
 
-BasicSynth.prototype.trigger = function(time, duration, note) {
-	duration = duration || 0.5;
+BasicSynth.prototype.trigger = function(time, props, note) {
 	note = note || this.note || 'C';
 
-	console.log(time, duration, note);
+	console.log(time, props);
 
-	this.setup(note);
+	// this.setup(note);
 
 	var frequency = this.noteToFrequency(note);
 
 	this.vco.frequency.setValueAtTime(frequency, time);
-	this.output.gain.linearRampToValueAtTime(1.0, time + 0.01);
 
-	this.output.gain.linearRampToValueAtTime(0.0, time + duration - 0.01);
+	// attack
+	this.output.gain.setValueCurveAtTime(new Float32Array([0, 1]), time, props.attack);
+	// decay
+	this.output.gain.setValueCurveAtTime(new Float32Array([1, 0.8]),
+		time + props.attack,
+		props.decay);
+	// sustain
+	// relase
+	this.output.gain.setValueCurveAtTime(new Float32Array([0.8, 0]),
+		time + props.attack + props.decay + props.sustain,
+		props.release);
 
-	this.vco.stop(time + duration);
+	this.vco.stop(time + props.attack + props.decay + props.sustain + props.release);
 
 	/*
 	this.gain.gain.setValueAtTime(0.1, time);
@@ -91,15 +100,14 @@ BasicSynth.prototype.trigger = function(time, duration, note) {
 	*/
 };
 
-BasicSynth.prototype.play = function(note) {
-	let duration = 0.5;
-	note = note || this.note || 'C';
+BasicSynth.prototype.play = function(props, note) {
+	// note = note || this.note || 'C';
 	var now = this.context.currentTime;
-	this.trigger(now, duration, note);
+	this.trigger(now, props, note);
 };
 
-BasicSynth.prototype.clone = function() {
-	var synth = new BasicSynth(this.context, this.note);
+BasicSynth.prototype.clone = function(note) {
+	var synth = new BasicSynth(this.context, note || this.note);
 	return synth;
 };
 

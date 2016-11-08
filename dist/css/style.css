@@ -2202,7 +2202,8 @@ body {
   margin: 0px;
   padding: 0px;
   color: #555;
-  font-family: 'Play', Helvetica, Arial, sans-serif; }
+  font-family: 'Play', Helvetica, Arial, sans-serif;
+  background: #aaa; }
 
 input, label {
   color: #555;
@@ -2225,7 +2226,7 @@ header {
   line-height: 38px;
   display: block;
   text-align: center;
-  background: #e6efe7;
+  background: #bbb;
   margin-bottom: 20px;
   box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
   border-bottom: 1px solid #bbb; }
@@ -2236,18 +2237,23 @@ header {
     height: 38px;
     line-height: 38px; }
   header h1 {
-    font-size: 18px; }
+    font-size: 18px;
+    background: #dfe;
+    padding: 0px 10px;
+    box-shadow: 0px 0px 7px #777; }
 
 .media-library {
   position: absolute;
   left: 20px;
   top: 50px;
   display: inline-block;
-  border: 1px solid #bbb;
+  border: 1px solid #777;
   background: #fefefe;
-  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
-  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
-  min-width: 200px; }
+  background: #fafafa;
+  box-shadow: 0px 0px 7px #777;
+  min-width: 250px; }
+  .media-library fieldset {
+    border: 1px solid #777; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2303,11 +2309,13 @@ header {
   left: 240px;
   top: 50px;
   display: inline-block;
-  border: 1px solid #bbb;
+  border: 1px solid #777;
   background: #fefefe;
-  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
-  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
-  min-width: 200px; }
+  background: #fafafa;
+  box-shadow: 0px 0px 7px #777;
+  min-width: 250px; }
+  .instrument fieldset {
+    border: 1px solid #777; }
   .instrument .header {
     cursor: pointer;
     margin: 0px;
@@ -2360,7 +2368,9 @@ header {
     .instrument .body form {
       margin: 0px;
       padding: 0px; }
-      .instrument .body form > input {
+      .instrument .body form fieldset {
+        padding: 10px; }
+      .instrument .body form input {
         margin: 0px;
         padding: 0px;
         margin: 10px 0px;
@@ -2372,10 +2382,12 @@ header {
   left: 560px;
   top: 50px;
   display: inline-block;
-  border: 1px solid #bbb;
+  border: 1px solid #777;
   background: #fefefe;
-  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
-  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5); }
+  background: #fafafa;
+  box-shadow: 0px 0px 7px #777; }
+  .sequencer fieldset {
+    border: 1px solid #777; }
   .sequencer .header {
     cursor: pointer;
     margin: 0px;
@@ -2487,11 +2499,13 @@ header {
   left: 1080px;
   top: 50px;
   display: inline-block;
-  border: 1px solid #bbb;
+  border: 1px solid #777;
   background: #fefefe;
-  background: linear-gradient(-30deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 243, 243, 0.5) 50%, rgba(237, 237, 237, 0.5) 51%, rgba(255, 255, 255, 0.5) 100%);
-  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
+  background: #fafafa;
+  box-shadow: 0px 0px 7px #777;
   min-width: 300px; }
+  .midi-map fieldset {
+    border: 1px solid #777; }
   .midi-map .header {
     cursor: pointer;
     margin: 0px;

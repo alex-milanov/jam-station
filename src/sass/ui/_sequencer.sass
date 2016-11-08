@@ -5,7 +5,7 @@
 		.head
 			margin: 2px
 			padding: 0px
-			padding-left: 106px
+			padding-left: 114px
 			height: 12px
 			line-height: 12px
 			.cell
@@ -25,7 +25,8 @@
 			padding: 0px
 			height: 32px
 			line-height: 32px
-			> *
+			clear: both
+			> .bar
 				height: 26px
 				line-height: 26px
 				margin: 3px
@@ -45,11 +46,21 @@
 					height: 28px
 					line-height: 28px
 			.instr
+				height: 26px
+				line-height: 26px
+				margin: 3px 7px
+				padding: 0px
+				display: inline-block
 				font-size: 14px
 				width: 100px
 				text-align: center
+				float: left
+				cursor: pointer
+				background: #eaeaea
+				border: 1px solid #aaa
+				box-sizing: border-box
+				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
 				&:hover
-					width: 102px
 			.bar
 				width: 16px
 				&:hover

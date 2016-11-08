@@ -2241,10 +2241,11 @@ header {
     line-height: 40px;
     font-size: 18px;
     background: #eaeaea;
-    padding: 0px 40px;
+    padding: 0px;
     box-sizing: border-box;
     border: 1px solid #aaa;
-    border-width: 0px 1px; }
+    border-width: 0px 1px;
+    width: 300px; }
 
 .media-library {
   position: absolute;
@@ -2253,10 +2254,7 @@ header {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 5px #777;
-  padding-bottom: 7px;
   min-width: 250px; }
-  .media-library fieldset {
-    border: 1px solid #777; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2304,53 +2302,52 @@ header {
     margin: 0px;
     padding: 0px;
     border-top: 1px solid #eee; }
-  .media-library .body {
-    padding: 0px 10px; }
-    .media-library .body p {
+    .media-library .body fieldset {
+      padding: 10px;
+      border: 0px solid #aaa;
+      margin: 10px 0px;
+      border-top-width: 1px; }
+      .media-library .body fieldset legend {
+        font-weight: bold;
+        padding: 0px 5px; }
+  .media-library .body ul {
+    margin: 0px;
+    padding: 0px;
+    list-style: none;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #eee;
+    margin: 0px -10px; }
+    .media-library .body ul li {
       display: inline-block;
-      height: 36px;
-      line-height: 36px;
-      font-weight: bold;
-      margin: 0px;
-      padding: 0px; }
-    .media-library .body ul {
-      margin: 0px;
-      padding: 0px;
-      list-style: none;
-      border-top: 1px solid #ccc;
-      border-bottom: 1px solid #eee;
-      margin: 0px -10px; }
-      .media-library .body ul li {
+      height: 32px;
+      line-height: 32px;
+      display: block;
+      padding: 0px 10px;
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #ccc;
+      transition: background .5s, box-shadow .5s;
+      cursor: pointer; }
+      .media-library .body ul li:hover {
+        background: #dfe;
+        box-shadow: inset 0px 0px 10px #ccc; }
+      .media-library .body ul li button {
+        margin: 0px;
+        padding: 0px;
+        padding: 0px 5px;
         display: inline-block;
         height: 32px;
         line-height: 32px;
-        display: block;
-        padding: 0px 10px;
-        border-top: 1px solid #eee;
-        border-bottom: 1px solid #ccc;
-        transition: background .5s, box-shadow .5s;
-        cursor: pointer; }
-        .media-library .body ul li:hover {
-          background: #dfe;
-          box-shadow: inset 0px 0px 10px #ccc; }
-        .media-library .body ul li button {
-          margin: 0px;
-          padding: 0px;
-          padding: 0px 5px;
-          display: inline-block;
-          height: 32px;
-          line-height: 32px;
-          border: 0px;
-          background: none;
-          color: #aaa;
-          font-size: 12px;
-          cursor: pointer;
-          outline: none;
-          transition: color .3s; }
-          .media-library .body ul li button:active {
-            outline: none; }
-          .media-library .body ul li button:hover {
-            color: #333; }
+        border: 0px;
+        background: none;
+        color: #aaa;
+        font-size: 12px;
+        cursor: pointer;
+        outline: none;
+        transition: color .3s; }
+        .media-library .body ul li button:active {
+          outline: none; }
+        .media-library .body ul li button:hover {
+          color: #333; }
 
 .instrument {
   position: absolute;
@@ -2359,10 +2356,7 @@ header {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 5px #777;
-  padding-bottom: 7px;
   min-width: 200px; }
-  .instrument fieldset {
-    border: 1px solid #777; }
   .instrument .header {
     cursor: pointer;
     margin: 0px;
@@ -2410,31 +2404,35 @@ header {
     margin: 0px;
     padding: 0px;
     border-top: 1px solid #eee; }
-  .instrument .body {
-    padding: 10px; }
-    .instrument .body form {
+    .instrument .body fieldset {
+      padding: 10px;
+      border: 0px solid #aaa;
+      margin: 10px 0px;
+      border-top-width: 1px; }
+      .instrument .body fieldset legend {
+        font-weight: bold;
+        padding: 0px 5px; }
+  .instrument .body form {
+    margin: 0px;
+    padding: 0px; }
+    .instrument .body form input {
       margin: 0px;
-      padding: 0px; }
-      .instrument .body form fieldset {
-        padding: 10px; }
-      .instrument .body form input {
-        margin: 0px;
-        padding: 0px;
-        margin: 10px 0px;
-        display: block;
-        width: 100%;
-        -webkit-appearance: none;
-        background-color: #777;
-        outline: none;
-        border-radius: 10px;
-        height: 2px;
-        cursor: pointer; }
-      .instrument .body form input[type=range]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        background-color: #bbb;
-        border: 1px solid #777;
-        width: 7px;
-        height: 20px; }
+      padding: 0px;
+      margin: 10px 0px;
+      display: block;
+      width: 100%;
+      -webkit-appearance: none;
+      background-color: #777;
+      outline: none;
+      border-radius: 10px;
+      height: 2px;
+      cursor: pointer; }
+    .instrument .body form input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      background-color: #bbb;
+      border: 1px solid #777;
+      width: 7px;
+      height: 20px; }
 
 .sequencer {
   position: absolute;
@@ -2442,10 +2440,7 @@ header {
   top: 60px;
   display: inline-block;
   background: #e0e0e0;
-  box-shadow: 0px 0px 5px #777;
-  padding-bottom: 7px; }
-  .sequencer fieldset {
-    border: 1px solid #777; }
+  box-shadow: 0px 0px 5px #777; }
   .sequencer .header {
     cursor: pointer;
     margin: 0px;
@@ -2493,10 +2488,18 @@ header {
     margin: 0px;
     padding: 0px;
     border-top: 1px solid #eee; }
+    .sequencer .body fieldset {
+      padding: 10px;
+      border: 0px solid #aaa;
+      margin: 10px 0px;
+      border-top-width: 1px; }
+      .sequencer .body fieldset legend {
+        font-weight: bold;
+        padding: 0px 5px; }
   .sequencer .body .head {
     margin: 2px;
     padding: 0px;
-    padding-left: 106px;
+    padding-left: 114px;
     height: 12px;
     line-height: 12px; }
     .sequencer .body .head .cell {
@@ -2515,8 +2518,9 @@ header {
     margin: 2px;
     padding: 0px;
     height: 32px;
-    line-height: 32px; }
-    .sequencer .body .row > * {
+    line-height: 32px;
+    clear: both; }
+    .sequencer .body .row > .bar {
       height: 26px;
       line-height: 26px;
       margin: 3px;
@@ -2530,17 +2534,26 @@ header {
       transition: box-shadow .3s, font-size .3s, background .3s;
       box-sizing: border-box;
       float: left; }
-      .sequencer .body .row > *:hover {
+      .sequencer .body .row > .bar:hover {
         box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
         margin: 2px;
         height: 28px;
         line-height: 28px; }
     .sequencer .body .row .instr {
+      height: 26px;
+      line-height: 26px;
+      margin: 3px 7px;
+      padding: 0px;
+      display: inline-block;
       font-size: 14px;
       width: 100px;
-      text-align: center; }
-      .sequencer .body .row .instr:hover {
-        width: 102px; }
+      text-align: center;
+      float: left;
+      cursor: pointer;
+      background: #eaeaea;
+      border: 1px solid #aaa;
+      box-sizing: border-box;
+      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
     .sequencer .body .row .bar {
       width: 16px; }
       .sequencer .body .row .bar:hover {
@@ -2559,10 +2572,7 @@ header {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 5px #777;
-  padding-bottom: 7px;
   min-width: 300px; }
-  .midi-map fieldset {
-    border: 1px solid #777; }
   .midi-map .header {
     cursor: pointer;
     margin: 0px;
@@ -2610,5 +2620,11 @@ header {
     margin: 0px;
     padding: 0px;
     border-top: 1px solid #eee; }
-  .midi-map .body > * {
-    margin: 10px; }
+    .midi-map .body fieldset {
+      padding: 10px;
+      border: 0px solid #aaa;
+      margin: 10px 0px;
+      border-top-width: 1px; }
+      .midi-map .body fieldset legend {
+        font-weight: bold;
+        padding: 0px 5px; }

@@ -1,6 +1,6 @@
 .instrument
-	+editor(240px, 50px)
-	min-width: 250px
+	+editor(240px, 60px)
+	min-width: 200px
 	.body
 		padding: 10px
 		form
@@ -12,3 +12,15 @@
 				margin: 10px 0px
 				display: block
 				width: 100%
+				-webkit-appearance: none
+				background-color: #777
+				outline: none
+				border-radius: 10px
+				height: 2px
+				cursor: pointer
+			input[type=range]::-webkit-slider-thumb
+				-webkit-appearance: none
+				background-color: #bbb
+				border: 1px solid #777
+				width: 7px
+				height: 20px

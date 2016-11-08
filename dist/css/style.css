@@ -2201,12 +2201,12 @@ html {
 body {
   margin: 0px;
   padding: 0px;
-  color: #555;
+  color: #333;
   font-family: 'Play', Helvetica, Arial, sans-serif;
-  background: #aaa; }
+  background: #c5c5c5; }
 
 input, label {
-  color: #555;
+  color: #333;
   font-family: 'Play', Helvetica, Arial, sans-serif; }
 
 .left {
@@ -2222,35 +2222,38 @@ header {
   margin: 0px;
   padding: 0px;
   display: inline-block;
-  height: 38px;
-  line-height: 38px;
+  height: 40px;
+  line-height: 40px;
   display: block;
   text-align: center;
-  background: #bbb;
+  background: #ccc;
   margin-bottom: 20px;
-  box-shadow: 0px 0px 5px rgba(33, 33, 33, 0.5);
-  border-bottom: 1px solid #bbb; }
+  box-shadow: 0px 0px 5px #777; }
   header > * {
     margin: 0px;
     padding: 0px;
     display: inline-block;
-    height: 38px;
-    line-height: 38px; }
+    height: 40px;
+    line-height: 40px; }
   header h1 {
+    display: inline-block;
+    height: 40px;
+    line-height: 40px;
     font-size: 18px;
-    background: #dfe;
-    padding: 0px 10px;
-    box-shadow: 0px 0px 7px #777; }
+    background: #eaeaea;
+    padding: 0px 40px;
+    box-sizing: border-box;
+    border: 1px solid #aaa;
+    border-width: 0px 1px; }
 
 .media-library {
   position: absolute;
   left: 20px;
-  top: 50px;
+  top: 60px;
   display: inline-block;
-  border: 1px solid #777;
-  background: #fefefe;
-  background: #fafafa;
-  box-shadow: 0px 0px 7px #777;
+  background: #e0e0e0;
+  box-shadow: 0px 0px 5px #777;
+  padding-bottom: 7px;
   min-width: 250px; }
   .media-library fieldset {
     border: 1px solid #777; }
@@ -2259,7 +2262,8 @@ header {
     margin: 0px;
     height: 38px;
     line-height: 34px;
-    border-bottom: 1px solid #ddd; }
+    border-bottom: 1px solid #aaa;
+    background: #eaeaea; }
     .media-library .header > * {
       margin: 7px 4px;
       padding: 0px 4px;
@@ -2275,8 +2279,7 @@ header {
       background: inherit; }
     .media-library .header input {
       box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #555;
-      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      color: #333;
       border-radius: 4px;
       background: #dfe; }
     .media-library .header button {
@@ -2300,20 +2303,64 @@ header {
   .media-library .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #fff; }
+    border-top: 1px solid #eee; }
   .media-library .body {
     padding: 0px 10px; }
+    .media-library .body p {
+      display: inline-block;
+      height: 36px;
+      line-height: 36px;
+      font-weight: bold;
+      margin: 0px;
+      padding: 0px; }
+    .media-library .body ul {
+      margin: 0px;
+      padding: 0px;
+      list-style: none;
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #eee;
+      margin: 0px -10px; }
+      .media-library .body ul li {
+        display: inline-block;
+        height: 32px;
+        line-height: 32px;
+        display: block;
+        padding: 0px 10px;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #ccc;
+        transition: background .5s, box-shadow .5s;
+        cursor: pointer; }
+        .media-library .body ul li:hover {
+          background: #dfe;
+          box-shadow: inset 0px 0px 10px #ccc; }
+        .media-library .body ul li button {
+          margin: 0px;
+          padding: 0px;
+          padding: 0px 5px;
+          display: inline-block;
+          height: 32px;
+          line-height: 32px;
+          border: 0px;
+          background: none;
+          color: #aaa;
+          font-size: 12px;
+          cursor: pointer;
+          outline: none;
+          transition: color .3s; }
+          .media-library .body ul li button:active {
+            outline: none; }
+          .media-library .body ul li button:hover {
+            color: #333; }
 
 .instrument {
   position: absolute;
   left: 240px;
-  top: 50px;
+  top: 60px;
   display: inline-block;
-  border: 1px solid #777;
-  background: #fefefe;
-  background: #fafafa;
-  box-shadow: 0px 0px 7px #777;
-  min-width: 250px; }
+  background: #e0e0e0;
+  box-shadow: 0px 0px 5px #777;
+  padding-bottom: 7px;
+  min-width: 200px; }
   .instrument fieldset {
     border: 1px solid #777; }
   .instrument .header {
@@ -2321,7 +2368,8 @@ header {
     margin: 0px;
     height: 38px;
     line-height: 34px;
-    border-bottom: 1px solid #ddd; }
+    border-bottom: 1px solid #aaa;
+    background: #eaeaea; }
     .instrument .header > * {
       margin: 7px 4px;
       padding: 0px 4px;
@@ -2337,8 +2385,7 @@ header {
       background: inherit; }
     .instrument .header input {
       box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #555;
-      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      color: #333;
       border-radius: 4px;
       background: #dfe; }
     .instrument .header button {
@@ -2362,7 +2409,7 @@ header {
   .instrument .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #fff; }
+    border-top: 1px solid #eee; }
   .instrument .body {
     padding: 10px; }
     .instrument .body form {
@@ -2375,17 +2422,28 @@ header {
         padding: 0px;
         margin: 10px 0px;
         display: block;
-        width: 100%; }
+        width: 100%;
+        -webkit-appearance: none;
+        background-color: #777;
+        outline: none;
+        border-radius: 10px;
+        height: 2px;
+        cursor: pointer; }
+      .instrument .body form input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        background-color: #bbb;
+        border: 1px solid #777;
+        width: 7px;
+        height: 20px; }
 
 .sequencer {
   position: absolute;
   left: 560px;
-  top: 50px;
+  top: 60px;
   display: inline-block;
-  border: 1px solid #777;
-  background: #fefefe;
-  background: #fafafa;
-  box-shadow: 0px 0px 7px #777; }
+  background: #e0e0e0;
+  box-shadow: 0px 0px 5px #777;
+  padding-bottom: 7px; }
   .sequencer fieldset {
     border: 1px solid #777; }
   .sequencer .header {
@@ -2393,7 +2451,8 @@ header {
     margin: 0px;
     height: 38px;
     line-height: 34px;
-    border-bottom: 1px solid #ddd; }
+    border-bottom: 1px solid #aaa;
+    background: #eaeaea; }
     .sequencer .header > * {
       margin: 7px 4px;
       padding: 0px 4px;
@@ -2409,8 +2468,7 @@ header {
       background: inherit; }
     .sequencer .header input {
       box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #555;
-      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      color: #333;
       border-radius: 4px;
       background: #dfe; }
     .sequencer .header button {
@@ -2434,7 +2492,7 @@ header {
   .sequencer .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #fff; }
+    border-top: 1px solid #eee; }
   .sequencer .body .head {
     margin: 2px;
     padding: 0px;
@@ -2465,15 +2523,15 @@ header {
       padding: 0px;
       border-radius: 4px;
       border: 0px solid #333;
-      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
+      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
       display: inline-block;
       cursor: pointer;
-      background: #fafafa;
+      background: #eee;
       transition: box-shadow .3s, font-size .3s, background .3s;
       box-sizing: border-box;
       float: left; }
       .sequencer .body .row > *:hover {
-        box-shadow: inset 0px 0px 7px rgba(33, 33, 33, 0.5);
+        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
         margin: 2px;
         height: 28px;
         line-height: 28px; }
@@ -2497,12 +2555,11 @@ header {
 .midi-map {
   position: absolute;
   left: 1080px;
-  top: 50px;
+  top: 60px;
   display: inline-block;
-  border: 1px solid #777;
-  background: #fefefe;
-  background: #fafafa;
-  box-shadow: 0px 0px 7px #777;
+  background: #e0e0e0;
+  box-shadow: 0px 0px 5px #777;
+  padding-bottom: 7px;
   min-width: 300px; }
   .midi-map fieldset {
     border: 1px solid #777; }
@@ -2511,7 +2568,8 @@ header {
     margin: 0px;
     height: 38px;
     line-height: 34px;
-    border-bottom: 1px solid #ddd; }
+    border-bottom: 1px solid #aaa;
+    background: #eaeaea; }
     .midi-map .header > * {
       margin: 7px 4px;
       padding: 0px 4px;
@@ -2527,8 +2585,7 @@ header {
       background: inherit; }
     .midi-map .header input {
       box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #555;
-      text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5);
+      color: #333;
       border-radius: 4px;
       background: #dfe; }
     .midi-map .header button {
@@ -2552,6 +2609,6 @@ header {
   .midi-map .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #fff; }
+    border-top: 1px solid #eee; }
   .midi-map .body > * {
     margin: 10px; }

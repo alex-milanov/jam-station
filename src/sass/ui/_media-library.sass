@@ -1,5 +1,42 @@
 .media-library
-	+editor(20px, 50px)
+	+editor(20px, 60px)
 	min-width: 250px
 	.body
 		padding: 0px 10px
+		p
+			+header-height(36px)
+			font-weight: bold
+			margin: 0px
+			padding: 0px
+		ul
+			+no-margin-padding
+			list-style: none
+			border-top: 1px solid #ccc
+			border-bottom: 1px solid #eee
+			margin: 0px -10px
+			li
+				+header-height(32px)
+				display: block
+				padding: 0px 10px
+				border-top: 1px solid #eee
+				border-bottom: 1px solid #ccc
+				transition: background .5s, box-shadow .5s
+				cursor: pointer
+				&:hover
+					background: #dfe
+					box-shadow: inset 0px 0px 10px #ccc
+				button
+					+no-margin-padding
+					padding: 0px 5px
+					+header-height(32px)
+					border: 0px
+					background: none
+					color: #aaa
+					font-size: 12px
+					cursor: pointer
+					outline: none
+					transition: color .3s
+					&:active
+						outline: none
+					&:hover
+						color: #333

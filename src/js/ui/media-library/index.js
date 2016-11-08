@@ -8,8 +8,11 @@ module.exports = ({state, actions}) => div('.media-library', [
 	]),
 	div('.body', [
 		p('Samples'),
-		ul(state.channels.map(
-			channel => li(channel)
+		ul(state.channels.map(channel =>
+			li([
+				span(channel),
+				button('.right.fa.fa-play')
+			])
 		)),
 		p('Instruments'),
 		ul([li('BasicSynth')])

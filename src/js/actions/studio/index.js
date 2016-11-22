@@ -5,13 +5,13 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {assignPropVal} = require('../../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
 const tick = () => stream.onNext(
-	state => assignPropVal(state, 'tickIndex',
+	state => obj.patch(state, 'tickIndex',
 		(state.tickIndex < state.beatLength - 1) && (state.tickIndex + 1) || 0
 	)
 );

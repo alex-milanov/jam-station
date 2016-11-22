@@ -3,7 +3,7 @@
 const {
 	div, h2, span, p, ul, li, hr, button,
 	form, label, input, fieldset, legend
-} = require('../../util/vdom');
+} = require('iblokz/adapters/vdom');
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [

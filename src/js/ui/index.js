@@ -1,6 +1,6 @@
 'use strict';
 
-const {div, h1, header, i} = require('../util/vdom');
+const {div, h1, header, i} = require('iblokz/adapters/vdom');
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');

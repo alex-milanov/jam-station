@@ -1,4 +1,122 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+const snabbdom = require('snabbdom');
+const h = require('snabbdom/h');
+const obj = require('../common/obj');
+
+const patch = snabbdom.init([ // Init patch function with choosen modules
+	require('snabbdom/modules/class'), // makes it easy to toggle classes
+	require('snabbdom/modules/props'), // for setting properties on DOM elements
+	require('snabbdom/modules/attributes'), // for setting properties on DOM elements
+	require('snabbdom/modules/style'), // handles styling on elements with support for animations
+	require('snabbdom/modules/eventlisteners') // attaches event listeners
+]);
+
+const patchStream = (stream, dom) => {
+	dom = (typeof dom === 'string') ? document.querySelector(dom) : dom;
+	stream.scan(
+		(vnode, newVnode) => patch(vnode, newVnode),
+		dom
+	).subscribe();
+};
+
+const processAttrs = args => {
+	let newArgs = args.slice();
+
+	let selector = newArgs[0] && typeof newArgs[0] === 'string' && newArgs[0] || '';
+	if (selector !== '') newArgs = newArgs.slice(1);
+
+	const attrRegExp = /\[[a-z\-0-9]+="[^"]+"\]/ig;
+
+	let attrs = selector && selector.match(attrRegExp);
+	selector = selector.replace(attrRegExp, '');
+
+	attrs = attrs && attrs.map && attrs
+			.map(c => c.replace(/[\[\]"]/g, '').split('='))
+			.reduce((o, attr) => obj.patch(o, attr[0], attr[1]), {}) || {};
+
+	if (attrs && Object.keys(attrs).length > 0) {
+		if (!newArgs[0] || newArgs[0]
+			&& typeof newArgs[0] === 'object' && !(newArgs[0] instanceof Array)) {
+			attrs = Object.assign({}, newArgs[0] && newArgs[0].attrs || {}, attrs);
+			newArgs[0] = Object.assign({}, newArgs[0] || {}, {attrs});
+		} else {
+			newArgs = [{attrs}].concat(
+				newArgs
+			);
+		}
+	}
+
+	if (selector !== '')
+		newArgs = [selector].concat(newArgs);
+
+	// console.log(args, newArgs);
+	return newArgs;
+};
+
+const hyperHelpers = [
+	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
+	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
+	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
+	'form', 'fieldset', 'legend', 'input', 'textarea', 'label', 'button', 'select', 'option',
+	'canvas', 'video'
+].reduce(
+	(o, tag) => {
+		o[tag] = function() {
+			return [Array.prototype.slice.call(arguments)]
+				.map(processAttrs)
+				.map(
+					args => (
+						args[0] && typeof args[0] === 'string'
+						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
+						? [].concat(tag + args[0], args.slice(1))
+						: [tag].concat(args))
+				.map(args => h.apply(this, args))
+				.pop();
+		};
+		return o;
+	}, {}
+);
+
+module.exports = Object.assign(
+	{
+		h,
+		patch,
+		patchStream
+	},
+	hyperHelpers
+);
+
+},{"../common/obj":2,"snabbdom":13,"snabbdom/h":5,"snabbdom/modules/attributes":8,"snabbdom/modules/class":9,"snabbdom/modules/eventlisteners":10,"snabbdom/modules/props":11,"snabbdom/modules/style":12}],2:[function(require,module,exports){
+'use strict';
+
+const keyValue = (k, v) => {
+	let o = {};
+	o[k] = v;
+	return o;
+};
+
+const patch = (o, k, v) => Object.assign({}, o,
+	(k instanceof Array)
+		? keyValue(k[0], (k.length > 1)
+			? patch(o[k[0]] || {}, k.slice(1), v)
+			: typeof o[k[0]] === 'object' && Object.assign({}, o[k[0]], v) || v)
+		: keyValue(k, typeof o[k] === 'object' && Object.assign({}, o[k], v) || v)
+);
+
+// console.log(patch({}, ['a', 'b', 'c'], 'boom'));
+// console.log(patch({}, 'x', 1));
+// console.log(['a', 'b', 'c'].slice(1));
+//
+// console.log(patch({a: {d: '1'}}, 'a', {g: 2}));
+
+module.exports = {
+	keyValue,
+	patch
+};
+
+},{}],3:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -160,7 +278,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -12552,7 +12670,7 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":1}],3:[function(require,module,exports){
+},{"_process":3}],5:[function(require,module,exports){
 var VNode = require('./vnode');
 var is = require('./is');
 
@@ -12588,7 +12706,7 @@ module.exports = function h(sel, b, c) {
   return VNode(sel, data, children, text, undefined);
 };
 
-},{"./is":5,"./vnode":12}],4:[function(require,module,exports){
+},{"./is":7,"./vnode":14}],6:[function(require,module,exports){
 function createElement(tagName){
   return document.createElement(tagName);
 }
@@ -12644,13 +12762,13 @@ module.exports = {
   setTextContent: setTextContent
 };
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
                 "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
                 "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
@@ -12695,7 +12813,7 @@ function updateAttrs(oldVnode, vnode) {
 
 module.exports = {create: updateAttrs, update: updateAttrs};
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class,
@@ -12720,7 +12838,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -12784,7 +12902,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":5}],9:[function(require,module,exports){
+},{"../is":7}],11:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -12809,7 +12927,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -12880,7 +12998,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Node */
 'use strict';
@@ -13140,14 +13258,14 @@ function init(modules, api) {
 
 module.exports = {init: init};
 
-},{"./htmldomapi":4,"./is":5,"./vnode":12}],12:[function(require,module,exports){
+},{"./htmldomapi":6,"./is":7,"./vnode":14}],14:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13160,7 +13278,7 @@ const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
 // util
-const {assignPropVal} = require('../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();
@@ -13204,34 +13322,34 @@ module.exports = {
 	init
 };
 
-},{"../util/data":31,"../util/math":32,"./instrument":14,"./midi-map":15,"./sequencer":16,"./studio":17,"rx":2}],14:[function(require,module,exports){
+},{"../util/math":33,"./instrument":16,"./midi-map":17,"./sequencer":18,"./studio":19,"iblokz/common/obj":2,"rx":4}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
-const {assignPropVal} = require('../../util/data');
+const obj = require('iblokz/common/obj');
 
 const stream = new Subject();
 
-const updateProp = (prop, value) => stream.onNext(state => Object.assign({}, state, {
-	instrument: assignPropVal(state.instrument, prop, value)
-}));
+const updateProp = (prop, value) => stream.onNext(
+	state => obj.patch(state, ['instrument', prop], value)
+);
 
 module.exports = {
 	stream,
 	updateProp
 };
 
-},{"../../util/data":31,"rx":2}],15:[function(require,module,exports){
+},{"iblokz/common/obj":2,"rx":4}],17:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {assignPropVal} = require('../../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
@@ -13245,7 +13363,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/data":31,"../../util/math":32,"rx":2}],16:[function(require,module,exports){
+},{"../../util/math":33,"iblokz/common/obj":2,"rx":4}],18:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13253,13 +13371,13 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {assignPropVal} = require('../../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
 const change = (prop, val) =>
-	stream.onNext(state => [assignPropVal(state, prop, val)].map(
+	stream.onNext(state => [obj.patch(state, prop, val)].map(
 		state => (prop !== 'measure')
 			? state
 			: Object.assign({}, state, {beatLength: measureToBeatLength(state.measure)})
@@ -13279,7 +13397,7 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/data":31,"../../util/math":32,"rx":2}],17:[function(require,module,exports){
+},{"../../util/math":33,"iblokz/common/obj":2,"rx":4}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13287,13 +13405,13 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {assignPropVal} = require('../../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
 const tick = () => stream.onNext(
-	state => assignPropVal(state, 'tickIndex',
+	state => obj.patch(state, 'tickIndex',
 		(state.tickIndex < state.beatLength - 1) && (state.tickIndex + 1) || 0
 	)
 );
@@ -13312,12 +13430,12 @@ module.exports = {
 	tick
 };
 
-},{"../../util/data":31,"../../util/math":32,"rx":2}],18:[function(require,module,exports){
+},{"../../util/math":33,"iblokz/common/obj":2,"rx":4}],20:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
 const $ = Rx.Observable;
-const vdom = require('./util/vdom');
+const vdom = require('iblokz/adapters/vdom');
 const {h, div, input, hr, p, button} = vdom;
 
 const midi = require('./util/midi')();
@@ -13358,7 +13476,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 		}
 	});
 
-},{"./actions":13,"./instr/basic-synth":19,"./services":21,"./ui":25,"./util/midi":33,"./util/vdom":34,"rx":2}],19:[function(require,module,exports){
+},{"./actions":15,"./instr/basic-synth":21,"./services":23,"./ui":27,"./util/midi":34,"iblokz/adapters/vdom":1,"rx":4}],21:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13474,7 +13592,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13519,7 +13637,7 @@ Sampler.prototype.play = function(duration) {
 
 module.exports = Sampler;
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13541,7 +13659,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":22,"./midi":23,"./studio":24}],22:[function(require,module,exports){
+},{"./layout":24,"./midi":25,"./studio":26}],24:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13564,7 +13682,7 @@ module.exports = {
 	refresh
 };
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13575,7 +13693,7 @@ module.exports = {
 	refresh
 };
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 const {AudioContext} = require('../util/context');
@@ -13618,10 +13736,10 @@ module.exports = {
 	refresh
 };
 
-},{"../instr/sampler":20,"../util/context":30}],25:[function(require,module,exports){
+},{"../instr/sampler":22,"../util/context":32}],27:[function(require,module,exports){
 'use strict';
 
-const {div, h1, header, i} = require('../util/vdom');
+const {div, h1, header, i} = require('iblokz/adapters/vdom');
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
@@ -13635,13 +13753,13 @@ module.exports = ({state, actions}) => div('#ui', [
 	midiMap({state, actions})
 ]);
 
-},{"../util/vdom":34,"./instrument":26,"./media-library":27,"./midi-map":28,"./sequencer":29}],26:[function(require,module,exports){
+},{"./instrument":28,"./media-library":29,"./midi-map":30,"./sequencer":31,"iblokz/adapters/vdom":1}],28:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, ul, li, hr, button,
 	form, label, input, fieldset, legend
-} = require('../../util/vdom');
+} = require('iblokz/adapters/vdom');
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
@@ -13684,13 +13802,13 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"../../util/vdom":34}],27:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, ul, li, hr, button,
 	fieldset, legend, i
-} = require('../../util/vdom');
+} = require('iblokz/adapters/vdom');
 
 module.exports = ({state, actions}) => div('.media-library', [
 	div('.header', [
@@ -13713,10 +13831,12 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"../../util/vdom":34}],28:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
 'use strict';
 
-const {div, h2, span, p, input, fieldset, legend, label, hr, button} = require('../../util/vdom');
+const {
+	div, h2, span, p, input, fieldset, legend, label, hr, button
+} = require('iblokz/adapters/vdom');
 
 module.exports = ({state, actions}) => div('.midi-map', [
 	div('.header', [
@@ -13736,10 +13856,10 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"../../util/vdom":34}],29:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
 'use strict';
 
-const {div, h2, span, p, input, label, hr, button} = require('../../util/vdom');
+const {div, h2, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
@@ -13787,7 +13907,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"../../util/vdom":34}],30:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -13798,20 +13918,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],31:[function(require,module,exports){
-'use strict';
-
-const assignPropVal = (o, p, v) => {
-	let t = {};
-	t[p] = v;
-	return Object.assign({}, o, t);
-};
-
-module.exports = {
-	assignPropVal
-};
-
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -13822,7 +13929,7 @@ module.exports = {
 	measureToBeatLength
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13928,98 +14035,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":2}],34:[function(require,module,exports){
-'use strict';
-
-const snabbdom = require('snabbdom');
-const h = require('snabbdom/h');
-
-const patch = snabbdom.init([ // Init patch function with choosen modules
-	require('snabbdom/modules/class'), // makes it easy to toggle classes
-	require('snabbdom/modules/props'), // for setting properties on DOM elements
-	require('snabbdom/modules/attributes'), // for setting properties on DOM elements
-	require('snabbdom/modules/style'), // handles styling on elements with support for animations
-	require('snabbdom/modules/eventlisteners') // attaches event listeners
-]);
-
-const patchStream = (stream, dom) => {
-	dom = (typeof dom === 'string') ? document.querySelector(dom) : dom;
-	stream.scan(
-		(vnode, newVnode) => patch(vnode, newVnode),
-		dom
-	).subscribe();
-};
-
-const addKeyValue = (o, k, v) => {
-	o[k] = v;
-	return o;
-};
-
-const processAttrs = args => {
-	let newArgs = args.slice();
-
-	let selector = newArgs[0] && typeof newArgs[0] === 'string' && newArgs[0] || '';
-	if (selector !== '') newArgs = newArgs.slice(1);
-
-	const attrRegExp = /\[[a-z\-0-9]+="[^"]+"\]/ig;
-
-	let attrs = selector && selector.match(attrRegExp);
-	selector = selector.replace(attrRegExp, '');
-
-	attrs = attrs && attrs.map && attrs
-			.map(c => c.replace(/[\[\]"]/g, '').split('='))
-			.reduce((o, attr) => addKeyValue(o, attr[0], attr[1]), {}) || {};
-
-	if (attrs && Object.keys(attrs).length > 0) {
-		if (!newArgs[0] || newArgs[0]
-			&& typeof newArgs[0] === 'object' && !(newArgs[0] instanceof Array)) {
-			attrs = Object.assign({}, newArgs[0] && newArgs[0].attrs || {}, attrs);
-			newArgs[0] = Object.assign({}, newArgs[0] || {}, {attrs});
-		} else {
-			newArgs = [{attrs}].concat(
-				newArgs
-			);
-		}
-	}
-
-	if (selector !== '')
-		newArgs = [selector].concat(newArgs);
-
-	// console.log(args, newArgs);
-	return newArgs;
-};
-
-const hyperHelpers = [
-	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
-	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
-	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li', 'textarea',
-	'form', 'fieldset', 'legend', 'input', 'label', 'button', 'select', 'option',
-	'canvas', 'video'
-].reduce(
-	(o, tag) => {
-		o[tag] = function() {
-			return [Array.prototype.slice.call(arguments)]
-				.map(processAttrs)
-				.map(
-					args => (
-						args[0] && typeof args[0] === 'string'
-						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
-						? [].concat(tag + args[0], args.slice(1))
-						: [tag].concat(args))
-				.map(args => h.apply(this, args))
-				.pop();
-		};
-		return o;
-	}, {}
-);
-
-module.exports = Object.assign(
-	{
-		h,
-		patch,
-		patchStream
-	},
-	hyperHelpers
-);
-
-},{"snabbdom":11,"snabbdom/h":3,"snabbdom/modules/attributes":6,"snabbdom/modules/class":7,"snabbdom/modules/eventlisteners":8,"snabbdom/modules/props":9,"snabbdom/modules/style":10}]},{},[18]);
+},{"rx":4}]},{},[20]);

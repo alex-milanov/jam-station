@@ -10,7 +10,7 @@ const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
 // util
-const {assignPropVal} = require('../util/data');
+const obj = require('iblokz/common/obj');
 const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();

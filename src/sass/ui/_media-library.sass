@@ -1,28 +1,30 @@
 .media-library
 	+editor(20px, 60px)
-	min-width: 250px
+	min-width: 300px
 	.body
 		ul
 			+no-margin-padding
 			list-style: none
-			border-top: 1px solid #ccc
-			border-bottom: 1px solid #eee
+			border-top: 1px solid #bbb
+			border-bottom: 1px solid #bbb
 			margin: 0px -10px
 			li
-				+header-height(32px)
+				+header-height(24px)
+				font-size: 14px
 				display: block
 				padding: 0px 10px
-				border-top: 1px solid #eee
-				border-bottom: 1px solid #ccc
-				transition: background .5s, box-shadow .5s
+				background: #eaeaea
+				transition: background .7s, box-shadow .7s
 				cursor: pointer
+				&:not(:first-child)
+					border-top: 1px solid #ccc
 				&:hover
 					background: #dfe
-					box-shadow: inset 0px 0px 10px #ccc
+					box-shadow: inset 0px 0px 7px #ccc
 				button
 					+no-margin-padding
-					padding: 0px 5px
-					+header-height(32px)
+					padding: 0px
+					+header-height(24px)
 					border: 0px
 					background: none
 					color: #aaa

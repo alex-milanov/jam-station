@@ -20,9 +20,9 @@ const init = () => stream.onNext(state => ({
 	measure: '4/4',
 	beatLength: 16,
 	instrument: {
-		attack: 0.001,
-		decay: 0.001,
-		sustain: 0.5,
+		attack: 0.00001,
+		decay: 0.00001,
+		sustain: 0.4,
 		release: 0.1
 	},
 	channels: [

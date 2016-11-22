@@ -16,28 +16,28 @@ module.exports = ({state, actions}) => div('.instrument', [
 				label(`Attack`),
 				span('.right', `${state.instrument.attack}`),
 				input('[type="range"]', {
-					attrs: {min: 0.001, max: 1, step: 0.05},
+					attrs: {min: 0.00001, max: 1, step: 0.005},
 					props: {value: state.instrument.attack},
 					on: {change: ev => actions.instrument.updateProp('attack', parseFloat(ev.target.value))}
 				}),
 				label(`Decay`),
 				span('.right', `${state.instrument.decay}`),
 				input('[type="range"]', {
-					attrs: {min: 0.001, max: 1, step: 0.05},
+					attrs: {min: 0.00001, max: 1, step: 0.005},
 					props: {value: state.instrument.decay},
 					on: {change: ev => actions.instrument.updateProp('decay', parseFloat(ev.target.value))}
 				}),
 				label(`Sustain`),
 				span('.right', `${state.instrument.sustain}`),
 				input('[type="range"]', {
-					attrs: {min: 0.001, max: 1, step: 0.05},
+					attrs: {min: 0.00001, max: 1, step: 0.005},
 					props: {value: state.instrument.sustain},
 					on: {change: ev => actions.instrument.updateProp('sustain', parseFloat(ev.target.value))}
 				}),
 				label(`Release`),
 				span('.right', `${state.instrument.release}`),
 				input('[type="range"]', {
-					attrs: {min: 0.001, max: 1, step: 0.05},
+					attrs: {min: 0.00001, max: 1, step: 0.005},
 					props: {value: state.instrument.release},
 					on: {change: ev => actions.instrument.updateProp('release', parseFloat(ev.target.value))}
 				})

@@ -1,0 +1,3 @@
+[submodule "lib/iblokz"]
+	path = lib/iblokz
+	url = git@github.com:iblokz/iblokz.git

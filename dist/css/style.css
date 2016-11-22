@@ -2201,13 +2201,11 @@ html {
 body {
   margin: 0px;
   padding: 0px;
-  color: #333;
-  font-family: 'Play', Helvetica, Arial, sans-serif;
   background: #c5c5c5; }
 
-input, label {
+input, label, body {
   color: #333;
-  font-family: 'Play', Helvetica, Arial, sans-serif; }
+  font-family: "Play", Helvetica, Arial, sans-serif; }
 
 .left {
   float: left; }
@@ -2254,7 +2252,7 @@ header {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 5px #777;
-  min-width: 250px; }
+  min-width: 300px; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2314,29 +2312,31 @@ header {
     margin: 0px;
     padding: 0px;
     list-style: none;
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #eee;
+    border-top: 1px solid #bbb;
+    border-bottom: 1px solid #bbb;
     margin: 0px -10px; }
     .media-library .body ul li {
       display: inline-block;
-      height: 32px;
-      line-height: 32px;
+      height: 24px;
+      line-height: 24px;
+      font-size: 14px;
       display: block;
       padding: 0px 10px;
-      border-top: 1px solid #eee;
-      border-bottom: 1px solid #ccc;
-      transition: background .5s, box-shadow .5s;
+      background: #eaeaea;
+      transition: background .7s, box-shadow .7s;
       cursor: pointer; }
+      .media-library .body ul li:not(:first-child) {
+        border-top: 1px solid #ccc; }
       .media-library .body ul li:hover {
         background: #dfe;
-        box-shadow: inset 0px 0px 10px #ccc; }
+        box-shadow: inset 0px 0px 7px #ccc; }
       .media-library .body ul li button {
         margin: 0px;
         padding: 0px;
-        padding: 0px 5px;
+        padding: 0px;
         display: inline-block;
-        height: 32px;
-        line-height: 32px;
+        height: 24px;
+        line-height: 24px;
         border: 0px;
         background: none;
         color: #aaa;
@@ -2432,7 +2432,10 @@ header {
       background-color: #bbb;
       border: 1px solid #777;
       width: 7px;
-      height: 20px; }
+      height: 20px;
+      transition: .3s; }
+      .instrument .body form input[type=range]::-webkit-slider-thumb:hover {
+        background: #dfe; }
 
 .sequencer {
   position: absolute;
@@ -2553,7 +2556,11 @@ header {
       background: #eaeaea;
       border: 1px solid #aaa;
       box-sizing: border-box;
-      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
+      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
+      transition: background .3s, box-shadow .3s; }
+      .sequencer .body .row .instr:hover {
+        background: #dfe;
+        box-shadow: inset 0px 0px 10px #ccc; }
     .sequencer .body .row .bar {
       width: 16px; }
       .sequencer .body .row .bar:hover {

@@ -2,7 +2,7 @@
 
 const {
 	div, h2, span, p, ul, li, hr, button,
-	fieldset, legend
+	fieldset, legend, i
 } = require('../../util/vdom');
 
 module.exports = ({state, actions}) => div('.media-library', [

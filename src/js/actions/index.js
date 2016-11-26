@@ -20,10 +20,22 @@ const init = () => stream.onNext(state => ({
 	measure: '4/4',
 	beatLength: 16,
 	instrument: {
-		attack: 0.00001,
-		decay: 0.00001,
-		sustain: 0.4,
-		release: 0.1
+		eg: {
+			attack: 0,
+			decay: 0,
+			sustain: 0.4,
+			release: 0.1
+		},
+		vco: {
+			type: 'sawtooth'
+		},
+		lfo: {
+			type: 'sawtooth'
+		},
+		vcf: {
+			cutoff: 0,
+			resonance: 0
+		}
 	},
 	channels: [
 		'Kick',

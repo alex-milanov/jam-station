@@ -8,8 +8,8 @@ const obj = require('iblokz/common/obj');
 
 const stream = new Subject();
 
-const updateProp = (prop, value) => stream.onNext(
-	state => obj.patch(state, ['instrument', prop], value)
+const updateProp = (param, prop, value) => stream.onNext(
+	state => obj.patch(state, ['instrument', param, prop], value)
 );
 
 module.exports = {

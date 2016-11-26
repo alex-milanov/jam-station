@@ -2415,7 +2415,9 @@ header {
   .instrument .body form {
     margin: 0px;
     padding: 0px; }
-    .instrument .body form input {
+    .instrument .body form label, .instrument .body form input[type=radio] {
+      cursor: pointer; }
+    .instrument .body form input[type=range] {
       margin: 0px;
       padding: 0px;
       margin: 10px 0px;

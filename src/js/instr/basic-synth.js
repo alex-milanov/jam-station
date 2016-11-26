@@ -70,24 +70,32 @@ BasicSynth.prototype.trigger = function(time, props, note) {
 	console.log(time, props);
 
 	// this.setup(note);
+	if (props.vco.type)
+		this.vco.type = props.vco.type;
+	if (props.lfo.type)
+		this.lfo.type = props.lfo.type;
 
 	var frequency = this.noteToFrequency(note);
 
 	this.vco.frequency.setValueAtTime(frequency, time);
 
 	// attack
-	this.output.gain.setValueCurveAtTime(new Float32Array([0, 1]), time, props.attack);
+	if (props.eg.attack > 0)
+		this.output.gain.setValueCurveAtTime(new Float32Array([0, 1]), time, props.eg.attack);
+	else
+		this.output.gain.setValueAtTime(1, time);
+
 	// decay
-	this.output.gain.setValueCurveAtTime(new Float32Array([1, 0.8]),
-		time + props.attack,
-		props.decay);
+	if (props.eg.decay > 0)
+		this.output.gain.setValueCurveAtTime(new Float32Array([1, 0.8]),
+			time + props.eg.attack, props.eg.decay);
 	// sustain
 	// relase
-	this.output.gain.setValueCurveAtTime(new Float32Array([0.8, 0]),
-		time + props.attack + props.decay + props.sustain,
-		props.release);
+	this.output.gain.setValueCurveAtTime(new Float32Array([(props.eg.decay > 0) ? 0.8 : 1, 0]),
+		time + props.eg.attack + props.eg.decay + props.eg.sustain,
+		props.eg.release > 0 && props.eg.release || 0.00001);
 
-	this.vco.stop(time + props.attack + props.decay + props.sustain + props.release);
+	this.vco.stop(time + props.eg.attack + props.eg.decay + props.eg.sustain + props.eg.release);
 
 	/*
 	this.gain.gain.setValueAtTime(0.1, time);

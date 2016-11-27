@@ -23,13 +23,14 @@ const init = () => stream.onNext(state => ({
 		eg: {
 			attack: 0,
 			decay: 0.04,
-			sustain: 0.08,
+			sustain: 0.8,
 			release: 0.08
 		},
 		vco: {
 			type: 'square'
 		},
 		lfo: {
+			on: false,
 			type: 'sawtooth',
 			frequency: 0,
 			gain: 0

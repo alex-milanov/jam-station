@@ -38,6 +38,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 			/*
 			fieldset([
 				legend('LFO'),
+				input('.on-switch[type="checkbox"]', {
+					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
+					attrs: {checked: state.instrument.lfo.on}
+				}),
 				div(types.reduce((list, type) =>
 					list.concat([
 						input(`[name="lfo-type"][id="lfo-type-${type}"][type="radio"][value="${type}"]`, {
@@ -78,7 +82,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 50, max: 10000, step: 0.05},
+					attrs: {min: 50, max: 16000, step: 0.05},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),

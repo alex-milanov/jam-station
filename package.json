@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "prebuild": "node bin/move-assets.js",
-		"prebuild:js": "npm i iblokz",
+    "prebuild:js": "npm i iblokz",
     "build": "npm run build:js && npm run build:sass && npm run build:pug",
     "build:js": "browserify src/js/index.js -o dist/js/app.js",
     "build:sass": "node-sass --include-path=$(node bin/sass-paths.js) src/sass/style.sass dist/css/style.css",
@@ -25,11 +25,12 @@
     "eslint": "^3.3.1",
     "eslint-config-google": "^0.6.0",
     "fs-extra": "^0.30.0",
+    "gulp": "^3.9.1",
+    "iblokz": "file:lib/iblokz",
     "livereload": "^0.5.0",
     "node-sass": "^3.8.0",
     "nodemon": "^1.10.0",
-    "pug-cli": "^1.0.0-alpha6",
-    "iblokz": "file:lib/iblokz"
+    "pug-cli": "^1.0.0-alpha6"
   },
   "dependencies": {
     "bourbon": "^4.2.7",

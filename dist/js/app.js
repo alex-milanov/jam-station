@@ -13291,13 +13291,14 @@ const init = () => stream.onNext(state => ({
 		eg: {
 			attack: 0,
 			decay: 0.04,
-			sustain: 0.08,
+			sustain: 0.8,
 			release: 0.08
 		},
 		vco: {
 			type: 'square'
 		},
 		lfo: {
+			on: false,
 			type: 'sawtooth',
 			frequency: 0,
 			gain: 0
@@ -13587,8 +13588,12 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 	this.output.gain.cancelScheduledValues(0);
 
 	this.vco.frequency.setValueAtTime(frequency, now);
-	// this.lfo.frequency.setValueAtTime(props.lfo.frequency || 0, now);
-	// this.lfoGain.gain.setValueAtTime(props.lfo.gain || 0, now);
+
+	if (props.lfo.on) {
+		this.lfo.frequency.value = props.lfo.frequency || 0;
+		this.lfoGain.gain.value = props.lfo.gain || 0;
+	}
+
 	if (props.vcf.on) {
 		this.vcf.frequency.value = props.vcf.cutoff;
 		this.vcf.Q.value = props.vcf.resonance;
@@ -13602,7 +13607,7 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 
 	// decay
 	if (props.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, 0.8 * velocity]),
+		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, props.eg.sustain * velocity]),
 			time + props.eg.attack, props.eg.decay);
 	// sustain
 	// relase
@@ -13625,9 +13630,9 @@ BasicSynth.prototype.noteoff = function(props, note) {
 
 	this.output.gain.cancelScheduledValues(0);
 	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
-		time + props.eg.sustain, props.eg.release > 0 && props.eg.release || 0.00001);
+		time, props.eg.release > 0 && props.eg.release || 0.00001);
 
-	this.vco.stop(time + props.eg.sustain + (props.eg.release > 0 && props.eg.release || 0.00001));
+	this.vco.stop(time + (props.eg.release > 0 && props.eg.release || 0.00001));
 };
 
 BasicSynth.prototype.play = function(props, note) {
@@ -13845,6 +13850,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 			/*
 			fieldset([
 				legend('LFO'),
+				input('.on-switch[type="checkbox"]', {
+					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
+					attrs: {checked: state.instrument.lfo.on}
+				}),
 				div(types.reduce((list, type) =>
 					list.concat([
 						input(`[name="lfo-type"][id="lfo-type-${type}"][type="radio"][value="${type}"]`, {
@@ -13885,7 +13894,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 50, max: 10000, step: 0.05},
+					attrs: {min: 50, max: 16000, step: 0.05},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),

@@ -87,8 +87,12 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 	this.output.gain.cancelScheduledValues(0);
 
 	this.vco.frequency.setValueAtTime(frequency, now);
-	// this.lfo.frequency.setValueAtTime(props.lfo.frequency || 0, now);
-	// this.lfoGain.gain.setValueAtTime(props.lfo.gain || 0, now);
+
+	if (props.lfo.on) {
+		this.lfo.frequency.value = props.lfo.frequency || 0;
+		this.lfoGain.gain.value = props.lfo.gain || 0;
+	}
+
 	if (props.vcf.on) {
 		this.vcf.frequency.value = props.vcf.cutoff;
 		this.vcf.Q.value = props.vcf.resonance;
@@ -102,7 +106,7 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 
 	// decay
 	if (props.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, 0.8 * velocity]),
+		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, props.eg.sustain * velocity]),
 			time + props.eg.attack, props.eg.decay);
 	// sustain
 	// relase
@@ -125,9 +129,9 @@ BasicSynth.prototype.noteoff = function(props, note) {
 
 	this.output.gain.cancelScheduledValues(0);
 	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
-		time + props.eg.sustain, props.eg.release > 0 && props.eg.release || 0.00001);
+		time, props.eg.release > 0 && props.eg.release || 0.00001);
 
-	this.vco.stop(time + props.eg.sustain + (props.eg.release > 0 && props.eg.release || 0.00001));
+	this.vco.stop(time + (props.eg.release > 0 && props.eg.release || 0.00001));
 };
 
 BasicSynth.prototype.play = function(props, note) {

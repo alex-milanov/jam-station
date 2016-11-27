@@ -35,6 +35,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 					[]
 				))
 			]),
+			/*
 			fieldset([
 				legend('LFO'),
 				div(types.reduce((list, type) =>
@@ -50,30 +51,54 @@ module.exports = ({state, actions}) => div('.instrument', [
 						label(`[for="lfo-type-${type}"]`, type.slice(0, 3))
 					]),
 					[]
-				))
+				)),
+				label(`Frequency`),
+				span('.right', `${state.instrument.lfo.frequency}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1000, step: 0.05},
+					props: {value: state.instrument.lfo.frequency},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
+				}),
+				label(`Gain`),
+				span('.right', `${state.instrument.lfo.gain}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.lfo.gain},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
+				})
 			]),
+			*/
 			// VCF
-			/*
 			fieldset([
 				legend('VCF'),
+				input('.on-switch[type="checkbox"]', {
+					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
+					attrs: {checked: state.instrument.vcf.on}
+				}),
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
+					attrs: {min: 50, max: 10000, step: 0.05},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),
 				label(`Resonance`),
 				span('.right', `${state.instrument.vcf.resonance}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
+					attrs: {min: 0, max: 150, step: 0.05},
 					props: {value: state.instrument.vcf.resonance},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
 				})
+				// label(`Gain`),
+				// span('.right', `${state.instrument.vcf.gain}`),
+				// input('[type="range"]', {
+				// 	attrs: {min: 0, max: 1, step: 0.005},
+				// 	props: {value: state.instrument.vcf.gain},
+				// 	on: {change: ev => actions.instrument.updateProp('vcf', 'gain', parseFloat(ev.target.value))}
+				// })
 			]),
-			*/
 			fieldset([
-				legend('EG (ADSR)'),
+				legend('EG'),
 				label(`Attack`),
 				span('.right', `${state.instrument.eg.attack}`),
 				input('[type="range"]', {

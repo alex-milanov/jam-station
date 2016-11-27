@@ -22,19 +22,23 @@ const init = () => stream.onNext(state => ({
 	instrument: {
 		eg: {
 			attack: 0,
-			decay: 0.1,
-			sustain: 0.2,
-			release: 0.1
+			decay: 0.04,
+			sustain: 0.08,
+			release: 0.08
 		},
 		vco: {
-			type: 'sawtooth'
+			type: 'square'
 		},
 		lfo: {
-			type: 'sawtooth'
+			type: 'sawtooth',
+			frequency: 0,
+			gain: 0
 		},
 		vcf: {
-			cutoff: 0,
-			resonance: 0
+			on: false,
+			cutoff: 800,
+			resonance: 80,
+			gain: 0
 		}
 	},
 	channels: [

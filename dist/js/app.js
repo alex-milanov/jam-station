@@ -13290,19 +13290,23 @@ const init = () => stream.onNext(state => ({
 	instrument: {
 		eg: {
 			attack: 0,
-			decay: 0.1,
-			sustain: 0.2,
-			release: 0.1
+			decay: 0.04,
+			sustain: 0.08,
+			release: 0.08
 		},
 		vco: {
-			type: 'sawtooth'
+			type: 'square'
 		},
 		lfo: {
-			type: 'sawtooth'
+			type: 'sawtooth',
+			frequency: 0,
+			gain: 0
 		},
 		vcf: {
-			cutoff: 0,
-			resonance: 0
+			on: false,
+			cutoff: 800,
+			resonance: 80,
+			gain: 0
 		}
 	},
 	channels: [
@@ -13513,6 +13517,7 @@ function BasicSynth(context, note) {
 	this.vco.connect(this.vcf);
 	this.lfo.connect(this.lfoGain);
 	this.lfoGain.connect(this.vcf.frequency);
+	// this.lfoGain.connect(this.vco.frequency);
 	this.vcf.connect(this.output);
 	this.output.gain.value = 0;
 	this.vco.type = 'sawtooth';
@@ -13561,7 +13566,8 @@ BasicSynth.prototype.setup = function(note) {
 };
 
 BasicSynth.prototype.noteon = function(props, note, velocity) {
-	const time = this.context.currentTime + 0.00001;
+	const now = this.context.currentTime;
+	const time = now + 0.0001;
 
 	note = note || this.note || 'C';
 	velocity = velocity || 1;
@@ -13580,8 +13586,14 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 	this.vco.frequency.cancelScheduledValues(0);
 	this.output.gain.cancelScheduledValues(0);
 
-	this.vco.frequency.setValueAtTime(frequency, time);
-
+	this.vco.frequency.setValueAtTime(frequency, now);
+	// this.lfo.frequency.setValueAtTime(props.lfo.frequency || 0, now);
+	// this.lfoGain.gain.setValueAtTime(props.lfo.gain || 0, now);
+	if (props.vcf.on) {
+		this.vcf.frequency.value = props.vcf.cutoff;
+		this.vcf.Q.value = props.vcf.resonance;
+		// this.vcf.gain.setValueAtTime(props.vcf.gain, now);
+	}
 	// attack
 	if (props.eg.attack > 0)
 		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, props.eg.attack);
@@ -13610,6 +13622,8 @@ BasicSynth.prototype.noteoff = function(props, note) {
 	const time = this.context.currentTime + 0.00001;
 	var frequency = this.noteToFrequency(note);
 	console.log(props.eg);
+
+	this.output.gain.cancelScheduledValues(0);
 	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
 		time + props.eg.sustain, props.eg.release > 0 && props.eg.release || 0.00001);
 
@@ -13828,6 +13842,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 					[]
 				))
 			]),
+			/*
 			fieldset([
 				legend('LFO'),
 				div(types.reduce((list, type) =>
@@ -13843,30 +13858,54 @@ module.exports = ({state, actions}) => div('.instrument', [
 						label(`[for="lfo-type-${type}"]`, type.slice(0, 3))
 					]),
 					[]
-				))
+				)),
+				label(`Frequency`),
+				span('.right', `${state.instrument.lfo.frequency}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1000, step: 0.05},
+					props: {value: state.instrument.lfo.frequency},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
+				}),
+				label(`Gain`),
+				span('.right', `${state.instrument.lfo.gain}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.lfo.gain},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
+				})
 			]),
+			*/
 			// VCF
-			/*
 			fieldset([
 				legend('VCF'),
+				input('.on-switch[type="checkbox"]', {
+					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
+					attrs: {checked: state.instrument.vcf.on}
+				}),
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
+					attrs: {min: 50, max: 10000, step: 0.05},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),
 				label(`Resonance`),
 				span('.right', `${state.instrument.vcf.resonance}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
+					attrs: {min: 0, max: 150, step: 0.05},
 					props: {value: state.instrument.vcf.resonance},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
 				})
+				// label(`Gain`),
+				// span('.right', `${state.instrument.vcf.gain}`),
+				// input('[type="range"]', {
+				// 	attrs: {min: 0, max: 1, step: 0.005},
+				// 	props: {value: state.instrument.vcf.gain},
+				// 	on: {change: ev => actions.instrument.updateProp('vcf', 'gain', parseFloat(ev.target.value))}
+				// })
 			]),
-			*/
 			fieldset([
-				legend('EG (ADSR)'),
+				legend('EG'),
 				label(`Attack`),
 				span('.right', `${state.instrument.eg.attack}`),
 				input('[type="range"]', {

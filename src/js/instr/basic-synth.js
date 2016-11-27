@@ -17,6 +17,7 @@ function BasicSynth(context, note) {
 	this.vco.connect(this.vcf);
 	this.lfo.connect(this.lfoGain);
 	this.lfoGain.connect(this.vcf.frequency);
+	// this.lfoGain.connect(this.vco.frequency);
 	this.vcf.connect(this.output);
 	this.output.gain.value = 0;
 	this.vco.type = 'sawtooth';
@@ -65,7 +66,8 @@ BasicSynth.prototype.setup = function(note) {
 };
 
 BasicSynth.prototype.noteon = function(props, note, velocity) {
-	const time = this.context.currentTime + 0.00001;
+	const now = this.context.currentTime;
+	const time = now + 0.0001;
 
 	note = note || this.note || 'C';
 	velocity = velocity || 1;
@@ -84,8 +86,14 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 	this.vco.frequency.cancelScheduledValues(0);
 	this.output.gain.cancelScheduledValues(0);
 
-	this.vco.frequency.setValueAtTime(frequency, time);
-
+	this.vco.frequency.setValueAtTime(frequency, now);
+	// this.lfo.frequency.setValueAtTime(props.lfo.frequency || 0, now);
+	// this.lfoGain.gain.setValueAtTime(props.lfo.gain || 0, now);
+	if (props.vcf.on) {
+		this.vcf.frequency.value = props.vcf.cutoff;
+		this.vcf.Q.value = props.vcf.resonance;
+		// this.vcf.gain.setValueAtTime(props.vcf.gain, now);
+	}
 	// attack
 	if (props.eg.attack > 0)
 		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, props.eg.attack);
@@ -114,6 +122,8 @@ BasicSynth.prototype.noteoff = function(props, note) {
 	const time = this.context.currentTime + 0.00001;
 	var frequency = this.noteToFrequency(note);
 	console.log(props.eg);
+
+	this.output.gain.cancelScheduledValues(0);
 	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
 		time + props.eg.sustain, props.eg.release > 0 && props.eg.release || 0.00001);
 

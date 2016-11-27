@@ -2417,6 +2417,14 @@ header {
     padding: 0px; }
     .instrument .body form label, .instrument .body form input[type=radio] {
       cursor: pointer; }
+    .instrument .body form fieldset {
+      position: relative; }
+      .instrument .body form fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px; }
+    .instrument .body form div {
+      margin: 0px 0px 10px 0px; }
     .instrument .body form input[type=range] {
       margin: 0px;
       padding: 0px;

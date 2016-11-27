@@ -22,8 +22,8 @@ const init = () => stream.onNext(state => ({
 	instrument: {
 		eg: {
 			attack: 0,
-			decay: 0,
-			sustain: 0.4,
+			decay: 0.1,
+			sustain: 0.2,
 			release: 0.1
 		},
 		vco: {

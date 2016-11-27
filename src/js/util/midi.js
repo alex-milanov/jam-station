@@ -26,7 +26,8 @@ const parseMidiMsg = event => {
 				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
 					return {
 						state: 'keyDown',
-						note
+						note,
+						velocity: parseFloat((event.data[2] / 127).toFixed(2))
 					};
 					// scope.onKeyDown(note);
 				}

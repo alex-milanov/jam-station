@@ -24,7 +24,7 @@ function BasicSynth(context, note) {
 	this.vco.start(this.context.currentTime);
 	this.lfo.start(this.context.currentTime);
 	this.volume = this.context.createGain();
-	this.volume.gain.value = 0.4;
+	this.volume.gain.value = 0.7;
 	this.output.connect(this.volume);
 	this.volume.connect(this.context.destination);
 }
@@ -64,10 +64,13 @@ BasicSynth.prototype.setup = function(note) {
 	*/
 };
 
-BasicSynth.prototype.trigger = function(time, props, note) {
-	note = note || this.note || 'C';
+BasicSynth.prototype.noteon = function(props, note, velocity) {
+	const time = this.context.currentTime + 0.00001;
 
-	console.log(time, props);
+	note = note || this.note || 'C';
+	velocity = velocity || 1;
+
+	console.log(time, props, velocity);
 
 	// this.setup(note);
 	if (props.vco.type)
@@ -76,26 +79,25 @@ BasicSynth.prototype.trigger = function(time, props, note) {
 		this.lfo.type = props.lfo.type;
 
 	var frequency = this.noteToFrequency(note);
+	console.log(frequency);
+
+	this.vco.frequency.cancelScheduledValues(0);
+	this.output.gain.cancelScheduledValues(0);
 
 	this.vco.frequency.setValueAtTime(frequency, time);
 
 	// attack
 	if (props.eg.attack > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([0, 1]), time, props.eg.attack);
+		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, props.eg.attack);
 	else
-		this.output.gain.setValueAtTime(1, time);
+		this.output.gain.setValueAtTime(velocity, time);
 
 	// decay
 	if (props.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([1, 0.8]),
+		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, 0.8 * velocity]),
 			time + props.eg.attack, props.eg.decay);
 	// sustain
 	// relase
-	this.output.gain.setValueCurveAtTime(new Float32Array([(props.eg.decay > 0) ? 0.8 : 1, 0]),
-		time + props.eg.attack + props.eg.decay + props.eg.sustain,
-		props.eg.release > 0 && props.eg.release || 0.00001);
-
-	this.vco.stop(time + props.eg.attack + props.eg.decay + props.eg.sustain + props.eg.release);
 
 	/*
 	this.gain.gain.setValueAtTime(0.1, time);
@@ -106,6 +108,16 @@ BasicSynth.prototype.trigger = function(time, props, note) {
 
 	this.osc.stop(time + duration);
 	*/
+};
+
+BasicSynth.prototype.noteoff = function(props, note) {
+	const time = this.context.currentTime + 0.00001;
+	var frequency = this.noteToFrequency(note);
+	console.log(props.eg);
+	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
+		time + props.eg.sustain, props.eg.release > 0 && props.eg.release || 0.00001);
+
+	this.vco.stop(time + props.eg.sustain + (props.eg.release > 0 && props.eg.release || 0.00001));
 };
 
 BasicSynth.prototype.play = function(props, note) {

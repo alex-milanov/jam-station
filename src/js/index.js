@@ -32,13 +32,18 @@ state$.map(state => services.refresh({state, actions})).subscribe();
 // midi map
 const basicSynth = new BasicSynth(services.studio.context, 'C1');
 
+let voices = {};
+
 midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
-		console.log('msg', data);
-		if (data.msg && midi.parseMidiMsg(data.msg).state === 'keyDown') {
-			console.log(data.msg);
-			basicSynth.clone(midi.parseMidiMsg(data.msg).note.pitch).play(state.instrument);
+		const midiMsg = midi.parseMidiMsg(data.msg);
+		console.log('msg', data, midiMsg);
+		if (data.msg && midiMsg.state === 'keyDown') {
+			voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
+			voices[midiMsg.note.pitch].noteon(state.instrument, midiMsg.note.pitch, midiMsg.velocity);
+		} else if (data.msg && midiMsg.state === 'keyUp' && voices[midiMsg.note.pitch]) {
+			voices[midiMsg.note.pitch].noteoff(state.instrument, midiMsg.note.pitch);
 		}
 	});

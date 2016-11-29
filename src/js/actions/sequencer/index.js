@@ -10,23 +10,18 @@ const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
-const change = (prop, val) =>
-	stream.onNext(state => [obj.patch(state, prop, val)].map(
-		state => (prop !== 'measure')
-			? state
-			: Object.assign({}, state, {beatLength: measureToBeatLength(state.measure)})
-		).pop());
-
-const toggle = (r, c) =>
+const toggle = (r, c) => {
+	console.log(r, c);
 	stream.onNext(state => {
 		let pattern = state.pattern.slice();
 		pattern[r] = pattern[r] || [];
 		pattern[r][c] = pattern[r][c] ? 0 : 1;
+		console.log(pattern, pattern[r][c]);
 		return Object.assign({}, state, {pattern});
 	});
+};
 
 module.exports = {
 	stream,
-	change,
 	toggle
 };

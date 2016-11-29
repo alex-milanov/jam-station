@@ -1,17 +1,19 @@
 'use strict';
 
+const arr = require('iblokz/common/arr');
+
+const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
+
 const init = () => {};
 const refresh = ({state, actions}) => {
-	const mediaLibrary = document.querySelector('.media-library');
-	const instrument = document.querySelector('.instrument');
-	const sequencer = document.querySelector('.sequencer');
-	const midiMap = document.querySelector('.midi-map');
-	if (mediaLibrary && sequencer && midiMap) {
-		instrument.style.left = mediaLibrary.offsetWidth + 40 + 'px';
-		sequencer.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + 60 + 'px';
-		midiMap.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + sequencer.offsetWidth + 80 + 'px';
-		// console.log(midiMap.style.left, sequencer.offsetWidth);
-	}
+	const ui = document.querySelector('#ui');
+	const list = arr.fromList(ui.children);
+
+	list.forEach((el, i) => {
+		if (i > 0)
+			el.style.left = list.filter((el, k) => k < i && k > 0)
+				.reduce((w, el) => w + el.offsetWidth + 20, 0) + 20 + 'px';
+	});
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
 };
 

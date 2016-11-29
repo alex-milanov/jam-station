@@ -21,9 +21,8 @@ window.actions = actions;
 // reduce actions to state
 const state$ = actions.stream
 	.scan((state, reducer) => reducer(state), actions.initial)
-	.map(state => (console.log(state), state));
-
-state$.subscribe();
+	.map(state => (console.log(state), state))
+	.share();
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));

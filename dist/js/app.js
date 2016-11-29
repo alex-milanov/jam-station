@@ -88,7 +88,16 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"../common/obj":2,"snabbdom":13,"snabbdom/h":5,"snabbdom/modules/attributes":8,"snabbdom/modules/class":9,"snabbdom/modules/eventlisteners":10,"snabbdom/modules/props":11,"snabbdom/modules/style":12}],2:[function(require,module,exports){
+},{"../common/obj":3,"snabbdom":14,"snabbdom/h":6,"snabbdom/modules/attributes":9,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],2:[function(require,module,exports){
+'use strict';
+
+const fromList = list => Array.prototype.slice.call(list);
+
+module.exports = {
+	fromList
+};
+
+},{}],3:[function(require,module,exports){
 'use strict';
 
 const keyValue = (k, v) => {
@@ -116,7 +125,7 @@ module.exports = {
 	patch
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -278,7 +287,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -12670,7 +12679,7 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":3}],5:[function(require,module,exports){
+},{"_process":4}],6:[function(require,module,exports){
 var VNode = require('./vnode');
 var is = require('./is');
 
@@ -12706,7 +12715,7 @@ module.exports = function h(sel, b, c) {
   return VNode(sel, data, children, text, undefined);
 };
 
-},{"./is":7,"./vnode":14}],6:[function(require,module,exports){
+},{"./is":8,"./vnode":15}],7:[function(require,module,exports){
 function createElement(tagName){
   return document.createElement(tagName);
 }
@@ -12762,13 +12771,13 @@ module.exports = {
   setTextContent: setTextContent
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
                 "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
                 "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
@@ -12813,7 +12822,7 @@ function updateAttrs(oldVnode, vnode) {
 
 module.exports = {create: updateAttrs, update: updateAttrs};
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class,
@@ -12838,7 +12847,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -12902,7 +12911,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":7}],11:[function(require,module,exports){
+},{"../is":8}],12:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -12927,7 +12936,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -12998,7 +13007,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Node */
 'use strict';
@@ -13258,14 +13267,14 @@ function init(modules, api) {
 
 module.exports = {init: init};
 
-},{"./htmldomapi":6,"./is":7,"./vnode":14}],14:[function(require,module,exports){
+},{"./htmldomapi":7,"./is":8,"./vnode":15}],15:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13282,7 +13291,15 @@ const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();
 
+const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor], !state.ui[editor]));
+
 const initial = {
+	ui: {
+		mediaLibrary: true,
+		instrument: true,
+		sequencer: true,
+		midiMap: true
+	},
 	instrument: {
 		eg: {
 			attack: 0,
@@ -13326,13 +13343,14 @@ const initial = {
 
 module.exports = {
 	stream: $.merge(stream, instrument.stream, sequencer.stream, midiMap.stream),
+	toggleUI,
 	instrument,
 	sequencer,
 	midiMap,
 	initial
 };
 
-},{"../util/math":32,"./instrument":16,"./midi-map":17,"./sequencer":18,"iblokz/common/obj":2,"rx":4}],16:[function(require,module,exports){
+},{"../util/math":34,"./instrument":17,"./midi-map":18,"./sequencer":19,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13352,7 +13370,7 @@ module.exports = {
 	updateProp
 };
 
-},{"iblokz/common/obj":2,"rx":4}],17:[function(require,module,exports){
+},{"iblokz/common/obj":3,"rx":5}],18:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13373,7 +13391,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":32,"iblokz/common/obj":2,"rx":4}],18:[function(require,module,exports){
+},{"../../util/math":34,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13402,7 +13420,7 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/math":32,"iblokz/common/obj":2,"rx":4}],19:[function(require,module,exports){
+},{"../../util/math":34,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13426,9 +13444,8 @@ window.actions = actions;
 // reduce actions to state
 const state$ = actions.stream
 	.scan((state, reducer) => reducer(state), actions.initial)
-	.map(state => (console.log(state), state));
-
-state$.subscribe();
+	.map(state => (console.log(state), state))
+	.share();
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
@@ -13460,7 +13477,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 		}
 	});
 
-},{"./actions":15,"./instr/basic-synth":20,"./services":22,"./services/studio":25,"./ui":26,"./util/midi":33,"iblokz/adapters/vdom":1,"rx":4}],20:[function(require,module,exports){
+},{"./actions":16,"./instr/basic-synth":21,"./services":23,"./services/studio":26,"./ui":28,"./util/midi":35,"iblokz/adapters/vdom":1,"rx":5}],21:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13610,7 +13627,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13655,7 +13672,7 @@ Sampler.prototype.play = function(duration) {
 
 module.exports = Sampler;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13676,21 +13693,23 @@ module.exports = {
 	layout
 };
 
-},{"./layout":23,"./midi":24,"./studio":25}],23:[function(require,module,exports){
+},{"./layout":24,"./midi":25,"./studio":26}],24:[function(require,module,exports){
 'use strict';
+
+const arr = require('iblokz/common/arr');
+
+const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 const init = () => {};
 const refresh = ({state, actions}) => {
-	const mediaLibrary = document.querySelector('.media-library');
-	const instrument = document.querySelector('.instrument');
-	const sequencer = document.querySelector('.sequencer');
-	const midiMap = document.querySelector('.midi-map');
-	if (mediaLibrary && sequencer && midiMap) {
-		instrument.style.left = mediaLibrary.offsetWidth + 40 + 'px';
-		sequencer.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + 60 + 'px';
-		midiMap.style.left = mediaLibrary.offsetWidth + instrument.offsetWidth + sequencer.offsetWidth + 80 + 'px';
-		// console.log(midiMap.style.left, sequencer.offsetWidth);
-	}
+	const ui = document.querySelector('#ui');
+	const list = arr.fromList(ui.children);
+
+	list.forEach((el, i) => {
+		if (i > 0)
+			el.style.left = list.filter((el, k) => k < i && k > 0)
+				.reduce((w, el) => w + el.offsetWidth + 20, 0) + 20 + 'px';
+	});
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
 };
 
@@ -13699,7 +13718,7 @@ module.exports = {
 	refresh
 };
 
-},{}],24:[function(require,module,exports){
+},{"iblokz/common/arr":2}],25:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13710,7 +13729,7 @@ module.exports = {
 	refresh
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13828,24 +13847,50 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":21,"../util/context":31,"../util/math":32,"iblokz/common/obj":2,"rx":4}],26:[function(require,module,exports){
+},{"../instr/sampler":22,"../util/context":33,"../util/math":34,"iblokz/common/obj":3,"rx":5}],27:[function(require,module,exports){
 'use strict';
 
-const {div, h1, header, i} = require('iblokz/adapters/vdom');
+const {div, h1, header, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
+
+module.exports = ({state, actions}) => header([
+	ul([
+		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, 'Media Library')]),
+		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, 'Instrument')]),
+		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, 'Sequencer')]),
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')])
+	]),
+	h1([i('.fa.fa-music'), ' Jam Station']),
+	ul('.right', [
+		li([
+			a([i('.fa.fa-volume-down')]),
+			input('[type="range"]'),
+			a([i('.fa.fa-volume-up')])
+		]),
+		li([a([i('.fa.fa-save')])]),
+		li([a([i('.fa.fa-upload')])]),
+		li([a([i('.fa.fa-trash')])])
+	])
+]);
+
+},{"iblokz/adapters/vdom":1}],28:[function(require,module,exports){
+'use strict';
+
+const {div} = require('iblokz/adapters/vdom');
+const header = require('./header');
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 
 module.exports = ({state, actions}) => div('#ui', [
-	header([h1([i('.fa.fa-music'), ' Jam Station'])]),
-	mediaLibrary({state, actions}),
-	instrument({state, actions}),
-	sequencer({state, actions}),
-	midiMap({state, actions})
+	header({state, actions}),
+	state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
+	state.ui.instrument ? instrument({state, actions}) : '',
+	state.ui.sequencer ? sequencer({state, actions}) : '',
+	state.ui.midiMap ? midiMap({state, actions}) : ''
 ]);
 
-},{"./instrument":27,"./media-library":28,"./midi-map":29,"./sequencer":30,"iblokz/adapters/vdom":1}],27:[function(require,module,exports){
+},{"./header":27,"./instrument":29,"./media-library":30,"./midi-map":31,"./sequencer":32,"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
 'use strict';
 
 const {
@@ -13984,7 +14029,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],28:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14013,7 +14058,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14038,7 +14083,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -14089,7 +14134,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -14100,7 +14145,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -14111,7 +14156,7 @@ module.exports = {
 	measureToBeatLength
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14218,4 +14263,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":4}]},{},[19]);
+},{"rx":5}]},{},[20]);

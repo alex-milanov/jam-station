@@ -2,7 +2,6 @@ header
 	+no-margin-padding
 	+header-height(40px)
 	display: block
-	text-align: center
 	// background: #e6efe7
 	background: #ccc
 	margin-bottom: 20px
@@ -13,10 +12,70 @@ header
 	h1
 		+header-height(40px)
 		font-size: 18px
+		position: absolute
+		top: 0px
+		left: 50%
+		width: 300px
+		margin-left: -150px
+		text-align: center
 		// margin: 5px 0px 5px 0px
 		background: #eaeaea
 		padding: 0px
 		box-sizing: border-box
 		border: 1px solid #aaa
 		border-width: 0px 1px
-		width: 300px
+	ul
+		+no-margin-padding
+		+header-height(40px)
+		+user-select(none)
+		display: inline-block
+		list-style: none
+		padding: 0px 10px
+		&.right
+			float: none
+			position: absolute
+			top: 0px
+			right: 0px
+		li
+			+no-margin-padding
+			+header-height(26px)
+			box-sizing: content-box
+			padding: 7px 3px
+			display: inline-block
+			a
+				+no-margin-padding
+				+header-height(26px)
+				box-sizing: content-box
+				display: inline-block
+				padding: 0px 10px
+				color: #777
+				cursor: pointer
+				font-size: 12px
+				border-radius: 3px
+				&.fa
+					padding: 0 5px
+				&:hover
+					color: #333
+					background: #c5c5c5
+				&.on
+					box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.3)
+			input[type=range]
+				+no-margin-padding
+				+header-height(26px)
+				display: inline-block
+				vertical-align: middle
+				-webkit-appearance: none
+				background-color: #777
+				outline: none
+				border-radius: 10px
+				height: 2px
+				cursor: pointer
+			input[type=range]::-webkit-slider-thumb
+				-webkit-appearance: none
+				background-color: #bbb
+				border: 1px solid #777
+				width: 7px
+				height: 20px
+				transition: .3s
+				&:hover
+					background: $jam-station-color-light

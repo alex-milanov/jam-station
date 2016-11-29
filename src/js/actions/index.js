@@ -14,7 +14,15 @@ const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();
 
+const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor], !state.ui[editor]));
+
 const initial = {
+	ui: {
+		mediaLibrary: true,
+		instrument: true,
+		sequencer: true,
+		midiMap: true
+	},
 	instrument: {
 		eg: {
 			attack: 0,
@@ -58,6 +66,7 @@ const initial = {
 
 module.exports = {
 	stream: $.merge(stream, instrument.stream, sequencer.stream, midiMap.stream),
+	toggleUI,
 	instrument,
 	sequencer,
 	midiMap,

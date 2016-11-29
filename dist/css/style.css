@@ -2223,7 +2223,6 @@ header {
   height: 40px;
   line-height: 40px;
   display: block;
-  text-align: center;
   background: #ccc;
   margin-bottom: 20px;
   box-shadow: 0px 0px 5px #777; }
@@ -2238,12 +2237,87 @@ header {
     height: 40px;
     line-height: 40px;
     font-size: 18px;
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    width: 300px;
+    margin-left: -150px;
+    text-align: center;
     background: #eaeaea;
     padding: 0px;
     box-sizing: border-box;
     border: 1px solid #aaa;
-    border-width: 0px 1px;
-    width: 300px; }
+    border-width: 0px 1px; }
+  header ul {
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    height: 40px;
+    line-height: 40px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    display: inline-block;
+    list-style: none;
+    padding: 0px 10px; }
+    header ul.right {
+      float: none;
+      position: absolute;
+      top: 0px;
+      right: 0px; }
+    header ul li {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 26px;
+      line-height: 26px;
+      box-sizing: content-box;
+      padding: 7px 3px;
+      display: inline-block; }
+      header ul li a {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 26px;
+        line-height: 26px;
+        box-sizing: content-box;
+        display: inline-block;
+        padding: 0px 10px;
+        color: #777;
+        cursor: pointer;
+        font-size: 12px;
+        border-radius: 3px; }
+        header ul li a.fa {
+          padding: 0 5px; }
+        header ul li a:hover {
+          color: #333;
+          background: #c5c5c5; }
+        header ul li a.on {
+          box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.3); }
+      header ul li input[type=range] {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 26px;
+        line-height: 26px;
+        display: inline-block;
+        vertical-align: middle;
+        -webkit-appearance: none;
+        background-color: #777;
+        outline: none;
+        border-radius: 10px;
+        height: 2px;
+        cursor: pointer; }
+      header ul li input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        background-color: #bbb;
+        border: 1px solid #777;
+        width: 7px;
+        height: 20px;
+        transition: .3s; }
+        header ul li input[type=range]::-webkit-slider-thumb:hover {
+          background: #dfe; }
 
 .media-library {
   position: absolute;

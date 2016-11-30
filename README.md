@@ -14,7 +14,7 @@ npm i
 ```
 
 ## Running the app
-- **Important:** Web MIDI is currently supported only in Chrome
+**Important:** Web MIDI is currently supported only in Chrome
 - To start up the app just run:
 ```sh
 npm start
@@ -23,20 +23,23 @@ npm start
 - To use the synth simply connect a MIDI keyboard or install a virtual MIDI keyboard app
 
 ## Development Notes
-- **Note:** The app is currently in active development, and the architecture could undergo several refactorings.
+**Note:** The app is currently in active development, and the architecture could undergo several refactorings.
 
 ### App Architecture
-- The app architecture is influenced by recent trends like functional and functional reactive programming
-- It's building blocks consist of redux inspired state machine, virtual dom with hyperscript, whereby rxjs observables are used to connect the different elements.
-- The application flow is one directional, flux like.
- - **Actions** -> **State** -> **UI** (-> **Actions**)
-- A central goal of this approach is to structure the app in a manner of how one might reason about it. For eg.:
- - the `state` of the app is a function of the user `actions`
+The app architecture is influenced by recent trends like functional and functional reactive programming
+
+It's building blocks consist of **redux** inspired state machine, virtual dom with **hyperscript**, whereby **rxjs** observables are used to connect the different elements.
+
+The application flow is one directional, flux like.
+- **Actions** -> **State** -> **UI** (-> **Actions**)
+
+A central goal of this approach is to structure the app in a manner of how one might reason about it. For eg.:
+- The `State` of the app is being changed by the user `Actions`
 ```js
 const state$ = actions.stream
-	.scan((state, reducer) => reducer(state), actions.initial);
+	.scan((state, change) => change(state), actions.initial);
 ```
- - the `ui` of the app reflects it's `state`
+- The `UI` of the app reflects it's `State`
 ```js
 const ui$ = state$.map(state => ui({state, actions}));
 ```

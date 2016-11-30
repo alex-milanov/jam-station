@@ -20,7 +20,7 @@ window.actions = actions;
 
 // reduce actions to state
 const state$ = actions.stream
-	.scan((state, reducer) => reducer(state), actions.initial)
+	.scan((state, change) => change(state), actions.initial)
 	.map(state => (console.log(state), state))
 	.share();
 

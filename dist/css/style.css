@@ -1,6 +1,6 @@
 @charset "UTF-8";
-@import url(https://fonts.googleapis.com/css?family=Open+Sans);
-@import url(http://fonts.googleapis.com/css?family=Play:400,700&subset=latin,cyrillic-ext,cyrillic);
+@import url(//fonts.googleapis.com/css?family=Open+Sans);
+@import url(//fonts.googleapis.com/css?family=Play:400,700&subset=latin,cyrillic-ext,cyrillic);
 /*!
  *  Font Awesome 4.6.3 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -2248,6 +2248,12 @@ header {
     box-sizing: border-box;
     border: 1px solid #aaa;
     border-width: 0px 1px; }
+    header h1 img {
+      margin: 0px;
+      padding: 0px;
+      height: 40px;
+      margin-left: -10px;
+      vertical-align: top; }
   header ul {
     margin: 0px;
     padding: 0px;

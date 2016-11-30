@@ -1,3 +1,5 @@
+![screenshot](https://alex-milanov.github.io/jam-station/assets/screenshot-01.png)
+
 # ![logo](https://alex-milanov.github.io/jam-station/dist/assets/logo.png) Jam Station
 - Music Live Rig App with Web Audio and MIDI Api's
 

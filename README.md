@@ -30,3 +30,13 @@ npm start
 - It's building blocks consist of redux inspired state machine, virtual dom with hyperscript, whereby rxjs observables are used to connect the different elements.
 - The application flow is one directional, flux like.
  - **Actions** -> **State** -> **UI** (-> **Actions**)
+- A central goal of this approach is to structure the app in a manner of how one might reason about it. For eg.:
+ - the `state` of the app is a function of the user `actions`
+```js
+const state$ = actions.stream
+	.scan((state, reducer) => reducer(state), actions.initial);
+```
+ - the `ui` of the app reflects it's `state`
+```js
+const ui$ = state$.map(state => ui({state, actions}));
+```

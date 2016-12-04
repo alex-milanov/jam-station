@@ -12,9 +12,9 @@ module.exports = ({state, actions}) => div('.media-library', [
 	div('.body', [
 		fieldset([
 			legend('Samples'),
-			ul(state.channels.map(channel =>
+			ul(state.samples.map(sample =>
 				li([
-					span(channel),
+					span(sample),
 					button('.right.fa.fa-play')
 				])
 			))

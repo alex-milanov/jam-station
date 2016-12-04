@@ -5,19 +5,22 @@
  * @param {object} context: instance of the audio context.
  * @param {string} file: uri of the sample file.
  */
-function Sampler(context, file) {
+function Sampler(context, file, buffer) {
 	this.context = context;
+	this.file = file;
+	this.buffer = buffer;
 	var sampler = this;
-	var request = new XMLHttpRequest();
-	request.open('get', file, true);
-	request.responseType = 'arraybuffer';
-	request.onload = function() {
-		context.decodeAudioData(request.response, function(buffer) {
-			sampler.buffer = buffer;
-		});
-	};
-	request.send();
-
+	if (!buffer) {
+		var request = new XMLHttpRequest();
+		request.open('get', file, true);
+		request.responseType = 'arraybuffer';
+		request.onload = function() {
+			context.decodeAudioData(request.response, function(buffer) {
+				sampler.buffer = buffer;
+			});
+		};
+		request.send();
+	}
 	this.volume = this.context.createGain();
 	this.volume.gain.value = 0.4;
 }
@@ -38,6 +41,16 @@ Sampler.prototype.trigger = function(start, end) {
 Sampler.prototype.play = function(duration) {
 	var now = this.context.currentTime;
 	this.trigger(now, now + duration);
+};
+
+Sampler.prototype.stop = function(time) {
+	var now = this.context.currentTime;
+	this.source.stop(time || now);
+	this.volume.gain.value = 0;
+};
+
+Sampler.prototype.clone = function() {
+	return new Sampler(this.context, this.file, this.buffer);
 };
 
 module.exports = Sampler;

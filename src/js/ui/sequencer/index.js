@@ -31,9 +31,9 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				}
 			})
 		))
-	].concat(loop(4, r =>
+	].concat(loop(state.channels.length, r =>
 		div(`.row`, [
-			div('.instr', [span(state.channels[r])])
+			div('.instr', [span(state.samples[state.channels[r]].replace('.ogg', ''))])
 		].concat(loop(state.studio.beatLength, c =>
 			div(`.bar`, {
 				class: {

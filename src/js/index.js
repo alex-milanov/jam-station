@@ -15,7 +15,7 @@ const ui = require('./ui');
 // services
 const services = require('./services');
 const studio = require('./services/studio');
-actions = studio.attach(actions);
+// actions = studio.attach(actions);
 window.actions = actions;
 
 // reduce actions to state

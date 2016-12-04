@@ -2391,6 +2391,7 @@ input, label, body {
       border-top-width: 1px; }
       .media-library .body fieldset legend {
         font-weight: bold;
+        font-size: 14px;
         padding: 0px 5px; }
   .media-library .body ul {
     margin: 0px;
@@ -2403,7 +2404,7 @@ input, label, body {
       display: inline-block;
       height: 24px;
       line-height: 24px;
-      font-size: 14px;
+      font-size: 12px;
       display: block;
       padding: 0px 10px;
       background: #eaeaea;
@@ -2495,6 +2496,7 @@ input, label, body {
       border-top-width: 1px; }
       .instrument .body fieldset legend {
         font-weight: bold;
+        font-size: 14px;
         padding: 0px 5px; }
   .instrument .body form {
     margin: 0px;
@@ -2592,6 +2594,7 @@ input, label, body {
       border-top-width: 1px; }
       .sequencer .body fieldset legend {
         font-weight: bold;
+        font-size: 14px;
         padding: 0px 5px; }
   .sequencer .body .head {
     margin: 2px;
@@ -2642,7 +2645,7 @@ input, label, body {
       margin: 3px 7px;
       padding: 0px;
       display: inline-block;
-      font-size: 14px;
+      font-size: 12px;
       width: 100px;
       text-align: center;
       float: left;
@@ -2728,4 +2731,5 @@ input, label, body {
       border-top-width: 1px; }
       .midi-map .body fieldset legend {
         font-weight: bold;
+        font-size: 14px;
         padding: 0px 5px; }

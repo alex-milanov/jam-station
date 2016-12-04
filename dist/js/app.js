@@ -13281,6 +13281,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
+const studio = require('./studio');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
@@ -13324,16 +13325,38 @@ const initial = {
 		}
 	},
 	channels: [
-		'Kick',
-		'HiHat',
-		'Snare',
-		'Clap'
+		0,
+		5,
+		9,
+		14,
+		18
+	],
+	samples: [
+		'kick01.ogg',
+		'kick02.ogg',
+		'kick03.ogg',
+		'kick04.ogg',
+		'kick_hiphop01.ogg',
+		'hihat_opened02.ogg',
+		'hihat_opened03.ogg',
+		'ride02.ogg',
+		'rim01.ogg',
+		'snare01.ogg',
+		'snare02.ogg',
+		'snare03.ogg',
+		'snare04.ogg',
+		'snare05.ogg',
+		'clap01.ogg',
+		'clap02.ogg',
+		'clap03.ogg',
+		'clap04.ogg',
+		'shaker01.ogg',
+		'shaker02.ogg'
 	],
 	pattern: [
 		[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
 		[0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-		[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 	],
 	midi: {
 		inputs: [],
@@ -13342,15 +13365,16 @@ const initial = {
 };
 
 module.exports = {
-	stream: $.merge(stream, instrument.stream, sequencer.stream, midiMap.stream),
+	stream: $.merge(stream, instrument.stream, sequencer.stream, midiMap.stream, studio.stream),
 	toggleUI,
+	studio,
 	instrument,
 	sequencer,
 	midiMap,
-	initial
+	initial: obj.patch(initial, 'studio', studio.initial)
 };
 
-},{"../util/math":34,"./instrument":17,"./midi-map":18,"./sequencer":19,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
+},{"../util/math":35,"./instrument":17,"./midi-map":18,"./sequencer":19,"./studio":20,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13391,7 +13415,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":34,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
+},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13420,7 +13444,55 @@ module.exports = {
 	toggle
 };
 
-},{"../../util/math":34,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
+},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+// util
+const obj = require('iblokz/common/obj');
+const {measureToBeatLength} = require('../../util/math');
+
+const stream = new Subject();
+
+const tick = () => stream.onNext(
+	state => obj.patch(state, ['studio', 'tickIndex'],
+		(state.studio.tickIndex < state.studio.beatLength - 1) && (state.studio.tickIndex + 1) || 0
+	)
+);
+
+const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !state.studio.playing}));
+
+const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
+	tickIndex: -1,
+	playing: false
+}));
+
+const change = (prop, val) =>
+	stream.onNext(state => [obj.patch(state, ['studio', prop], val)].map(
+		state => (prop !== 'measure')
+			? state
+			: obj.patch(state, 'studio', {beatLength: measureToBeatLength(state.studio.measure)})
+		).pop());
+
+module.exports = {
+	stream,
+	initial: {
+		bpm: '120',
+		measure: '4/4',
+		beatLength: 16,
+		playing: false,
+		tickIndex: -1
+	},
+	play,
+	stop,
+	change,
+	tick
+};
+
+},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],21:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13438,7 +13510,7 @@ const ui = require('./ui');
 // services
 const services = require('./services');
 const studio = require('./services/studio');
-actions = studio.attach(actions);
+// actions = studio.attach(actions);
 window.actions = actions;
 
 // reduce actions to state
@@ -13477,7 +13549,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 		}
 	});
 
-},{"./actions":16,"./instr/basic-synth":21,"./services":23,"./services/studio":26,"./ui":28,"./util/midi":35,"iblokz/adapters/vdom":1,"rx":5}],21:[function(require,module,exports){
+},{"./actions":16,"./instr/basic-synth":22,"./services":24,"./services/studio":27,"./ui":29,"./util/midi":36,"iblokz/adapters/vdom":1,"rx":5}],22:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13627,7 +13699,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13635,19 +13707,22 @@ module.exports = BasicSynth;
  * @param {object} context: instance of the audio context.
  * @param {string} file: uri of the sample file.
  */
-function Sampler(context, file) {
+function Sampler(context, file, buffer) {
 	this.context = context;
+	this.file = file;
+	this.buffer = buffer;
 	var sampler = this;
-	var request = new XMLHttpRequest();
-	request.open('get', file, true);
-	request.responseType = 'arraybuffer';
-	request.onload = function() {
-		context.decodeAudioData(request.response, function(buffer) {
-			sampler.buffer = buffer;
-		});
-	};
-	request.send();
-
+	if (!buffer) {
+		var request = new XMLHttpRequest();
+		request.open('get', file, true);
+		request.responseType = 'arraybuffer';
+		request.onload = function() {
+			context.decodeAudioData(request.response, function(buffer) {
+				sampler.buffer = buffer;
+			});
+		};
+		request.send();
+	}
 	this.volume = this.context.createGain();
 	this.volume.gain.value = 0.4;
 }
@@ -13670,9 +13745,19 @@ Sampler.prototype.play = function(duration) {
 	this.trigger(now, now + duration);
 };
 
+Sampler.prototype.stop = function(time) {
+	var now = this.context.currentTime;
+	this.source.stop(time || now);
+	this.volume.gain.value = 0;
+};
+
+Sampler.prototype.clone = function() {
+	return new Sampler(this.context, this.file, this.buffer);
+};
+
 module.exports = Sampler;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13693,7 +13778,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":24,"./midi":25,"./studio":26}],24:[function(require,module,exports){
+},{"./layout":25,"./midi":26,"./studio":27}],25:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -13718,7 +13803,7 @@ module.exports = {
 	refresh
 };
 
-},{"iblokz/common/arr":2}],25:[function(require,module,exports){
+},{"iblokz/common/arr":2}],26:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13729,7 +13814,7 @@ module.exports = {
 	refresh
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13739,70 +13824,67 @@ const Subject = Rx.Subject;
 const {AudioContext} = require('../util/context');
 const Sampler = require('../instr/sampler');
 const obj = require('iblokz/common/obj');
-const {measureToBeatLength} = require('../util/math');
+const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 const stream = new Subject();
 
 let context = new AudioContext();
 let kit = [
 	'samples/kick01.ogg',
+	'samples/kick02.ogg',
+	'samples/kick03.ogg',
+	'samples/kick04.ogg',
+	'samples/kick_hiphop01.ogg',
 	'samples/hihat_opened02.ogg',
+	'samples/hihat_opened03.ogg',
+	'samples/ride02.ogg',
+	'samples/rim01.ogg',
 	'samples/snare01.ogg',
-	'samples/clap01.ogg'
+	'samples/snare02.ogg',
+	'samples/snare03.ogg',
+	'samples/snare04.ogg',
+	'samples/snare05.ogg',
+	'samples/clap01.ogg',
+	'samples/clap02.ogg',
+	'samples/clap03.ogg',
+	'samples/clap04.ogg',
+	'samples/shaker01.ogg',
+	'samples/shaker02.ogg'
 ].map(url => new Sampler(context, url));
-
-const tick = () => stream.onNext(
-	state => obj.patch(state, ['studio', 'tickIndex'],
-		(state.studio.tickIndex < state.studio.beatLength - 1) && (state.studio.tickIndex + 1) || 0
-	)
-);
-
-const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !state.studio.playing}));
-
-const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
-	tickIndex: -1,
-	playing: false
-}));
-
-const change = (prop, val) =>
-	stream.onNext(state => [obj.patch(state, ['studio', prop], val)].map(
-		state => (prop !== 'measure')
-			? state
-			: obj.patch(state, 'studio', {beatLength: measureToBeatLength(state.studio.measure)})
-		).pop());
-
-const studio = {
-	stream,
-	initial: {
-		studio: {
-			bpm: '120',
-			measure: '4/4',
-			beatLength: 16,
-			playing: false,
-			tickIndex: -1
-		}
-	},
-	play,
-	stop,
-	change,
-	tick
-};
-
-const attach = actions => Object.assign(
-	{},
-	actions,
-	{
-		studio,
-		stream: $.merge(actions.stream, studio.stream),
-		initial: Object.assign({}, actions.initial, studio.initial)
-	}
-);
 
 const hook = ({state$, actions}) => {
 	let playTime = new Rx.Subject();
+	let buffer = [];
+
+	const clearBuffer = () => {
+		console.log(buffer);
+		buffer.forEach(inst => inst.stop());
+		buffer = [];
+	};
 
 	playTime.withLatestFrom(state$, (time, state) => ({time, state}))
-		.subscribe(({state}) => state.pattern.forEach((row, i) => (row[state.studio.tickIndex]) && kit[i].play()));
+		.subscribe(({state, time}) => {
+			console.log(time);
+			if (state.studio.tickIndex === 0 || time.value === 0) {
+				clearBuffer();
+				let now = context.currentTime;
+				for (let i = state.studio.tickIndex; i < state.studio.beatLength; i++) {
+					let time = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
+					state.pattern.forEach((row, k) => {
+						if (row[i]) {
+							let inst = kit[state.channels[k]].clone();
+							inst.trigger(time);
+							buffer.push(inst);
+						}
+					});
+				}
+			}
+			/*
+			state.pattern.forEach((row, i) => {
+				(row[state.studio.tickIndex]) && kit[i].play()));
+			}
+			*/
+		});
 
 	let intervalSub = null;
 
@@ -13811,16 +13893,18 @@ const hook = ({state$, actions}) => {
 		.subscribe(state => {
 			if (state.studio.playing) {
 				if (intervalSub === null) {
-					intervalSub = $.interval(60 / parseInt(state.studio.bpm, 10) * 1000 / 4)
+					intervalSub = $.interval(bpmToTime(state.studio.bpm) * 1000)
 						.timeInterval().subscribe(time => {
 							actions.studio.tick();
 							playTime.onNext(time);
 						});
 				} else {
+					clearBuffer();
 					intervalSub.dispose();
 					intervalSub = null;
 				}
 			} else if (intervalSub) {
+				clearBuffer();
 				intervalSub.dispose();
 				intervalSub = null;
 			}
@@ -13832,7 +13916,7 @@ const hook = ({state$, actions}) => {
 		.subscribe(state => {
 			if (intervalSub) {
 				intervalSub.dispose();
-				intervalSub = $.interval(60 / parseInt(state.studio.bpm, 10) * 1000 / 4)
+				intervalSub = $.interval(bpmToTime(state.studio.bpm) * 1000)
 					.timeInterval().subscribe(time => {
 						actions.studio.tick();
 						playTime.onNext(time);
@@ -13843,11 +13927,10 @@ const hook = ({state$, actions}) => {
 
 module.exports = {
 	context,
-	attach,
 	hook
 };
 
-},{"../instr/sampler":22,"../util/context":33,"../util/math":34,"iblokz/common/obj":3,"rx":5}],27:[function(require,module,exports){
+},{"../instr/sampler":23,"../util/context":34,"../util/math":35,"iblokz/common/obj":3,"rx":5}],28:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -13875,7 +13958,7 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],28:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz/adapters/vdom');
@@ -13893,7 +13976,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiMap ? midiMap({state, actions}) : ''
 ]);
 
-},{"./header":27,"./instrument":29,"./media-library":30,"./midi-map":31,"./sequencer":32,"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
+},{"./header":28,"./instrument":30,"./media-library":31,"./midi-map":32,"./sequencer":33,"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14032,7 +14115,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14047,9 +14130,9 @@ module.exports = ({state, actions}) => div('.media-library', [
 	div('.body', [
 		fieldset([
 			legend('Samples'),
-			ul(state.channels.map(channel =>
+			ul(state.samples.map(sample =>
 				li([
-					span(channel),
+					span(sample),
 					button('.right.fa.fa-play')
 				])
 			))
@@ -14061,7 +14144,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14086,7 +14169,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
 'use strict';
 
 const {div, h2, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -14120,9 +14203,9 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				}
 			})
 		))
-	].concat(loop(4, r =>
+	].concat(loop(state.channels.length, r =>
 		div(`.row`, [
-			div('.instr', [span(state.channels[r])])
+			div('.instr', [span(state.samples[state.channels[r]].replace('.ogg', ''))])
 		].concat(loop(state.studio.beatLength, c =>
 			div(`.bar`, {
 				class: {
@@ -14137,7 +14220,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	)
 ]);
 
-},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -14148,18 +14231,21 @@ module.exports = {
 	AudioContext
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
 	.map(v => parseInt(v, 10))
 	.reduce((p, v, i) => (i === 0) ? p * v : p / v, 16);
 
+const bpmToTime = bpm => 15 / parseInt(bpm, 10);
+
 module.exports = {
-	measureToBeatLength
+	measureToBeatLength,
+	bpmToTime
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14266,4 +14352,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":5}]},{},[20]);
+},{"rx":5}]},{},[21]);

@@ -2,6 +2,7 @@
 .sequencer
 	+editor(560px, 60px)
 	.body
+		padding-right: 20px
 		.head
 			margin: 2px
 			padding: 0px
@@ -45,7 +46,19 @@
 					margin: 2px
 					height: 28px
 					line-height: 28px
-			.instr
+			.delete-channel
+				height: 26px
+				line-height: 26px
+				margin: 3px
+				margin-right: -23px
+				padding: 0px
+				display: inline-block
+				cursor: pointer
+				color: #aaa
+				&:hover
+					color: #c77
+			.channel
+				+user-select(none)
 				height: 26px
 				line-height: 26px
 				margin: 3px 7px
@@ -61,6 +74,20 @@
 				box-sizing: border-box
 				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
 				transition: background .3s, box-shadow .3s
+				&:hover, &.on
+					background: $jam-station-color-light
+					box-shadow: inset 0px 0px 10px #ccc
+			.add-channel
+				margin: 3px 7px
+				height: 16px
+				line-height: 16px
+				width: 100px
+				text-align: center
+				height: 26px
+				line-height: 26px
+				transition: background .3s, box-shadow .3s
+				cursor: pointer
+				border: 1px solid #aaa
 				&:hover
 					background: $jam-station-color-light
 					box-shadow: inset 0px 0px 10px #ccc

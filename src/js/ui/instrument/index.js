@@ -75,9 +75,13 @@ module.exports = ({state, actions}) => div('.instrument', [
 			// VCF
 			fieldset([
 				legend('VCF'),
-				input('.on-switch[type="checkbox"]', {
+				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
-					attrs: {checked: state.instrument.vcf.on}
+					class: {
+						'fa-circle-thin': !state.instrument.vcf.on,
+						'on': state.instrument.vcf.on,
+						'fa-circle': state.instrument.vcf.on
+					}
 				}),
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),

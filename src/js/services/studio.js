@@ -16,7 +16,6 @@ let kit = [
 	'samples/kick01.ogg',
 	'samples/kick02.ogg',
 	'samples/kick03.ogg',
-	'samples/kick04.ogg',
 	'samples/kick_hiphop01.ogg',
 	'samples/hihat_opened02.ogg',
 	'samples/hihat_opened03.ogg',
@@ -53,9 +52,9 @@ const hook = ({state$, actions}) => {
 				let now = context.currentTime;
 				for (let i = state.studio.tickIndex; i < state.studio.beatLength; i++) {
 					let time = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
-					state.pattern.forEach((row, k) => {
+					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
-							let inst = kit[state.channels[k]].clone();
+							let inst = kit[state.sequencer.channels[k]].clone();
 							inst.trigger(time);
 							buffer.push(inst);
 						}

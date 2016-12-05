@@ -13285,6 +13285,7 @@ const studio = require('./studio');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
+const mediaLibrary = require('./media-library');
 
 // util
 const obj = require('iblokz/common/obj');
@@ -13301,41 +13302,89 @@ const initial = {
 		sequencer: true,
 		midiMap: true
 	},
-	instrument: {
-		eg: {
-			attack: 0,
-			decay: 0.04,
-			sustain: 0.8,
-			release: 0.08
-		},
-		vco: {
-			type: 'square'
-		},
-		lfo: {
-			on: false,
-			type: 'sawtooth',
-			frequency: 0,
-			gain: 0
-		},
-		vcf: {
-			on: false,
-			cutoff: 800,
-			resonance: 80,
-			gain: 0
-		}
+	midi: {
+		inputs: [],
+		outputs: []
+	}
+};
+
+module.exports = {
+	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
+	toggleUI,
+	studio,
+	instrument,
+	sequencer,
+	midiMap,
+	initial: Object.assign({}, initial, {
+		studio: studio.initial,
+		sequencer: sequencer.initial,
+		instrument: instrument.initial,
+		mediaLibrary: mediaLibrary.initial
+	})
+};
+
+},{"../util/math":36,"./instrument":17,"./media-library":18,"./midi-map":19,"./sequencer":20,"./studio":21,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+const obj = require('iblokz/common/obj');
+
+const stream = new Subject();
+
+const updateProp = (param, prop, value) => stream.onNext(
+	state => obj.patch(state, ['instrument', param, prop], value)
+);
+
+const initial = {
+	eg: {
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
 	},
-	channels: [
-		0,
-		5,
-		9,
-		14,
-		18
-	],
+	vco: {
+		type: 'square'
+	},
+	lfo: {
+		on: false,
+		type: 'sawtooth',
+		frequency: 0,
+		gain: 0
+	},
+	vcf: {
+		on: false,
+		cutoff: 800,
+		resonance: 80,
+		gain: 0
+	}
+};
+
+module.exports = {
+	stream,
+	initial,
+	updateProp
+};
+
+},{"iblokz/common/obj":3,"rx":5}],18:[function(require,module,exports){
+'use strict';
+const Rx = require('rx');
+const $ = Rx.Observable;
+const {Subject} = Rx;
+
+// util
+const obj = require('iblokz/common/obj');
+const {measureToBeatLength} = require('../../util/math');
+
+const stream = new Subject();
+
+const initial = {
 	samples: [
 		'kick01.ogg',
 		'kick02.ogg',
 		'kick03.ogg',
-		'kick04.ogg',
 		'kick_hiphop01.ogg',
 		'hihat_opened02.ogg',
 		'hihat_opened03.ogg',
@@ -13352,49 +13401,15 @@ const initial = {
 		'clap04.ogg',
 		'shaker01.ogg',
 		'shaker02.ogg'
-	],
-	pattern: [
-		[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-		[0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-		[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-	],
-	midi: {
-		inputs: [],
-		outputs: []
-	}
+	]
 };
-
-module.exports = {
-	stream: $.merge(stream, instrument.stream, sequencer.stream, midiMap.stream, studio.stream),
-	toggleUI,
-	studio,
-	instrument,
-	sequencer,
-	midiMap,
-	initial: obj.patch(initial, 'studio', studio.initial)
-};
-
-},{"../util/math":35,"./instrument":17,"./midi-map":18,"./sequencer":19,"./studio":20,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
-'use strict';
-
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
-
-const obj = require('iblokz/common/obj');
-
-const stream = new Subject();
-
-const updateProp = (param, prop, value) => stream.onNext(
-	state => obj.patch(state, ['instrument', param, prop], value)
-);
 
 module.exports = {
 	stream,
-	updateProp
+	initial
 };
 
-},{"iblokz/common/obj":3,"rx":5}],18:[function(require,module,exports){
+},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13415,7 +13430,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
+},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13428,23 +13443,84 @@ const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
-const toggle = (r, c) => {
-	console.log(r, c);
+const toggle = (bar, r, c) => {
+	console.log(bar, r, c);
 	stream.onNext(state => {
-		let pattern = state.pattern.slice();
-		pattern[r] = pattern[r] || [];
-		pattern[r][c] = pattern[r][c] ? 0 : 1;
-		console.log(pattern, pattern[r][c]);
-		return Object.assign({}, state, {pattern});
+		let pattern = state.sequencer.pattern.slice();
+		pattern[bar] = pattern[bar] || [];
+		pattern[bar][r] = pattern[bar][r] || [];
+		pattern[bar][r][c] = pattern[bar][r][c] ? 0 : 1;
+		console.log(pattern, pattern[bar][r][c]);
+		return obj.patch(state, 'sequencer', {pattern});
 	});
+};
+
+const selectChannel = channel => stream.onNext(state =>
+	obj.patch(state, 'sequencer', {
+		channel: (state.sequencer.channel === channel)
+			? -1
+			: channel
+	})
+);
+
+const addChannel = channel => stream.onNext(state =>
+	obj.patch(state, 'sequencer', {
+		channels: state.sequencer.channels.concat([0])
+	})
+);
+
+const deleteChannel = channel => (channel > -1) && stream.onNext(state =>
+	obj.patch(state, 'sequencer', {
+		channels: [].concat(
+			state.sequencer.channels.slice(0, channel),
+			state.sequencer.channels.slice(channel + 1)
+		),
+		pattern: state.sequencer.pattern.map(pattern => pattern.filter((r, i) => i !== channel)),
+		channel: (channel === state.sequencer.channel) ? -1 : state.sequencer.channel
+	})
+);
+
+const setSample = (channel, sample) => (channel > -1) && stream.onNext(state =>
+	obj.patch(state, 'sequencer', {
+		channels: [].concat(
+			state.sequencer.channels.slice(0, channel),
+			[sample],
+			state.sequencer.channels.slice(channel + 1)
+		)
+	})
+);
+
+const initial = {
+	barCount: 0,
+	bar: 0,
+	channel: -1,
+	channels: [
+		0,
+		4,
+		8,
+		13,
+		17
+	],
+	pattern: [
+		[
+			[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+			[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+		]
+	]
 };
 
 module.exports = {
 	stream,
-	toggle
+	initial,
+	toggle,
+	selectChannel,
+	addChannel,
+	deleteChannel,
+	setSample
 };
 
-},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
+},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],21:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13492,7 +13568,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":35,"iblokz/common/obj":3,"rx":5}],21:[function(require,module,exports){
+},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],22:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13549,7 +13625,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 		}
 	});
 
-},{"./actions":16,"./instr/basic-synth":22,"./services":24,"./services/studio":27,"./ui":29,"./util/midi":36,"iblokz/adapters/vdom":1,"rx":5}],22:[function(require,module,exports){
+},{"./actions":16,"./instr/basic-synth":23,"./services":25,"./services/studio":28,"./ui":30,"./util/midi":37,"iblokz/adapters/vdom":1,"rx":5}],23:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13699,7 +13775,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13757,7 +13833,7 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13778,7 +13854,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":25,"./midi":26,"./studio":27}],25:[function(require,module,exports){
+},{"./layout":26,"./midi":27,"./studio":28}],26:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -13803,7 +13879,7 @@ module.exports = {
 	refresh
 };
 
-},{"iblokz/common/arr":2}],26:[function(require,module,exports){
+},{"iblokz/common/arr":2}],27:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13814,7 +13890,7 @@ module.exports = {
 	refresh
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13833,7 +13909,6 @@ let kit = [
 	'samples/kick01.ogg',
 	'samples/kick02.ogg',
 	'samples/kick03.ogg',
-	'samples/kick04.ogg',
 	'samples/kick_hiphop01.ogg',
 	'samples/hihat_opened02.ogg',
 	'samples/hihat_opened03.ogg',
@@ -13870,9 +13945,9 @@ const hook = ({state$, actions}) => {
 				let now = context.currentTime;
 				for (let i = state.studio.tickIndex; i < state.studio.beatLength; i++) {
 					let time = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
-					state.pattern.forEach((row, k) => {
+					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
-							let inst = kit[state.channels[k]].clone();
+							let inst = kit[state.sequencer.channels[k]].clone();
 							inst.trigger(time);
 							buffer.push(inst);
 						}
@@ -13930,7 +14005,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":23,"../util/context":34,"../util/math":35,"iblokz/common/obj":3,"rx":5}],28:[function(require,module,exports){
+},{"../instr/sampler":24,"../util/context":35,"../util/math":36,"iblokz/common/obj":3,"rx":5}],29:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -13958,7 +14033,7 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],29:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz/adapters/vdom');
@@ -13976,7 +14051,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiMap ? midiMap({state, actions}) : ''
 ]);
 
-},{"./header":28,"./instrument":30,"./media-library":31,"./midi-map":32,"./sequencer":33,"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
+},{"./header":29,"./instrument":31,"./media-library":32,"./midi-map":33,"./sequencer":34,"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14054,9 +14129,13 @@ module.exports = ({state, actions}) => div('.instrument', [
 			// VCF
 			fieldset([
 				legend('VCF'),
-				input('.on-switch[type="checkbox"]', {
+				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
-					attrs: {checked: state.instrument.vcf.on}
+					class: {
+						'fa-circle-thin': !state.instrument.vcf.on,
+						'on': state.instrument.vcf.on,
+						'fa-circle': state.instrument.vcf.on
+					}
 				}),
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
@@ -14115,7 +14194,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14130,8 +14209,10 @@ module.exports = ({state, actions}) => div('.media-library', [
 	div('.body', [
 		fieldset([
 			legend('Samples'),
-			ul(state.samples.map(sample =>
-				li([
+			ul(state.mediaLibrary.samples.map((sample, i) =>
+				li({
+					on: {click: () => actions.sequencer.setSample(state.sequencer.channel, i)}
+				}, [
 					span(sample),
 					button('.right.fa.fa-play')
 				])
@@ -14144,7 +14225,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14169,12 +14250,14 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
 'use strict';
 
-const {div, h2, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
+const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
+
+const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][channel] && pattern[bar][channel][tick];
 
 module.exports = ({state, actions}) => div('.sequencer', [
 	div('.header', [
@@ -14184,6 +14267,11 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			on: {click: () => actions.studio.play()}
 		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
+		span('.cipher', [
+			button('.left.fa.fa-caret-left'),
+			input('.bar[type="number"]', {props: {value: 0, size: 6}}),
+			button('.right.fa.fa-caret-right')
+		]),
 		label('BPM'),
 		input('.bpm', {
 			props: {value: state.studio.bpm || 120, size: 6},
@@ -14195,32 +14283,44 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			on: {input: ev => actions.studio.change('measure', ev.target.value)}
 		})
 	]),
-	div('.body', [
-		div('.head', loop(state.studio.beatLength, c =>
+	div('.body', [].concat(
+		[div('.head', loop(state.studio.beatLength, c =>
 			div('.cell', {
 				class: {
 					tick: (state.studio.tickIndex === c)
 				}
 			})
-		))
-	].concat(loop(state.channels.length, r =>
-		div(`.row`, [
-			div('.instr', [span(state.samples[state.channels[r]].replace('.ogg', ''))])
-		].concat(loop(state.studio.beatLength, c =>
-			div(`.bar`, {
-				class: {
-					on: (state.pattern[r] && state.pattern[r][c] && state.studio.tickIndex !== c),
-					tick: (state.pattern[r] && state.pattern[r][c] && state.studio.tickIndex === c)
-				},
-				on: {
-					click: ev => actions.sequencer.toggle(r, c)
-				}
-			})))
-		)))
-	)
+		))],
+		loop(state.sequencer.channels.length, r =>
+			div(`.row`, [].concat(
+				[div('.channel', {
+					class: {on: state.sequencer.channel === r},
+					on: {click: () => actions.sequencer.selectChannel(r)}
+				}, [span(state.mediaLibrary.samples[state.sequencer.channels[r]].replace('.ogg', ''))])],
+				loop(state.studio.beatLength, c =>
+					div(`.bar`, {
+						class: {
+							on: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tickIndex !== c),
+							tick: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tickIndex === c)
+						},
+						on: {
+							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)
+						}
+					})
+				),
+				(state.sequencer.channel === r) ? [div('.delete-channel.fa.fa-minus-circle', {
+					on: {click: () => actions.sequencer.deleteChannel(r)}
+				})] : []
+			))),
+		[div(`.row`, [
+			div('.add-channel', {
+				on: {click: () => actions.sequencer.addChannel()}
+			}, [span('.fa.fa-plus')])
+		])]
+	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -14231,7 +14331,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -14245,7 +14345,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14352,4 +14452,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":5}]},{},[21]);
+},{"rx":5}]},{},[22]);

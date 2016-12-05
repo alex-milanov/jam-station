@@ -12,8 +12,10 @@ module.exports = ({state, actions}) => div('.media-library', [
 	div('.body', [
 		fieldset([
 			legend('Samples'),
-			ul(state.samples.map(sample =>
-				li([
+			ul(state.mediaLibrary.samples.map((sample, i) =>
+				li({
+					on: {click: () => actions.sequencer.setSample(state.sequencer.channel, i)}
+				}, [
 					span(sample),
 					button('.right.fa.fa-play')
 				])

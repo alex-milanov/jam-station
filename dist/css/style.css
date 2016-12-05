@@ -2229,7 +2229,7 @@ input, label, body {
   display: block;
   background: #ccc;
   margin-bottom: 20px;
-  box-shadow: 0px 0px 5px #777; }
+  box-shadow: 0px 0px 3px #777; }
   #ui > header > * {
     margin: 0px;
     padding: 0px;
@@ -2335,7 +2335,7 @@ input, label, body {
   top: 60px;
   display: inline-block;
   background: #e0e0e0;
-  box-shadow: 0px 0px 5px #777;
+  box-shadow: 0px 0px 3px #777;
   min-width: 300px; }
   .media-library .header {
     cursor: pointer;
@@ -2349,7 +2349,7 @@ input, label, body {
       padding: 0px 4px;
       height: 24px;
       line-height: 24px;
-      font-size: 16px;
+      font-size: 14px;
       display: inline-block;
       float: left; }
     .media-library .header input, .media-library .header button {
@@ -2362,6 +2362,35 @@ input, label, body {
       color: #333;
       border-radius: 4px;
       background: #dfe; }
+      .media-library .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .media-library .header input[type=number]::-webkit-inner-spin-button, .media-library .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .media-library .header .cipher {
+      position: relative; }
+      .media-library .header .cipher input {
+        float: left; }
+      .media-library .header .cipher input, .media-library .header .cipher button {
+        height: 24px;
+        line-height: 24px;
+        box-sizing: border-box; }
+      .media-library .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .media-library .header .cipher .left, .media-library .header .cipher .right {
+        float: none; }
+      .media-library .header .cipher .left {
+        left: 0px; }
+      .media-library .header .cipher .right {
+        right: 0px; }
+      .media-library .header .cipher button:hover {
+        opacity: 0.7; }
     .media-library .header button {
       width: 30px;
       text-align: center;
@@ -2383,12 +2412,31 @@ input, label, body {
   .media-library .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #eee; }
+    border-top: 1px solid #eee;
+    font-size: 14px; }
     .media-library .body fieldset {
+      position: relative;
       padding: 10px;
       border: 0px solid #aaa;
       margin: 10px 0px;
       border-top-width: 1px; }
+      .media-library .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        height: 16px;
+        line-height: 16px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #e0e0e0;
+        color: #aaa;
+        text-align: center; }
+        .media-library .body fieldset .on-switch.on {
+          color: #dfe;
+          text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
+      .media-library .body fieldset div {
+        margin: 0px 0px 10px 0px; }
       .media-library .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
@@ -2440,7 +2488,7 @@ input, label, body {
   top: 60px;
   display: inline-block;
   background: #e0e0e0;
-  box-shadow: 0px 0px 5px #777;
+  box-shadow: 0px 0px 3px #777;
   min-width: 200px; }
   .instrument .header {
     cursor: pointer;
@@ -2454,7 +2502,7 @@ input, label, body {
       padding: 0px 4px;
       height: 24px;
       line-height: 24px;
-      font-size: 16px;
+      font-size: 14px;
       display: inline-block;
       float: left; }
     .instrument .header input, .instrument .header button {
@@ -2467,6 +2515,35 @@ input, label, body {
       color: #333;
       border-radius: 4px;
       background: #dfe; }
+      .instrument .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .instrument .header input[type=number]::-webkit-inner-spin-button, .instrument .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .instrument .header .cipher {
+      position: relative; }
+      .instrument .header .cipher input {
+        float: left; }
+      .instrument .header .cipher input, .instrument .header .cipher button {
+        height: 24px;
+        line-height: 24px;
+        box-sizing: border-box; }
+      .instrument .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .instrument .header .cipher .left, .instrument .header .cipher .right {
+        float: none; }
+      .instrument .header .cipher .left {
+        left: 0px; }
+      .instrument .header .cipher .right {
+        right: 0px; }
+      .instrument .header .cipher button:hover {
+        opacity: 0.7; }
     .instrument .header button {
       width: 30px;
       text-align: center;
@@ -2488,12 +2565,31 @@ input, label, body {
   .instrument .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #eee; }
+    border-top: 1px solid #eee;
+    font-size: 14px; }
     .instrument .body fieldset {
+      position: relative;
       padding: 10px;
       border: 0px solid #aaa;
       margin: 10px 0px;
       border-top-width: 1px; }
+      .instrument .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        height: 16px;
+        line-height: 16px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #e0e0e0;
+        color: #aaa;
+        text-align: center; }
+        .instrument .body fieldset .on-switch.on {
+          color: #dfe;
+          text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
+      .instrument .body fieldset div {
+        margin: 0px 0px 10px 0px; }
       .instrument .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
@@ -2503,12 +2599,6 @@ input, label, body {
     padding: 0px; }
     .instrument .body form label, .instrument .body form input[type=radio] {
       cursor: pointer; }
-    .instrument .body form fieldset {
-      position: relative; }
-      .instrument .body form fieldset .on-switch {
-        position: absolute;
-        top: 0px;
-        right: 10px; }
     .instrument .body form div {
       margin: 0px 0px 10px 0px; }
     .instrument .body form input[type=range] {
@@ -2539,7 +2629,7 @@ input, label, body {
   top: 60px;
   display: inline-block;
   background: #e0e0e0;
-  box-shadow: 0px 0px 5px #777; }
+  box-shadow: 0px 0px 3px #777; }
   .sequencer .header {
     cursor: pointer;
     margin: 0px;
@@ -2552,7 +2642,7 @@ input, label, body {
       padding: 0px 4px;
       height: 24px;
       line-height: 24px;
-      font-size: 16px;
+      font-size: 14px;
       display: inline-block;
       float: left; }
     .sequencer .header input, .sequencer .header button {
@@ -2565,6 +2655,35 @@ input, label, body {
       color: #333;
       border-radius: 4px;
       background: #dfe; }
+      .sequencer .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .sequencer .header input[type=number]::-webkit-inner-spin-button, .sequencer .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .sequencer .header .cipher {
+      position: relative; }
+      .sequencer .header .cipher input {
+        float: left; }
+      .sequencer .header .cipher input, .sequencer .header .cipher button {
+        height: 24px;
+        line-height: 24px;
+        box-sizing: border-box; }
+      .sequencer .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .sequencer .header .cipher .left, .sequencer .header .cipher .right {
+        float: none; }
+      .sequencer .header .cipher .left {
+        left: 0px; }
+      .sequencer .header .cipher .right {
+        right: 0px; }
+      .sequencer .header .cipher button:hover {
+        opacity: 0.7; }
     .sequencer .header button {
       width: 30px;
       text-align: center;
@@ -2586,88 +2705,138 @@ input, label, body {
   .sequencer .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #eee; }
+    border-top: 1px solid #eee;
+    font-size: 14px; }
     .sequencer .body fieldset {
+      position: relative;
       padding: 10px;
       border: 0px solid #aaa;
       margin: 10px 0px;
       border-top-width: 1px; }
+      .sequencer .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        height: 16px;
+        line-height: 16px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #e0e0e0;
+        color: #aaa;
+        text-align: center; }
+        .sequencer .body fieldset .on-switch.on {
+          color: #dfe;
+          text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
+      .sequencer .body fieldset div {
+        margin: 0px 0px 10px 0px; }
       .sequencer .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
         padding: 0px 5px; }
-  .sequencer .body .head {
-    margin: 2px;
-    padding: 0px;
-    padding-left: 114px;
-    height: 12px;
-    line-height: 12px; }
-    .sequencer .body .head .cell {
-      display: inline-block;
-      margin: 3px;
-      height: 6px;
-      line-height: 6px;
-      width: 16px;
+  .sequencer .body {
+    padding-right: 20px; }
+    .sequencer .body .head {
+      margin: 2px;
       padding: 0px;
-      border-radius: 4px;
-      border: 0px solid #333;
-      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
-      .sequencer .body .head .cell.tick {
-        background: #dfe; }
-  .sequencer .body .row {
-    margin: 2px;
-    padding: 0px;
-    height: 32px;
-    line-height: 32px;
-    clear: both; }
-    .sequencer .body .row > .bar {
-      height: 26px;
-      line-height: 26px;
-      margin: 3px;
+      padding-left: 114px;
+      height: 12px;
+      line-height: 12px; }
+      .sequencer .body .head .cell {
+        display: inline-block;
+        margin: 3px;
+        height: 6px;
+        line-height: 6px;
+        width: 16px;
+        padding: 0px;
+        border-radius: 4px;
+        border: 0px solid #333;
+        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
+        .sequencer .body .head .cell.tick {
+          background: #dfe; }
+    .sequencer .body .row {
+      margin: 2px;
       padding: 0px;
-      border-radius: 4px;
-      border: 0px solid #333;
-      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
-      display: inline-block;
-      cursor: pointer;
-      background: #eee;
-      transition: box-shadow .3s, font-size .3s, background .3s;
-      box-sizing: border-box;
-      float: left; }
-      .sequencer .body .row > .bar:hover {
+      height: 32px;
+      line-height: 32px;
+      clear: both; }
+      .sequencer .body .row > .bar {
+        height: 26px;
+        line-height: 26px;
+        margin: 3px;
+        padding: 0px;
+        border-radius: 4px;
+        border: 0px solid #333;
         box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
-        margin: 2px;
-        height: 28px;
-        line-height: 28px; }
-    .sequencer .body .row .instr {
-      height: 26px;
-      line-height: 26px;
-      margin: 3px 7px;
-      padding: 0px;
-      display: inline-block;
-      font-size: 12px;
-      width: 100px;
-      text-align: center;
-      float: left;
-      cursor: pointer;
-      background: #eaeaea;
-      border: 1px solid #aaa;
-      box-sizing: border-box;
-      box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
-      transition: background .3s, box-shadow .3s; }
-      .sequencer .body .row .instr:hover {
-        background: #dfe;
-        box-shadow: inset 0px 0px 10px #ccc; }
-    .sequencer .body .row .bar {
-      width: 16px; }
-      .sequencer .body .row .bar:hover {
-        width: 18px; }
-      .sequencer .body .row .bar:nth-child(2n-1) {
-        background: #f5f5f5; }
-      .sequencer .body .row .bar.on {
-        background: #c0cacf; }
-      .sequencer .body .row .bar.tick {
-        background: #dfe; }
+        display: inline-block;
+        cursor: pointer;
+        background: #eee;
+        transition: box-shadow .3s, font-size .3s, background .3s;
+        box-sizing: border-box;
+        float: left; }
+        .sequencer .body .row > .bar:hover {
+          box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
+          margin: 2px;
+          height: 28px;
+          line-height: 28px; }
+      .sequencer .body .row .delete-channel {
+        height: 26px;
+        line-height: 26px;
+        margin: 3px;
+        margin-right: -23px;
+        padding: 0px;
+        display: inline-block;
+        cursor: pointer;
+        color: #aaa; }
+        .sequencer .body .row .delete-channel:hover {
+          color: #c77; }
+      .sequencer .body .row .channel {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        height: 26px;
+        line-height: 26px;
+        margin: 3px 7px;
+        padding: 0px;
+        display: inline-block;
+        font-size: 12px;
+        width: 100px;
+        text-align: center;
+        float: left;
+        cursor: pointer;
+        background: #eaeaea;
+        border: 1px solid #aaa;
+        box-sizing: border-box;
+        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
+        transition: background .3s, box-shadow .3s; }
+        .sequencer .body .row .channel:hover, .sequencer .body .row .channel.on {
+          background: #dfe;
+          box-shadow: inset 0px 0px 10px #ccc; }
+      .sequencer .body .row .add-channel {
+        margin: 3px 7px;
+        height: 16px;
+        line-height: 16px;
+        width: 100px;
+        text-align: center;
+        height: 26px;
+        line-height: 26px;
+        transition: background .3s, box-shadow .3s;
+        cursor: pointer;
+        border: 1px solid #aaa; }
+        .sequencer .body .row .add-channel:hover {
+          background: #dfe;
+          box-shadow: inset 0px 0px 10px #ccc; }
+      .sequencer .body .row .bar {
+        width: 16px; }
+        .sequencer .body .row .bar:hover {
+          width: 18px; }
+        .sequencer .body .row .bar:nth-child(2n-1) {
+          background: #f5f5f5; }
+        .sequencer .body .row .bar.on {
+          background: #c0cacf; }
+        .sequencer .body .row .bar.tick {
+          background: #dfe; }
 
 .midi-map {
   position: absolute;
@@ -2675,8 +2844,8 @@ input, label, body {
   top: 60px;
   display: inline-block;
   background: #e0e0e0;
-  box-shadow: 0px 0px 5px #777;
-  min-width: 300px; }
+  box-shadow: 0px 0px 3px #777;
+  min-width: 250px; }
   .midi-map .header {
     cursor: pointer;
     margin: 0px;
@@ -2689,7 +2858,7 @@ input, label, body {
       padding: 0px 4px;
       height: 24px;
       line-height: 24px;
-      font-size: 16px;
+      font-size: 14px;
       display: inline-block;
       float: left; }
     .midi-map .header input, .midi-map .header button {
@@ -2702,6 +2871,35 @@ input, label, body {
       color: #333;
       border-radius: 4px;
       background: #dfe; }
+      .midi-map .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .midi-map .header input[type=number]::-webkit-inner-spin-button, .midi-map .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .midi-map .header .cipher {
+      position: relative; }
+      .midi-map .header .cipher input {
+        float: left; }
+      .midi-map .header .cipher input, .midi-map .header .cipher button {
+        height: 24px;
+        line-height: 24px;
+        box-sizing: border-box; }
+      .midi-map .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .midi-map .header .cipher .left, .midi-map .header .cipher .right {
+        float: none; }
+      .midi-map .header .cipher .left {
+        left: 0px; }
+      .midi-map .header .cipher .right {
+        right: 0px; }
+      .midi-map .header .cipher button:hover {
+        opacity: 0.7; }
     .midi-map .header button {
       width: 30px;
       text-align: center;
@@ -2723,12 +2921,31 @@ input, label, body {
   .midi-map .body {
     margin: 0px;
     padding: 0px;
-    border-top: 1px solid #eee; }
+    border-top: 1px solid #eee;
+    font-size: 14px; }
     .midi-map .body fieldset {
+      position: relative;
       padding: 10px;
       border: 0px solid #aaa;
       margin: 10px 0px;
       border-top-width: 1px; }
+      .midi-map .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        height: 16px;
+        line-height: 16px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #e0e0e0;
+        color: #aaa;
+        text-align: center; }
+        .midi-map .body fieldset .on-switch.on {
+          color: #dfe;
+          text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
+      .midi-map .body fieldset div {
+        margin: 0px 0px 10px 0px; }
       .midi-map .body fieldset legend {
         font-weight: bold;
         font-size: 14px;

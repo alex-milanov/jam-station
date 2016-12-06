@@ -19,6 +19,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	div('.body', [
 		form([
 			fieldset([
+				// legend([span('.on', 'VCO1'), span('VCO2')]),
 				legend('VCO'),
 				div(types.reduce((list, type) =>
 					list.concat([

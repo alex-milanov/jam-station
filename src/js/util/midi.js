@@ -42,8 +42,11 @@ const parseMidiMsg = event => {
 			default:
 				break;
 		}
-		return;
 	}
+
+	return {
+		state: false
+	};
 };
 //
 // const hookUpMIDIInput = midiAccess => {

@@ -2336,7 +2336,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 300px; }
+  min-width: 270px; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2431,9 +2431,11 @@ input, label, body {
         outline: none;
         background: #e0e0e0;
         color: #aaa;
-        text-align: center; }
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
         .media-library .body fieldset .on-switch.on {
           color: #dfe;
+          font-size: 12px;
           text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
       .media-library .body fieldset div {
         margin: 0px 0px 10px 0px; }
@@ -2441,6 +2443,21 @@ input, label, body {
         font-weight: bold;
         font-size: 14px;
         padding: 0px 5px; }
+        .media-library .body fieldset legend span {
+          color: #999;
+          height: 16px;
+          line-height: 16px; }
+          .media-library .body fieldset legend span:not(:last-child)::after {
+            content: '';
+            border-top: 1px solid #999;
+            display: inline-block;
+            height: 1px;
+            width: 7px;
+            margin: 0px 3px;
+            margin-top: -2px;
+            vertical-align: middle; }
+          .media-library .body fieldset legend span.on {
+            color: #333; }
   .media-library .body ul {
     margin: 0px;
     padding: 0px;
@@ -2489,7 +2506,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 200px; }
+  min-width: 230px; }
   .instrument .header {
     cursor: pointer;
     margin: 0px;
@@ -2584,9 +2601,11 @@ input, label, body {
         outline: none;
         background: #e0e0e0;
         color: #aaa;
-        text-align: center; }
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
         .instrument .body fieldset .on-switch.on {
           color: #dfe;
+          font-size: 12px;
           text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
       .instrument .body fieldset div {
         margin: 0px 0px 10px 0px; }
@@ -2594,6 +2613,21 @@ input, label, body {
         font-weight: bold;
         font-size: 14px;
         padding: 0px 5px; }
+        .instrument .body fieldset legend span {
+          color: #999;
+          height: 16px;
+          line-height: 16px; }
+          .instrument .body fieldset legend span:not(:last-child)::after {
+            content: '';
+            border-top: 1px solid #999;
+            display: inline-block;
+            height: 1px;
+            width: 7px;
+            margin: 0px 3px;
+            margin-top: -2px;
+            vertical-align: middle; }
+          .instrument .body fieldset legend span.on {
+            color: #333; }
   .instrument .body form {
     margin: 0px;
     padding: 0px; }
@@ -2724,9 +2758,11 @@ input, label, body {
         outline: none;
         background: #e0e0e0;
         color: #aaa;
-        text-align: center; }
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
         .sequencer .body fieldset .on-switch.on {
           color: #dfe;
+          font-size: 12px;
           text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
       .sequencer .body fieldset div {
         margin: 0px 0px 10px 0px; }
@@ -2734,6 +2770,21 @@ input, label, body {
         font-weight: bold;
         font-size: 14px;
         padding: 0px 5px; }
+        .sequencer .body fieldset legend span {
+          color: #999;
+          height: 16px;
+          line-height: 16px; }
+          .sequencer .body fieldset legend span:not(:last-child)::after {
+            content: '';
+            border-top: 1px solid #999;
+            display: inline-block;
+            height: 1px;
+            width: 7px;
+            margin: 0px 3px;
+            margin-top: -2px;
+            vertical-align: middle; }
+          .sequencer .body fieldset legend span.on {
+            color: #333; }
   .sequencer .body {
     padding-right: 20px; }
     .sequencer .body .head {
@@ -2940,9 +2991,11 @@ input, label, body {
         outline: none;
         background: #e0e0e0;
         color: #aaa;
-        text-align: center; }
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
         .midi-map .body fieldset .on-switch.on {
           color: #dfe;
+          font-size: 12px;
           text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
       .midi-map .body fieldset div {
         margin: 0px 0px 10px 0px; }
@@ -2950,3 +3003,18 @@ input, label, body {
         font-weight: bold;
         font-size: 14px;
         padding: 0px 5px; }
+        .midi-map .body fieldset legend span {
+          color: #999;
+          height: 16px;
+          line-height: 16px; }
+          .midi-map .body fieldset legend span:not(:last-child)::after {
+            content: '';
+            border-top: 1px solid #999;
+            display: inline-block;
+            height: 1px;
+            width: 7px;
+            margin: 0px 3px;
+            margin-top: -2px;
+            vertical-align: middle; }
+          .midi-map .body fieldset legend span.on {
+            color: #333; }

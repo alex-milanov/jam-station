@@ -55,7 +55,7 @@ const hook = ({state$, actions}) => {
 					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
 							let inst = kit[state.sequencer.channels[k]].clone();
-							inst.trigger(time);
+							inst.trigger(state, time);
 							buffer.push(inst);
 						}
 					});

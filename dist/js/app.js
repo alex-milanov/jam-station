@@ -13560,7 +13560,8 @@ module.exports = {
 		measure: '4/4',
 		beatLength: 16,
 		playing: false,
-		tickIndex: -1
+		tickIndex: -1,
+		volume: 0.4
 	},
 	play,
 	stop,
@@ -13616,17 +13617,42 @@ const basicSynth = new BasicSynth(studio.context, 'C1');
 
 let voices = {};
 
+let midiMap = {
+	22: ['studio', 'bpm', 60, 200, 0],
+	23: ['studio', 'volume'],
+	24: ['instrument', 'eg', 'attack'],
+	25: ['instrument', 'eg', 'decay'],
+	26: ['instrument', 'eg', 'sustain'],
+	27: ['instrument', 'eg', 'release']
+};
+
 midi.access$.subscribe(actions.midiMap.connect);
 midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		console.log('msg', data, midiMsg);
-		if (data.msg && midiMsg.state === 'keyDown') {
+		if (data.msg && midiMsg.state === 'noteOn') {
 			voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
-			voices[midiMsg.note.pitch].noteon(state.instrument, midiMsg.note.pitch, midiMsg.velocity);
-		} else if (data.msg && midiMsg.state === 'keyUp' && voices[midiMsg.note.pitch]) {
-			voices[midiMsg.note.pitch].noteoff(state.instrument, midiMsg.note.pitch);
+			voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
+		} else if (data.msg && midiMsg.state === 'noteOff' && voices[midiMsg.note.pitch]) {
+			voices[midiMsg.note.pitch].noteoff(state, midiMsg.note.pitch);
+		} else if (data.msg && midiMsg.state === 'controller') {
+			let mmap = midiMap[midiMsg.controller];
+			if (mmap[0] === 'instrument') {
+				let value = parseFloat(
+					(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
+				).toFixed(mmap[5] || 3);
+				if (mmap[5] === 0) value = parseInt(value, 10);
+				actions.instrument.updateProp(mmap[1], mmap[2], value);
+			}
+			if (mmap[0] === 'studio') {
+				let value = parseFloat(
+					(mmap[2] || 0) + midiMsg.value * (mmap[3] || 1) - midiMsg.value * (mmap[2] || 0)
+				).toFixed(mmap[4] || 3);
+				if (mmap[4] === 0) value = parseInt(value, 10);
+				actions.studio.change(mmap[1], value);
+			}
 		}
 	});
 
@@ -13647,11 +13673,11 @@ function BasicSynth(context, note) {
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
 	this.output = this.context.createGain();
-	this.vco.connect(this.vcf);
+	// this.vco.connect(this.output);
 	this.lfo.connect(this.lfoGain);
 	this.lfoGain.connect(this.vcf.frequency);
 	// this.lfoGain.connect(this.vco.frequency);
-	this.vcf.connect(this.output);
+	// this.vcf.connect(this.output);
 	this.output.gain.value = 0;
 	this.vco.type = 'sawtooth';
 	this.lfo.type = 'sawtooth';
@@ -13698,20 +13724,22 @@ BasicSynth.prototype.setup = function(note) {
 	*/
 };
 
-BasicSynth.prototype.noteon = function(props, note, velocity) {
+BasicSynth.prototype.noteon = function(state, note, velocity) {
 	const now = this.context.currentTime;
 	const time = now + 0.0001;
 
 	note = note || this.note || 'C';
 	velocity = velocity || 1;
 
-	console.log(time, props, velocity);
+	console.log(time, state.instrument, velocity);
 
 	// this.setup(note);
-	if (props.vco.type)
-		this.vco.type = props.vco.type;
-	if (props.lfo.type)
-		this.lfo.type = props.lfo.type;
+	if (state.instrument.vco.type)
+		this.vco.type = state.instrument.vco.type;
+	if (state.instrument.lfo.type)
+		this.lfo.type = state.instrument.lfo.type;
+	if (state.studio.volume)
+		this.volume.gain.value = state.studio.volume;
 
 	var frequency = this.noteToFrequency(note);
 	console.log(frequency);
@@ -13721,26 +13749,30 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 
 	this.vco.frequency.setValueAtTime(frequency, now);
 
-	if (props.lfo.on) {
-		this.lfo.frequency.value = props.lfo.frequency || 0;
-		this.lfoGain.gain.value = props.lfo.gain || 0;
+	if (state.instrument.lfo.on) {
+		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
+		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
 	}
 
-	if (props.vcf.on) {
-		this.vcf.frequency.value = props.vcf.cutoff;
-		this.vcf.Q.value = props.vcf.resonance;
-		// this.vcf.gain.setValueAtTime(props.vcf.gain, now);
+	if (state.instrument.vcf.on) {
+		this.vco.connect(this.vcf);
+		this.vcf.connect(this.output);
+		this.vcf.frequency.value = state.instrument.vcf.cutoff;
+		this.vcf.Q.value = state.instrument.vcf.resonance;
+		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
+	} else {
+		this.vco.connect(this.output);
 	}
 	// attack
-	if (props.eg.attack > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, props.eg.attack);
+	if (state.instrument.eg.attack > 0)
+		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
 	else
 		this.output.gain.setValueAtTime(velocity, time);
 
 	// decay
-	if (props.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, props.eg.sustain * velocity]),
-			time + props.eg.attack, props.eg.decay);
+	if (state.instrument.eg.decay > 0)
+		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
+			time + state.instrument.eg.attack, state.instrument.eg.decay);
 	// sustain
 	// relase
 
@@ -13755,22 +13787,22 @@ BasicSynth.prototype.noteon = function(props, note, velocity) {
 	*/
 };
 
-BasicSynth.prototype.noteoff = function(props, note) {
+BasicSynth.prototype.noteoff = function(state, note) {
 	const time = this.context.currentTime + 0.00001;
 	var frequency = this.noteToFrequency(note);
-	console.log(props.eg);
+	console.log(state.instrument.eg);
 
 	this.output.gain.cancelScheduledValues(0);
 	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
-		time, props.eg.release > 0 && props.eg.release || 0.00001);
+		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
 
-	this.vco.stop(time + (props.eg.release > 0 && props.eg.release || 0.00001));
+	this.vco.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
 };
 
-BasicSynth.prototype.play = function(props, note) {
+BasicSynth.prototype.play = function(state, note) {
 	// note = note || this.note || 'C';
 	var now = this.context.currentTime;
-	this.trigger(now, props, note);
+	this.trigger(now, state.instrument, note);
 };
 
 BasicSynth.prototype.clone = function(note) {
@@ -13808,15 +13840,19 @@ function Sampler(context, file, buffer) {
 	this.volume.gain.value = 0.4;
 }
 
-Sampler.prototype.setup = function() {
+Sampler.prototype.setup = function(state) {
 	this.source = this.context.createBufferSource();
 	this.source.buffer = this.buffer;
 	this.source.connect(this.volume);
 	this.volume.connect(this.context.destination);
 };
 
-Sampler.prototype.trigger = function(start, end) {
+Sampler.prototype.trigger = function(state, start, end) {
 	this.setup();
+
+	if (state.studio.volume)
+		this.volume.gain.value = state.studio.volume;
+
 	this.source.start(start);
 	if (end) this.source.stop(end);
 };
@@ -13953,7 +13989,7 @@ const hook = ({state$, actions}) => {
 					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
 							let inst = kit[state.sequencer.channels[k]].clone();
-							inst.trigger(time);
+							inst.trigger(state, time);
 							buffer.push(inst);
 						}
 					});
@@ -14029,7 +14065,11 @@ module.exports = ({state, actions}) => header([
 	ul('.right', [
 		li([
 			a([i('.fa.fa-volume-down')]),
-			input('[type="range"]'),
+			input('[type="range"]', {
+				attrs: {min: 0, max: 1, step: 0.005},
+				props: {value: state.studio.volume},
+				on: {change: ev => actions.studio.change('volume', parseFloat(ev.target.value))}
+			}),
 			a([i('.fa.fa-volume-up')])
 		]),
 		li([a([i('.fa.fa-save')])]),
@@ -14371,36 +14411,52 @@ const numberToNote = number => {
 const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
-	if (event.data[1]) {
-		var number = event.data[1];
-		var note = numberToNote(number);
+	const status = event.data[0] & 0xf0;
+	const binary = status.toString(2).slice(0, 4);
+	const channel = event.data[0] - status + 1;
+	let msg = {};
 
-		switch (event.data[0] & 0xf0) {
-			case 0x90:
-				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
-					return {
-						state: 'keyDown',
-						note,
-						velocity: parseFloat((event.data[2] / 127).toFixed(2))
-					};
-					// scope.onKeyDown(note);
+	switch (binary) {
+		// noteoff
+		case "1000":
+			msg = {
+				state: 'noteOff',
+				note: numberToNote(event.data[1])
+			};
+			break;
+		// noteon
+		case "1001":
+			msg = (event.data[2] !== 0) // if velocity != 0, this is a note-on message
+				? {
+					state: 'noteOn',
+					note: numberToNote(event.data[1]),
+					velocity: parseFloat((event.data[2] / 127).toFixed(2))
 				}
-				break;
-				// if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
-			case 0x80:
-				// scope.onKeyUp(note);
-				return {
-					state: 'keyUp',
-					note
+				: { // if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
+					state: 'noteOff',
+					note: numberToNote(event.data[1])
 				};
-			default:
-				break;
-		}
+			break;
+		case "1011":
+			msg = {
+				state: "controller",
+				controller: event.data[1],
+				value: parseFloat((event.data[2] / 127).toFixed(2))
+			};
+			break;
+		default:
+			msg = {
+				state: false
+			};
+			break;
 	}
 
-	return {
-		state: false
-	};
+	return Object.assign({}, msg, {
+		status,
+		channel,
+		binary,
+		data: event.data
+	});
 };
 //
 // const hookUpMIDIInput = midiAccess => {

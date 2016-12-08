@@ -25,15 +25,19 @@ function Sampler(context, file, buffer) {
 	this.volume.gain.value = 0.4;
 }
 
-Sampler.prototype.setup = function() {
+Sampler.prototype.setup = function(state) {
 	this.source = this.context.createBufferSource();
 	this.source.buffer = this.buffer;
 	this.source.connect(this.volume);
 	this.volume.connect(this.context.destination);
 };
 
-Sampler.prototype.trigger = function(start, end) {
+Sampler.prototype.trigger = function(state, start, end) {
 	this.setup();
+
+	if (state.studio.volume)
+		this.volume.gain.value = state.studio.volume;
+
 	this.source.start(start);
 	if (end) this.source.stop(end);
 };

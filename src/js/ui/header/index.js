@@ -16,7 +16,11 @@ module.exports = ({state, actions}) => header([
 	ul('.right', [
 		li([
 			a([i('.fa.fa-volume-down')]),
-			input('[type="range"]'),
+			input('[type="range"]', {
+				attrs: {min: 0, max: 1, step: 0.005},
+				props: {value: state.studio.volume},
+				on: {change: ev => actions.studio.change('volume', parseFloat(ev.target.value))}
+			}),
 			a([i('.fa.fa-volume-up')])
 		]),
 		li([a([i('.fa.fa-save')])]),

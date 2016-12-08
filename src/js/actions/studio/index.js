@@ -37,7 +37,8 @@ module.exports = {
 		measure: '4/4',
 		beatLength: 16,
 		playing: false,
-		tickIndex: -1
+		tickIndex: -1,
+		volume: 0.4
 	},
 	play,
 	stop,

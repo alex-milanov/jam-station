@@ -17,39 +17,52 @@ const numberToNote = number => {
 const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
-	if (event.data[1]) {
-		var number = event.data[1];
-		var note = numberToNote(number);
+	const status = event.data[0] & 0xf0;
+	const binary = status.toString(2).slice(0, 4);
+	const channel = event.data[0] - status + 1;
+	let msg = {};
 
-		switch (event.data[0] & 0xf0) {
-			case 0x90:
-				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
-					return {
-						state: 'noteOn',
-						note,
-						velocity: parseFloat((event.data[2] / 127).toFixed(2))
-					};
-					// scope.onKeyDown(note);
+	switch (binary) {
+		// noteoff
+		case "1000":
+			msg = {
+				state: 'noteOff',
+				note: numberToNote(event.data[1])
+			};
+			break;
+		// noteon
+		case "1001":
+			msg = (event.data[2] !== 0) // if velocity != 0, this is a note-on message
+				? {
+					state: 'noteOn',
+					note: numberToNote(event.data[1]),
+					velocity: parseFloat((event.data[2] / 127).toFixed(2))
 				}
-				return {
-					state: 'nodeOff',
-					note
-				};
-				// if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
-			case 0x80:
-				// scope.onKeyUp(note);
-				return {
+				: { // if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
 					state: 'noteOff',
-					note
+					note: numberToNote(event.data[1])
 				};
-			default:
-				break;
-		}
+			break;
+		case "1011":
+			msg = {
+				state: "controller",
+				controller: event.data[1],
+				value: parseFloat((event.data[2] / 127).toFixed(2))
+			};
+			break;
+		default:
+			msg = {
+				state: false
+			};
+			break;
 	}
 
-	return {
-		state: false
-	};
+	return Object.assign({}, msg, {
+		status,
+		channel,
+		binary,
+		data: event.data
+	});
 };
 //
 // const hookUpMIDIInput = midiAccess => {

@@ -21,8 +21,13 @@ window.actions = actions;
 // reduce actions to state
 const state$ = actions.stream
 	.scan((state, change) => change(state), actions.initial)
-	.map(state => (console.log(state), state))
 	.share();
+
+state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
+	// .map(state => (console.log(state), state))
+	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
+	.map(({state}) => state)
+	.subscribe(state => (console.log(state), state));
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));

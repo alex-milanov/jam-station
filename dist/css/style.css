@@ -2857,13 +2857,21 @@ input, label, body {
         float: left;
         cursor: pointer;
         background: #eaeaea;
-        border: 1px solid #aaa;
+        border: 1px solid #afafaf;
         box-sizing: border-box;
         box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
         transition: background .3s, box-shadow .3s; }
-        .sequencer .body .row .channel:hover, .sequencer .body .row .channel.on {
-          background: #dfe;
-          box-shadow: inset 0px 0px 10px #ccc; }
+        .sequencer .body .row .channel:hover {
+          background: #dfe; }
+        .sequencer .body .row .channel.on {
+          background: #d8ffeb;
+          border: 1px solid #bbb;
+          box-shadow: inset 0px 0px 7px #bbb; }
+        .sequencer .body .row .channel:active {
+          background: #d8ffeb;
+          box-shadow: inset 0px 0px 10px #bbb;
+          line-height: 24px;
+          padding-top: 2px; }
       .sequencer .body .row .add-channel {
         margin: 3px 7px;
         height: 16px;
@@ -2874,10 +2882,15 @@ input, label, body {
         line-height: 26px;
         transition: background .3s, box-shadow .3s;
         cursor: pointer;
-        border: 1px solid #aaa; }
+        border: 1px solid #ccc;
+        background: #ddd; }
         .sequencer .body .row .add-channel:hover {
           background: #dfe;
           box-shadow: inset 0px 0px 10px #ccc; }
+        .sequencer .body .row .add-channel:active {
+          box-shadow: inset 0px 0px 10px #ccc;
+          line-height: 24px;
+          padding-top: 2px; }
       .sequencer .body .row .bar {
         width: 16px; }
         .sequencer .body .row .bar:hover {

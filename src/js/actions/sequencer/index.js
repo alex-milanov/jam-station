@@ -11,13 +11,13 @@ const {measureToBeatLength} = require('../../util/math');
 const stream = new Subject();
 
 const toggle = (bar, r, c) => {
-	console.log(bar, r, c);
+	// console.log(bar, r, c);
 	stream.onNext(state => {
 		let pattern = state.sequencer.pattern.slice();
 		pattern[bar] = pattern[bar] || [];
 		pattern[bar][r] = pattern[bar][r] || [];
 		pattern[bar][r][c] = pattern[bar][r][c] ? 0 : 1;
-		console.log(pattern, pattern[bar][r][c]);
+		// console.log(pattern, pattern[bar][r][c]);
 		return obj.patch(state, 'sequencer', {pattern});
 	});
 };

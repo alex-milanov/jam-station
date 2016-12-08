@@ -39,14 +39,14 @@ const hook = ({state$, actions}) => {
 	let buffer = [];
 
 	const clearBuffer = () => {
-		console.log(buffer);
+		// console.log(buffer);
 		buffer.forEach(inst => inst.stop());
 		buffer = [];
 	};
 
 	playTime.withLatestFrom(state$, (time, state) => ({time, state}))
 		.subscribe(({state, time}) => {
-			console.log(time);
+			// console.log(time);
 			if (state.studio.tickIndex === 0 || time.value === 0) {
 				clearBuffer();
 				let now = context.currentTime;

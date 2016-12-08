@@ -13444,13 +13444,13 @@ const {measureToBeatLength} = require('../../util/math');
 const stream = new Subject();
 
 const toggle = (bar, r, c) => {
-	console.log(bar, r, c);
+	// console.log(bar, r, c);
 	stream.onNext(state => {
 		let pattern = state.sequencer.pattern.slice();
 		pattern[bar] = pattern[bar] || [];
 		pattern[bar][r] = pattern[bar][r] || [];
 		pattern[bar][r][c] = pattern[bar][r][c] ? 0 : 1;
-		console.log(pattern, pattern[bar][r][c]);
+		// console.log(pattern, pattern[bar][r][c]);
 		return obj.patch(state, 'sequencer', {pattern});
 	});
 };
@@ -13592,8 +13592,13 @@ window.actions = actions;
 // reduce actions to state
 const state$ = actions.stream
 	.scan((state, change) => change(state), actions.initial)
-	.map(state => (console.log(state), state))
 	.share();
+
+state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
+	// .map(state => (console.log(state), state))
+	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
+	.map(({state}) => state)
+	.subscribe(state => (console.log(state), state));
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
@@ -13932,14 +13937,14 @@ const hook = ({state$, actions}) => {
 	let buffer = [];
 
 	const clearBuffer = () => {
-		console.log(buffer);
+		// console.log(buffer);
 		buffer.forEach(inst => inst.stop());
 		buffer = [];
 	};
 
 	playTime.withLatestFrom(state$, (time, state) => ({time, state}))
 		.subscribe(({state, time}) => {
-			console.log(time);
+			// console.log(time);
 			if (state.studio.tickIndex === 0 || time.value === 0) {
 				clearBuffer();
 				let now = context.currentTime;

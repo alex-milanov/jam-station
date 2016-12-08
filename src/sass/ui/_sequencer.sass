@@ -70,13 +70,22 @@
 				float: left
 				cursor: pointer
 				background: #eaeaea
-				border: 1px solid #aaa
+				border: 1px solid #afafaf
 				box-sizing: border-box
 				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
 				transition: background .3s, box-shadow .3s
-				&:hover, &.on
+				&:hover
+					// background: #eafaf5
 					background: $jam-station-color-light
-					box-shadow: inset 0px 0px 10px #ccc
+				&.on
+					background: darken($jam-station-color-light, 1%)
+					border: 1px solid #bbb
+					box-shadow: inset 0px 0px 7px #bbb
+				&:active
+					background: darken($jam-station-color-light, 1%)
+					box-shadow: inset 0px 0px 10px #bbb
+					line-height: 24px
+					padding-top: 2px
 			.add-channel
 				margin: 3px 7px
 				height: 16px
@@ -87,10 +96,15 @@
 				line-height: 26px
 				transition: background .3s, box-shadow .3s
 				cursor: pointer
-				border: 1px solid #aaa
+				border: 1px solid #ccc
+				background: #ddd
 				&:hover
 					background: $jam-station-color-light
 					box-shadow: inset 0px 0px 10px #ccc
+				&:active
+					box-shadow: inset 0px 0px 10px #ccc
+					line-height: 24px
+					padding-top: 2px
 			.bar
 				width: 16px
 				&:hover

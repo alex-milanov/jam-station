@@ -25,18 +25,21 @@ const parseMidiMsg = event => {
 			case 0x90:
 				if (event.data[2] !== 0) {	// if velocity != 0, this is a note-on message
 					return {
-						state: 'keyDown',
+						state: 'noteOn',
 						note,
 						velocity: parseFloat((event.data[2] / 127).toFixed(2))
 					};
 					// scope.onKeyDown(note);
 				}
-				break;
+				return {
+					state: 'nodeOff',
+					note
+				};
 				// if velocity == 0, fall thru: it's a note-off.	MIDI's weird, ya'll.
 			case 0x80:
 				// scope.onKeyUp(note);
 				return {
-					state: 'keyUp',
+					state: 'noteOff',
 					note
 				};
 			default:

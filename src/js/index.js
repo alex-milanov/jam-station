@@ -51,10 +51,10 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		console.log('msg', data, midiMsg);
-		if (data.msg && midiMsg.state === 'keyDown') {
+		if (data.msg && midiMsg.state === 'noteOn') {
 			voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
 			voices[midiMsg.note.pitch].noteon(state.instrument, midiMsg.note.pitch, midiMsg.velocity);
-		} else if (data.msg && midiMsg.state === 'keyUp' && voices[midiMsg.note.pitch]) {
+		} else if (data.msg && midiMsg.state === 'noteOff' && voices[midiMsg.note.pitch]) {
 			voices[midiMsg.note.pitch].noteoff(state.instrument, midiMsg.note.pitch);
 		}
 	});

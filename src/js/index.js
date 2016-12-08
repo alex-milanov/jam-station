@@ -71,14 +71,14 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 				let value = parseFloat(
 					(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
 				).toFixed(mmap[5] || 3);
-				if (mmap[5] === 0) value = parseInt(value, 10);
+				value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
 				actions.instrument.updateProp(mmap[1], mmap[2], value);
 			}
 			if (mmap[0] === 'studio') {
 				let value = parseFloat(
 					(mmap[2] || 0) + midiMsg.value * (mmap[3] || 1) - midiMsg.value * (mmap[2] || 0)
 				).toFixed(mmap[4] || 3);
-				if (mmap[4] === 0) value = parseInt(value, 10);
+				value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
 				actions.studio.change(mmap[1], value);
 			}
 		}

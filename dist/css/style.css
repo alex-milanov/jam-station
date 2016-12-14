@@ -3049,3 +3049,171 @@ input, label, body {
             vertical-align: middle; }
           .midi-map .body fieldset legend span.on {
             color: #333; }
+
+.midi-keyboard {
+  position: absolute;
+  left: 560px;
+  top: 340px;
+  display: inline-block;
+  background: #e0e0e0;
+  box-shadow: 0px 0px 3px #777;
+  min-width: 550px; }
+  .midi-keyboard .header {
+    cursor: pointer;
+    margin: 0px;
+    height: 38px;
+    line-height: 34px;
+    border-bottom: 1px solid #aaa;
+    background: #eaeaea; }
+    .midi-keyboard .header > * {
+      margin: 7px 4px;
+      padding: 0px 4px;
+      height: 24px;
+      line-height: 24px;
+      font-size: 14px;
+      display: inline-block;
+      float: left; }
+    .midi-keyboard .header input, .midi-keyboard .header button {
+      outline: none;
+      text-align: center;
+      border: 0px solid #333;
+      background: inherit; }
+    .midi-keyboard .header input {
+      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+      color: #333;
+      border-radius: 4px;
+      background: #dfe; }
+      .midi-keyboard .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .midi-keyboard .header input[type=number]::-webkit-inner-spin-button, .midi-keyboard .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .midi-keyboard .header .cipher {
+      position: relative; }
+      .midi-keyboard .header .cipher input {
+        float: left; }
+      .midi-keyboard .header .cipher input, .midi-keyboard .header .cipher button {
+        height: 24px;
+        line-height: 24px;
+        box-sizing: border-box; }
+      .midi-keyboard .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .midi-keyboard .header .cipher .left, .midi-keyboard .header .cipher .right {
+        float: none; }
+      .midi-keyboard .header .cipher .left {
+        left: 0px; }
+      .midi-keyboard .header .cipher .right {
+        right: 0px; }
+      .midi-keyboard .header .cipher button:hover {
+        opacity: 0.7; }
+    .midi-keyboard .header button {
+      width: 30px;
+      text-align: center;
+      padding: 0px;
+      cursor: pointer;
+      transition: box-shadow .5s, text-shadow .5s;
+      outline: none;
+      border-radius: 4px; }
+      .midi-keyboard .header button.on {
+        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        background: #dfe; }
+      .midi-keyboard .header button:hover {
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        outline: none; }
+      .midi-keyboard .header button:active, .midi-keyboard .header button:focus, .midi-keyboard .header button::-moz-focus-inner {
+        outline: none;
+        border-image: none;
+        border: 0px; }
+  .midi-keyboard .body {
+    margin: 0px;
+    padding: 0px;
+    border-top: 1px solid #eee;
+    font-size: 14px; }
+    .midi-keyboard .body fieldset {
+      position: relative;
+      padding: 10px;
+      border: 0px solid #aaa;
+      margin: 10px 0px;
+      border-top-width: 1px; }
+      .midi-keyboard .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        height: 16px;
+        line-height: 16px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #e0e0e0;
+        color: #aaa;
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
+        .midi-keyboard .body fieldset .on-switch.on {
+          color: #dfe;
+          font-size: 12px;
+          text-shadow: 0px 0px 2px rgba(33, 33, 33, 0.7); }
+      .midi-keyboard .body fieldset div {
+        margin: 0px 0px 10px 0px; }
+      .midi-keyboard .body fieldset legend {
+        font-weight: bold;
+        font-size: 14px;
+        padding: 0px 5px; }
+        .midi-keyboard .body fieldset legend span {
+          color: #999;
+          height: 16px;
+          line-height: 16px; }
+          .midi-keyboard .body fieldset legend span:not(:last-child)::after {
+            content: '';
+            border-top: 1px solid #999;
+            display: inline-block;
+            height: 1px;
+            width: 7px;
+            margin: 0px 3px;
+            margin-top: -2px;
+            vertical-align: middle; }
+          .midi-keyboard .body fieldset legend span.on {
+            color: #333; }
+  .midi-keyboard .body .keys {
+    height: 100px;
+    vertical-align: top; }
+    .midi-keyboard .body .keys > * {
+      display: inline-block;
+      vertical-align: top;
+      border: 1px solid #777;
+      border-top: 0px;
+      box-sizing: border-box;
+      float: left;
+      position: relative;
+      cursor: pointer; }
+      .midi-keyboard .body .keys > * > span {
+        position: absolute;
+        bottom: 2px;
+        width: 100%;
+        text-align: center; }
+    .midi-keyboard .body .keys .white {
+      width: 3.57%;
+      height: 100%;
+      background: #f5faff;
+      color: #black;
+      z-index: 0; }
+      .midi-keyboard .body .keys .white:hover {
+        background: #e5eaef; }
+    .midi-keyboard .body .keys .black {
+      width: 2%;
+      height: 67%;
+      background: black;
+      color: white;
+      margin: 0px;
+      z-index: 99; }
+      .midi-keyboard .body .keys .black:not(:first-child) {
+        margin-left: -1%; }
+      .midi-keyboard .body .keys .black:hover {
+        background: #111; }
+      .midi-keyboard .body .keys .black + .white {
+        margin-left: -1%; }

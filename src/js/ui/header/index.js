@@ -8,7 +8,8 @@ module.exports = ({state, actions}) => header([
 		li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
 		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, 'Instrument')]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, 'Sequencer')]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')])
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')]),
+		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, 'MIDI Keyboard')])
 	]),
 	h1([
 		img('[src="assets/logo.png"]'),

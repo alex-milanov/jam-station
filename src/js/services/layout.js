@@ -9,11 +9,37 @@ const refresh = ({state, actions}) => {
 	const ui = document.querySelector('#ui');
 	const list = arr.fromList(ui.children);
 
-	list.forEach((el, i) => {
+	list.filter(el => el.className !== 'midi-keyboard').forEach((el, i) => {
 		if (i > 0)
 			el.style.left = list.filter((el, k) => k < i && k > 0)
 				.reduce((w, el) => w + el.offsetWidth + 20, 0) + 20 + 'px';
 	});
+
+	list.filter(el => el.className === 'midi-keyboard')
+		.forEach(el => {
+			const sequencer = document.querySelector('.sequencer');
+			if (sequencer)
+				el.style.left = sequencer.style.left;
+			else
+				el.style.left = '50%';
+
+			const keys = arr.fromList(el.querySelector('.keys').children);
+			console.log(keys);
+
+			const whiteKeysLength = keys.filter(key => key.className === 'white').length;
+
+			keys.forEach((key, i) => {
+				if (key.className === "white") {
+					key.style.width = (100 / whiteKeysLength) + '%';
+					if (i > 0 && keys[i - 1].className === 'black')
+						key.style.marginLeft = -(80 / whiteKeysLength / 2) + '%';
+				} else {
+					key.style.width = (80 / whiteKeysLength) + '%';
+					if (i > 0)
+						key.style.marginLeft = -(80 / whiteKeysLength / 2) + '%';
+				}
+			});
+		});
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
 };
 

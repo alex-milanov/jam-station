@@ -21,6 +21,7 @@ const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor
 const initial = {
 	ui: {
 		mediaLibrary: true,
+		patches: true,
 		instrument: true,
 		sequencer: true,
 		midiMap: true
@@ -36,6 +37,7 @@ module.exports = {
 	toggleUI,
 	studio,
 	instrument,
+	mediaLibrary,
 	sequencer,
 	midiMap,
 	initial: Object.assign({}, initial, {

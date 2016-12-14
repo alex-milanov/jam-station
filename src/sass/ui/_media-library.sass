@@ -2,29 +2,50 @@
 	+editor(20px, 60px)
 	min-width: 270px
 	.body
+		display: relative
+		fieldset > ul
+			margin: 0px -10px
 		ul
-			+no-margin-padding
 			list-style: none
+			padding: 0px
 			border-top: 1px solid #bbb
 			border-bottom: 1px solid #bbb
-			margin: 0px -10px
 			li
-				+header-height(24px)
-				font-size: 12px
-				display: block
-				padding: 0px 10px
-				background: #eaeaea
-				transition: background .7s, box-shadow .7s
-				cursor: pointer
+				position: relative
+				ul
+					display: none
+					border-bottom: 0px
+				&.expanded ul
+					display: block
+				li
+					&:last-child
+						border-bottom: 0px
+					&:first-child
+						border-top: 0px
+					> span
+						padding-left: 10px
+				> span
+					i
+						font-size: 10px
+					padding: 0px 5px
+					line-height: 24px
+					font-size: 12px
+					display: block
+					background: #eaeaea
+					transition: background .7s, box-shadow .7s
+					cursor: pointer
+					&:hover
+						background: #dfe
+						box-shadow: inset 0px 0px 7px #ccc
 				&:not(:first-child)
 					border-top: 1px solid #ccc
-				&:hover
-					background: #dfe
-					box-shadow: inset 0px 0px 7px #ccc
 				button
 					+no-margin-padding
-					padding: 0px
+					padding: 0px 5px
 					+header-height(24px)
+					position: absolute
+					top: 0px
+					right: 0px
 					border: 0px
 					background: none
 					color: #aaa

@@ -88,7 +88,7 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"../common/obj":3,"snabbdom":14,"snabbdom/h":6,"snabbdom/modules/attributes":9,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],2:[function(require,module,exports){
+},{"../common/obj":3,"snabbdom":15,"snabbdom/h":7,"snabbdom/modules/attributes":10,"snabbdom/modules/class":11,"snabbdom/modules/eventlisteners":12,"snabbdom/modules/props":13,"snabbdom/modules/style":14}],2:[function(require,module,exports){
 'use strict';
 
 const fromList = list => Array.prototype.slice.call(list);
@@ -126,6 +126,38 @@ module.exports = {
 };
 
 },{}],4:[function(require,module,exports){
+'use strict';
+
+const toCamelCase = (str, glue) =>
+	str.split(glue || '_')
+		.map((chunk, i) => (i === 0)
+			? chunk
+			: chunk.charAt(0).toUpperCase() + chunk.slice(1))
+		.join('');
+
+const fromCamelCase = (str, glue) =>
+	str.replace(/([A-Z])/g, ' $1')
+		.split(' ')
+		.map(chunk => chunk.toLowerCase())
+		.join(glue || '_');
+
+const singularToPlural = str =>
+	str.replace(/y$/, 'ie').concat('s');
+
+const pluralToSingular = str =>
+	str.replace(/ies$/, 'y').replace(/s$/, '');
+
+const toDocumentId = str => ':'.concat(pluralToSingular(toCamelCase(str, '-')), 'Id');
+
+module.exports = {
+	toCamelCase,
+	fromCamelCase,
+	singularToPlural,
+	pluralToSingular,
+	toDocumentId
+};
+
+},{}],5:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -287,7 +319,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -12679,7 +12711,7 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":4}],6:[function(require,module,exports){
+},{"_process":5}],7:[function(require,module,exports){
 var VNode = require('./vnode');
 var is = require('./is');
 
@@ -12715,7 +12747,7 @@ module.exports = function h(sel, b, c) {
   return VNode(sel, data, children, text, undefined);
 };
 
-},{"./is":8,"./vnode":15}],7:[function(require,module,exports){
+},{"./is":9,"./vnode":16}],8:[function(require,module,exports){
 function createElement(tagName){
   return document.createElement(tagName);
 }
@@ -12771,13 +12803,13 @@ module.exports = {
   setTextContent: setTextContent
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
                 "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
                 "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
@@ -12822,7 +12854,7 @@ function updateAttrs(oldVnode, vnode) {
 
 module.exports = {create: updateAttrs, update: updateAttrs};
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class,
@@ -12847,7 +12879,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -12911,7 +12943,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":8}],12:[function(require,module,exports){
+},{"../is":9}],13:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -12936,7 +12968,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -13007,7 +13039,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Node */
 'use strict';
@@ -13267,14 +13299,14 @@ function init(modules, api) {
 
 module.exports = {init: init};
 
-},{"./htmldomapi":7,"./is":8,"./vnode":15}],15:[function(require,module,exports){
+},{"./htmldomapi":8,"./is":9,"./vnode":16}],16:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13298,6 +13330,7 @@ const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor
 const initial = {
 	ui: {
 		mediaLibrary: true,
+		patches: true,
 		instrument: true,
 		sequencer: true,
 		midiMap: true
@@ -13313,6 +13346,7 @@ module.exports = {
 	toggleUI,
 	studio,
 	instrument,
+	mediaLibrary,
 	sequencer,
 	midiMap,
 	initial: Object.assign({}, initial, {
@@ -13323,7 +13357,7 @@ module.exports = {
 	})
 };
 
-},{"../util/math":36,"./instrument":17,"./media-library":18,"./midi-map":19,"./sequencer":20,"./studio":21,"iblokz/common/obj":3,"rx":5}],17:[function(require,module,exports){
+},{"../util/math":37,"./instrument":18,"./media-library":19,"./midi-map":20,"./sequencer":21,"./studio":22,"iblokz/common/obj":3,"rx":6}],18:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13368,7 +13402,7 @@ module.exports = {
 	updateProp
 };
 
-},{"iblokz/common/obj":3,"rx":5}],18:[function(require,module,exports){
+},{"iblokz/common/obj":3,"rx":6}],19:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13380,7 +13414,25 @@ const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
+const remove = (arr, item) => arr.indexOf(item) > -1 ? [].concat(
+	arr.slice(0, arr.indexOf(item)),
+	arr.slice(arr.indexOf(item) + 1)
+) : arr;
+
+const add = (arr, item) => [].concat(arr, [item]);
+
+const toggle = (arr, item) => arr.indexOf(item) > -1
+	? remove(arr, item)
+	: add(arr, item);
+
+console.log(remove(add([], '2'), '2'));
+
+const expand = group => stream.onNext(state => obj.patch(state, ['mediaLibrary'], {
+	expanded: toggle(state.mediaLibrary.expanded, group)
+}));
+
 const initial = {
+	expanded: [],
 	samples: [
 		'kick01.ogg',
 		'kick02.ogg',
@@ -13401,15 +13453,24 @@ const initial = {
 		'clap04.ogg',
 		'shaker01.ogg',
 		'shaker02.ogg'
+	],
+	instruments: [
+		{
+			name: 'sampler'
+		},
+		{
+			name: 'basicSynth'
+		}
 	]
 };
 
 module.exports = {
 	stream,
+	expand,
 	initial
 };
 
-},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],19:[function(require,module,exports){
+},{"../../util/math":37,"iblokz/common/obj":3,"rx":6}],20:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13430,7 +13491,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],20:[function(require,module,exports){
+},{"../../util/math":37,"iblokz/common/obj":3,"rx":6}],21:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13520,7 +13581,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],21:[function(require,module,exports){
+},{"../../util/math":37,"iblokz/common/obj":3,"rx":6}],22:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13561,7 +13622,33 @@ module.exports = {
 		beatLength: 16,
 		playing: false,
 		tickIndex: -1,
-		volume: 0.4
+		volume: 0.4,
+		channels: [
+			{
+				instr: 'sampler',
+				name: 'Sampler 1',
+				volume: 0.4,
+				props: {
+
+				}
+			},
+			{
+				instr: 'basicSynth',
+				name: 'Basic Synth 1',
+				volume: 0.4,
+				props: {
+
+				}
+			},
+			{
+				instr: 'basicSynth',
+				name: 'Basic Synth 2',
+				volume: 0.4,
+				props: {
+
+				}
+			}
+		]
 	},
 	play,
 	stop,
@@ -13569,7 +13656,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":36,"iblokz/common/obj":3,"rx":5}],22:[function(require,module,exports){
+},{"../../util/math":37,"iblokz/common/obj":3,"rx":6}],23:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13631,32 +13718,52 @@ midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
-		console.log('msg', data, midiMsg);
-		if (data.msg && midiMsg.state === 'noteOn') {
-			voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
-			voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
-		} else if (data.msg && midiMsg.state === 'noteOff' && voices[midiMsg.note.pitch]) {
-			voices[midiMsg.note.pitch].noteoff(state, midiMsg.note.pitch);
-		} else if (data.msg && midiMsg.state === 'controller') {
-			let mmap = midiMap[midiMsg.controller];
-			if (mmap[0] === 'instrument') {
-				let value = parseFloat(
-					(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
-				).toFixed(mmap[5] || 3);
-				value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
-				actions.instrument.updateProp(mmap[1], mmap[2], value);
-			}
-			if (mmap[0] === 'studio') {
-				let value = parseFloat(
-					(mmap[2] || 0) + midiMsg.value * (mmap[3] || 1) - midiMsg.value * (mmap[2] || 0)
-				).toFixed(mmap[4] || 3);
-				value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
-				actions.studio.change(mmap[1], value);
-			}
+		if (midiMsg.state !== false) console.log('msg', data, midiMsg);
+
+		switch (midiMsg.state) {
+			case 'noteOn':
+				if (midiMsg.channel === 10) {
+					if (state.sequencer.channels[midiMsg.note.midi - 60])
+						studio.kit[state.sequencer.channels[midiMsg.note.midi - 60]].clone().trigger({
+							studio: {volume: state.studio.volume * midiMsg.velocity}
+						});
+				} else {
+					voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
+					voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
+				}
+				break;
+			case 'noteOff':
+				if (midiMsg.channel === 10) {
+
+				} else if (voices[midiMsg.note.pitch]) {
+					voices[midiMsg.note.pitch].noteoff(state, midiMsg.note.pitch);
+				}
+				break;
+			case 'controller':
+				{
+					let mmap = midiMap[midiMsg.controller];
+					if (mmap && mmap[0] === 'instrument') {
+						let value = parseFloat(
+							(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
+						).toFixed(mmap[5] || 3);
+						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
+						actions.instrument.updateProp(mmap[1], mmap[2], value);
+					}
+					if (mmap && mmap[0] === 'studio') {
+						let value = parseFloat(
+							(mmap[2] || 0) + midiMsg.value * (mmap[3] || 1) - midiMsg.value * (mmap[2] || 0)
+						).toFixed(mmap[4] || 3);
+						value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
+						actions.studio.change(mmap[1], value);
+					}
+				}
+				break;
+			default:
+				break;
 		}
 	});
 
-},{"./actions":16,"./instr/basic-synth":23,"./services":25,"./services/studio":28,"./ui":30,"./util/midi":37,"iblokz/adapters/vdom":1,"rx":5}],23:[function(require,module,exports){
+},{"./actions":17,"./instr/basic-synth":24,"./services":26,"./services/studio":29,"./ui":31,"./util/midi":38,"iblokz/adapters/vdom":1,"rx":6}],24:[function(require,module,exports){
 'use strict';
 /**
  * BasicSynth instrument.
@@ -13812,7 +13919,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13874,7 +13981,7 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -13895,7 +14002,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":26,"./midi":27,"./studio":28}],26:[function(require,module,exports){
+},{"./layout":27,"./midi":28,"./studio":29}],27:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -13920,7 +14027,7 @@ module.exports = {
 	refresh
 };
 
-},{"iblokz/common/arr":2}],27:[function(require,module,exports){
+},{"iblokz/common/arr":2}],28:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -13931,7 +14038,7 @@ module.exports = {
 	refresh
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14043,10 +14150,11 @@ const hook = ({state$, actions}) => {
 
 module.exports = {
 	context,
+	kit,
 	hook
 };
 
-},{"../instr/sampler":24,"../util/context":35,"../util/math":36,"iblokz/common/obj":3,"rx":5}],29:[function(require,module,exports){
+},{"../instr/sampler":25,"../util/context":36,"../util/math":37,"iblokz/common/obj":3,"rx":6}],30:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -14054,6 +14162,7 @@ const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adap
 module.exports = ({state, actions}) => header([
 	ul([
 		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, 'Media Library')]),
+		li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
 		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, 'Instrument')]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, 'Sequencer')]),
 		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')])
@@ -14078,7 +14187,7 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],30:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz/adapters/vdom');
@@ -14096,7 +14205,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiMap ? midiMap({state, actions}) : ''
 ]);
 
-},{"./header":29,"./instrument":31,"./media-library":32,"./midi-map":33,"./sequencer":34,"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
+},{"./header":30,"./instrument":32,"./media-library":33,"./midi-map":34,"./sequencer":35,"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14118,8 +14227,8 @@ module.exports = ({state, actions}) => div('.instrument', [
 	div('.body', [
 		form([
 			fieldset([
-				// legend([span('.on', 'VCO1'), span('VCO2')]),
-				legend('VCO'),
+				legend([span('.on', 'VCO1'), span('VCO2')]),
+				// legend('VCO'),
 				div(types.reduce((list, type) =>
 					list.concat([
 						input(`[name="vco-type"][id="vco-type-${type}"][type="radio"][value="${type}"]`, {
@@ -14174,7 +14283,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 			*/
 			// VCF
 			fieldset([
-				legend('VCF'),
+				legend([span('.on', 'VCF1'), span('VCF2')]),
 				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
 					class: {
@@ -14240,13 +14349,49 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, ul, li, hr, button,
 	fieldset, legend, i
 } = require('iblokz/adapters/vdom');
+
+const obj = require('iblokz/common/obj');
+const str = require('iblokz/common/str');
+
+const indexAt = (collection, prop, value) =>
+	collection.reduce((index, doc, i) => doc[prop] === value ? i : index, -1);
+
+const groupList = list => list.reduce((groups, name) =>
+	[str.toCamelCase(name.replace(/[0-9]+/ig, '').replace('.ogg', ''))]
+		.map(group => ({group, index: indexAt(groups, 'name', group)}))
+		.map(({group, index}) =>
+		(index > -1)
+			? [].concat(
+				groups.slice(0, index),
+				[{
+					name: group,
+					items: groups[index].items.concat([name])
+				}],
+				groups.slice(index + 1)
+			)
+			: groups.concat([{
+				name: group,
+				items: [name]
+			}])
+	).pop(), []
+);
+
+// console.log(groupList([
+// 	'kick01.ogg',
+// 	'kick02.ogg',
+// 	'kick03.ogg',
+// 	'kick_hiphop01.ogg',
+// 	'hihat_opened02.ogg',
+// 	'hihat_opened03.ogg',
+// 	'ride02.ogg',
+// 	'rim01.ogg']));
 
 module.exports = ({state, actions}) => div('.media-library', [
 	div('.header', [
@@ -14255,12 +14400,29 @@ module.exports = ({state, actions}) => div('.media-library', [
 	div('.body', [
 		fieldset([
 			legend('Samples'),
-			ul(state.mediaLibrary.samples.map((sample, i) =>
+			ul(groupList(state.mediaLibrary.samples).map((group, k) =>
 				li({
-					on: {click: () => actions.sequencer.setSample(state.sequencer.channel, i)}
+					class: {expanded: state.mediaLibrary.expanded.indexOf(group.name) > -1}
 				}, [
-					span(sample),
-					button('.right.fa.fa-play')
+					span({
+						on: {click: () => actions.mediaLibrary.expand(group.name)}
+					}, [
+						i((state.mediaLibrary.expanded.indexOf(group.name) > -1)
+							? '.fa.fa-minus-square-o' : '.fa.fa-plus-square-o'),
+						' ',
+						group.name
+					]),
+					ul(group.items.map((sample, i) =>
+						li({
+							on: {click: () => actions.sequencer.setSample(
+								state.sequencer.channel,
+								state.mediaLibrary.samples.indexOf(sample)
+							)}
+						}, [
+							span(sample),
+							button('.right.fa.fa-play')
+						])
+					))
 				])
 			))
 		]),
@@ -14271,7 +14433,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1,"iblokz/common/obj":3,"iblokz/common/str":4}],34:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14296,7 +14458,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -14366,7 +14528,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],36:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -14377,7 +14539,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -14391,7 +14553,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14517,4 +14679,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":5}]},{},[22]);
+},{"rx":6}]},{},[23]);

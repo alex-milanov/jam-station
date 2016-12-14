@@ -38,7 +38,33 @@ module.exports = {
 		beatLength: 16,
 		playing: false,
 		tickIndex: -1,
-		volume: 0.4
+		volume: 0.4,
+		channels: [
+			{
+				instr: 'sampler',
+				name: 'Sampler 1',
+				volume: 0.4,
+				props: {
+
+				}
+			},
+			{
+				instr: 'basicSynth',
+				name: 'Basic Synth 1',
+				volume: 0.4,
+				props: {
+
+				}
+			},
+			{
+				instr: 'basicSynth',
+				name: 'Basic Synth 2',
+				volume: 0.4,
+				props: {
+
+				}
+			}
+		]
 	},
 	play,
 	stop,

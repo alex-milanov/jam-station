@@ -19,8 +19,8 @@ module.exports = ({state, actions}) => div('.instrument', [
 	div('.body', [
 		form([
 			fieldset([
-				// legend([span('.on', 'VCO1'), span('VCO2')]),
-				legend('VCO'),
+				legend([span('.on', 'VCO1'), span('VCO2')]),
+				// legend('VCO'),
 				div(types.reduce((list, type) =>
 					list.concat([
 						input(`[name="vco-type"][id="vco-type-${type}"][type="radio"][value="${type}"]`, {
@@ -75,7 +75,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 			*/
 			// VCF
 			fieldset([
-				legend('VCF'),
+				legend([span('.on', 'VCF1'), span('VCF2')]),
 				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
 					class: {

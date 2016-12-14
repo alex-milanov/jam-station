@@ -109,5 +109,6 @@ const hook = ({state$, actions}) => {
 
 module.exports = {
 	context,
+	kit,
 	hook
 };

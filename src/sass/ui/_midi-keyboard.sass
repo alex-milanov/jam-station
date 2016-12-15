@@ -3,6 +3,7 @@
 	min-width: 550px
 	.body
 		.keys
+			+user-select(none)
 			height: 100px
 			vertical-align: top
 			> *
@@ -19,25 +20,26 @@
 					bottom: 2px
 					width: 100%
 					text-align: center
+					color: #979a9f
 
 			.white
 				width: 3.57%
 				height: 100%
-				background: #f5faff
+				background: #e7eaef
 				color: #black
 				z-index: 0
 				&:hover
-					background: #e5eaef
+					background: #d7dadf
 			.black
 				width: 2%
 				height: 67%
-				background: black
+				background: #a7aaaf
 				color: white
 				margin: 0px
 				&:not(:first-child)
 					margin-left: -1%
 				z-index: 99
 				&:hover
-					background: #111
+					background: #979a9f
 				& + .white
 					margin-left: -1%

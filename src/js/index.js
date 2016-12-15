@@ -6,6 +6,8 @@ const vdom = require('iblokz/adapters/vdom');
 const {h, div, input, hr, p, button} = vdom;
 
 const midi = require('./util/midi')();
+const audio = require('./util/audio');
+window.a = audio;
 const BasicSynth = require('./instr/basic-synth');
 
 // app

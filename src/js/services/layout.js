@@ -32,11 +32,11 @@ const refresh = ({state, actions}) => {
 				if (key.className === "white") {
 					key.style.width = (100 / whiteKeysLength) + '%';
 					if (i > 0 && keys[i - 1].className === 'black')
-						key.style.marginLeft = -(80 / whiteKeysLength / 2) + '%';
+						key.style.marginLeft = -(70 / whiteKeysLength / 2) + '%';
 				} else {
-					key.style.width = (80 / whiteKeysLength) + '%';
+					key.style.width = (70 / whiteKeysLength) + '%';
 					if (i > 0)
-						key.style.marginLeft = -(80 / whiteKeysLength / 2) + '%';
+						key.style.marginLeft = -(70 / whiteKeysLength / 2) + '%';
 				}
 			});
 		});

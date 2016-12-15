@@ -3180,6 +3180,10 @@ input, label, body {
           .midi-keyboard .body fieldset legend span.on {
             color: #333; }
   .midi-keyboard .body .keys {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
     height: 100px;
     vertical-align: top; }
     .midi-keyboard .body .keys > * {
@@ -3195,25 +3199,26 @@ input, label, body {
         position: absolute;
         bottom: 2px;
         width: 100%;
-        text-align: center; }
+        text-align: center;
+        color: #979a9f; }
     .midi-keyboard .body .keys .white {
       width: 3.57%;
       height: 100%;
-      background: #f5faff;
+      background: #e7eaef;
       color: #black;
       z-index: 0; }
       .midi-keyboard .body .keys .white:hover {
-        background: #e5eaef; }
+        background: #d7dadf; }
     .midi-keyboard .body .keys .black {
       width: 2%;
       height: 67%;
-      background: black;
+      background: #a7aaaf;
       color: white;
       margin: 0px;
       z-index: 99; }
       .midi-keyboard .body .keys .black:not(:first-child) {
         margin-left: -1%; }
       .midi-keyboard .body .keys .black:hover {
-        background: #111; }
+        background: #979a9f; }
       .midi-keyboard .body .keys .black + .white {
         margin-left: -1%; }

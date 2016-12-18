@@ -13390,8 +13390,8 @@ const initial = {
 	},
 	vcf: {
 		on: false,
-		cutoff: 800,
-		resonance: 80,
+		cutoff: 1,
+		resonance: 0,
 		gain: 0
 	}
 };
@@ -13767,6 +13767,23 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 
 },{"./actions":17,"./instr/basic-synth":24,"./services":26,"./services/studio":29,"./ui":31,"./util/audio":37,"./util/midi":40,"iblokz/adapters/vdom":1,"rx":6}],24:[function(require,module,exports){
 'use strict';
+
+const filterSetFreq = (filter, value, context) => {
+	const minValue = 40;
+	const maxValue = context.sampleRate / 2;
+	// Logarithm (base 2) to compute how many octaves fall in the range.
+	var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+	// Compute a multiplier from 0 to 1 based on an exponential scale.
+	var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+	// Get back to the frequency value between min and max.
+	filter.frequency.value = maxValue * multiplier;
+};
+
+const filterSetQ = (filter, value, context) => {
+	const QUAL_MUL = 30;
+	filter.Q.value = value * QUAL_MUL;
+};
+
 /**
  * BasicSynth instrument.
  * @param {object} context: instance of the audio context.
@@ -13866,8 +13883,8 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	if (state.instrument.vcf.on) {
 		this.vco.connect(this.vcf);
 		this.vcf.connect(this.output);
-		this.vcf.frequency.value = state.instrument.vcf.cutoff;
-		this.vcf.Q.value = state.instrument.vcf.resonance;
+		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
+		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
 		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
 	} else {
 		this.vco.connect(this.output);
@@ -14326,14 +14343,14 @@ module.exports = ({state, actions}) => div('.instrument', [
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 50, max: 16000, step: 0.05},
+					attrs: {min: 0, max: 1, step: 0.01},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),
 				label(`Resonance`),
 				span('.right', `${state.instrument.vcf.resonance}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 150, step: 0.05},
+					attrs: {min: 0, max: 1, step: 0.01},
 					props: {value: state.instrument.vcf.resonance},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
 				})
@@ -14621,6 +14638,9 @@ const prefsMap = {
 		type: 'type',
 		cutoff: 'frequency',
 		resonance: 'Q'
+	},
+	vca: {
+		gain: 'gain'
 	}
 };
 
@@ -14640,10 +14660,17 @@ const create = (type, context) => ({
 });
 
 const connect = (node1, node2) => (
-	(node1.node && node1.node.connect && node1.node
-	|| node1.connect && node1).connect(
+	((node1.node && node1.node.connect)
+		? node1.node
+		: node1).connect(
 		node2.node || node2
 	), node1
+);
+
+const chain = nodes => nodes.forEach(
+	(node, i) => {
+		if (nodes[i + 1]) connect(node, nodes[i + 1]);
+	}
 );
 
 const apply = (node, prefs) => Object.keys(prefs)
@@ -14656,6 +14683,8 @@ const apply = (node, prefs) => Object.keys(prefs)
 			node.node[prefsMap[node.type][pref]].value = prefs[pref];
 		return node;
 	}, node);
+
+const add = (type, prefs, context) => apply(create(type, context), prefs);
 
 const start = function(node) {
 	node.node.start.apply(node.node, Array.from(arguments).slice(1));
@@ -14671,7 +14700,9 @@ module.exports = {
 	context,
 	create,
 	connect,
+	chain,
 	apply,
+	add,
 	start,
 	stop
 };

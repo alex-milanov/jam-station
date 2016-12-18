@@ -1,4 +1,21 @@
 'use strict';
+
+const filterSetFreq = (filter, value, context) => {
+	const minValue = 40;
+	const maxValue = context.sampleRate / 2;
+	// Logarithm (base 2) to compute how many octaves fall in the range.
+	var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+	// Compute a multiplier from 0 to 1 based on an exponential scale.
+	var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+	// Get back to the frequency value between min and max.
+	filter.frequency.value = maxValue * multiplier;
+};
+
+const filterSetQ = (filter, value, context) => {
+	const QUAL_MUL = 30;
+	filter.Q.value = value * QUAL_MUL;
+};
+
 /**
  * BasicSynth instrument.
  * @param {object} context: instance of the audio context.
@@ -98,8 +115,8 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	if (state.instrument.vcf.on) {
 		this.vco.connect(this.vcf);
 		this.vcf.connect(this.output);
-		this.vcf.frequency.value = state.instrument.vcf.cutoff;
-		this.vcf.Q.value = state.instrument.vcf.resonance;
+		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
+		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
 		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
 	} else {
 		this.vco.connect(this.output);

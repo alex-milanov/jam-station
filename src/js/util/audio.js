@@ -12,6 +12,9 @@ const prefsMap = {
 		type: 'type',
 		cutoff: 'frequency',
 		resonance: 'Q'
+	},
+	vca: {
+		gain: 'gain'
 	}
 };
 
@@ -31,10 +34,17 @@ const create = (type, context) => ({
 });
 
 const connect = (node1, node2) => (
-	(node1.node && node1.node.connect && node1.node
-	|| node1.connect && node1).connect(
+	((node1.node && node1.node.connect)
+		? node1.node
+		: node1).connect(
 		node2.node || node2
 	), node1
+);
+
+const chain = nodes => nodes.forEach(
+	(node, i) => {
+		if (nodes[i + 1]) connect(node, nodes[i + 1]);
+	}
 );
 
 const apply = (node, prefs) => Object.keys(prefs)
@@ -47,6 +57,8 @@ const apply = (node, prefs) => Object.keys(prefs)
 			node.node[prefsMap[node.type][pref]].value = prefs[pref];
 		return node;
 	}, node);
+
+const add = (type, prefs, context) => apply(create(type, context), prefs);
 
 const start = function(node) {
 	node.node.start.apply(node.node, Array.from(arguments).slice(1));
@@ -62,7 +74,9 @@ module.exports = {
 	context,
 	create,
 	connect,
+	chain,
 	apply,
+	add,
 	start,
 	stop
 };

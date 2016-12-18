@@ -30,8 +30,8 @@ const initial = {
 	},
 	vcf: {
 		on: false,
-		cutoff: 800,
-		resonance: 80,
+		cutoff: 1,
+		resonance: 0,
 		gain: 0
 	}
 };

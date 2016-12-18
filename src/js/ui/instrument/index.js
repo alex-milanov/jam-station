@@ -87,14 +87,14 @@ module.exports = ({state, actions}) => div('.instrument', [
 				label(`Cutoff`),
 				span('.right', `${state.instrument.vcf.cutoff}`),
 				input('[type="range"]', {
-					attrs: {min: 50, max: 16000, step: 0.05},
+					attrs: {min: 0, max: 1, step: 0.01},
 					props: {value: state.instrument.vcf.cutoff},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
 				}),
 				label(`Resonance`),
 				span('.right', `${state.instrument.vcf.resonance}`),
 				input('[type="range"]', {
-					attrs: {min: 0, max: 150, step: 0.05},
+					attrs: {min: 0, max: 1, step: 0.01},
 					props: {value: state.instrument.vcf.resonance},
 					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
 				})

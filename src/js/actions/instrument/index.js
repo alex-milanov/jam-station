@@ -25,8 +25,8 @@ const initial = {
 	lfo: {
 		on: false,
 		type: 'sawtooth',
-		frequency: 0,
-		gain: 0
+		frequency: 5,
+		gain: 0.15
 	},
 	vcf: {
 		on: false,

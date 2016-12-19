@@ -43,7 +43,7 @@ const groupList = list => list.reduce((groups, name) =>
 
 module.exports = ({state, actions}) => div('.media-library', [
 	div('.header', [
-		h2('Media Library')
+		h2([i('.fa.fa-book'), ' Media Library'])
 	]),
 	div('.body', [
 		fieldset([

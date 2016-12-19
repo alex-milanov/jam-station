@@ -8,7 +8,7 @@ const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][chann
 
 module.exports = ({state, actions}) => div('.sequencer', [
 	div('.header', [
-		h2('Sequencer'),
+		h2([i('.fa.fa-braille'), ' Sequencer']),
 		button('.fa.fa-play', {
 			class: {on: state.studio.playing},
 			on: {click: () => actions.studio.play()}

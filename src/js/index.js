@@ -48,6 +48,8 @@ const basicSynth = new BasicSynth(studio.context, 'C1');
 let voices = {};
 
 let midiMap = {
+	20: ['instrument', 'vcf', 'cutoff'],
+	21: ['instrument', 'vcf', 'resonance'],
 	22: ['studio', 'bpm', 60, 200, 0],
 	23: ['studio', 'volume'],
 	24: ['instrument', 'eg', 'attack'],

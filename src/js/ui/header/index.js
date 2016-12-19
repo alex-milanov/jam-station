@@ -4,12 +4,12 @@ const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adap
 
 module.exports = ({state, actions}) => header([
 	ul([
-		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, 'Media Library')]),
-		li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
-		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, 'Instrument')]),
-		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, 'Sequencer')]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')]),
-		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, 'MIDI Keyboard')])
+		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, [i('.fa.fa-book')])]),
+		// li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
+		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, [i('.fa.fa-sliders')])]),
+		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
+		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
 	]),
 	h1([
 		img('[src="assets/logo.png"]'),

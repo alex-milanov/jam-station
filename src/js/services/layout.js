@@ -18,10 +18,12 @@ const refresh = ({state, actions}) => {
 	list.filter(el => el.className === 'midi-keyboard')
 		.forEach(el => {
 			const sequencer = document.querySelector('.sequencer');
-			if (sequencer)
+			if (sequencer) {
 				el.style.left = sequencer.style.left;
-			else
+				el.style.top = 80 + sequencer.offsetHeight + 'px';
+			} else {
 				el.style.left = '50%';
+			}
 
 			const keys = arr.fromList(el.querySelector('.keys').children);
 			console.log(keys);

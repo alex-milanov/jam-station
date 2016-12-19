@@ -30,20 +30,20 @@ function BasicSynth(context, note) {
 	this.lfo = this.context.createOscillator();
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
-	this.output = this.context.createGain();
-	// this.vco.connect(this.output);
+	this.vca = this.context.createGain();
+	// this.vco.connect(this.vca);
 	this.lfo.connect(this.lfoGain);
-	this.lfoGain.connect(this.vcf.frequency);
+	// this.lfoGain.connect(this.vcf.frequency);
 	// this.lfoGain.connect(this.vco.frequency);
-	// this.vcf.connect(this.output);
-	this.output.gain.value = 0;
+	// this.vcf.connect(this.vca);
+	this.vca.gain.value = 0;
 	this.vco.type = 'sawtooth';
 	this.lfo.type = 'sawtooth';
 	this.vco.start(this.context.currentTime);
 	this.lfo.start(this.context.currentTime);
 	this.volume = this.context.createGain();
 	this.volume.gain.value = 0.7;
-	this.output.connect(this.volume);
+	this.vca.connect(this.volume);
 	this.volume.connect(this.context.destination);
 }
 
@@ -103,33 +103,35 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	console.log(frequency);
 
 	this.vco.frequency.cancelScheduledValues(0);
-	this.output.gain.cancelScheduledValues(0);
+	this.vca.gain.cancelScheduledValues(0);
 
 	this.vco.frequency.setValueAtTime(frequency, now);
 
 	if (state.instrument.lfo.on) {
 		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
 		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
+		this.lfoGain.connect(this.vco.detune);
 	}
 
 	if (state.instrument.vcf.on) {
 		this.vco.connect(this.vcf);
-		this.vcf.connect(this.output);
+		this.vcf.connect(this.vca);
 		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
 		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
 		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
 	} else {
-		this.vco.connect(this.output);
+		this.vco.connect(this.vca);
 	}
+
 	// attack
 	if (state.instrument.eg.attack > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
+		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
 	else
-		this.output.gain.setValueAtTime(velocity, time);
+		this.vca.gain.setValueAtTime(velocity, time);
 
 	// decay
 	if (state.instrument.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
+		this.vca.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
 			time + state.instrument.eg.attack, state.instrument.eg.decay);
 	// sustain
 	// relase
@@ -150,8 +152,8 @@ BasicSynth.prototype.noteoff = function(state, note) {
 	var frequency = this.noteToFrequency(note);
 	console.log(state.instrument.eg);
 
-	this.output.gain.cancelScheduledValues(0);
-	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
+	this.vca.gain.cancelScheduledValues(0);
+	this.vca.gain.setValueCurveAtTime(new Float32Array([this.vca.gain.value, 0]),
 		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
 
 	this.vco.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));

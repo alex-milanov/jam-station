@@ -1,7 +1,7 @@
 'use strict';
 
 const {
-	div, h2, span, p, input, fieldset, legend, label, hr, button
+	div, h2, span, p, input, fieldset, legend, label, hr, button, i
 } = require('iblokz/adapters/vdom');
 
 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -33,7 +33,7 @@ const generateKeys = (start, end) => [{start: parseKey(start), end: parseKey(end
 
 module.exports = ({state, actions}) => div('.midi-keyboard', [
 	div('.header', [
-		h2('MIDI Keyboard')
+		h2([i('.fa.fa-keyboard-o'), ' MIDI Keyboard'])
 	]),
 	div('.body', [
 		div('.keys', generateKeys('C1', 'C4').map(parseKey).map(key =>

@@ -13385,8 +13385,8 @@ const initial = {
 	lfo: {
 		on: false,
 		type: 'sawtooth',
-		frequency: 0,
-		gain: 0
+		frequency: 5,
+		gain: 0.15
 	},
 	vcf: {
 		on: false,
@@ -13556,16 +13556,18 @@ const initial = {
 	bar: 0,
 	channel: -1,
 	channels: [
-		0,
-		4,
+		3,
+		17,
 		8,
 		13,
-		17
+		6,
+		7,
+		4
 	],
 	pattern: [
 		[
-			[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-			[0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+			[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+			[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
 			[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 		]
 	]
@@ -13707,6 +13709,8 @@ const basicSynth = new BasicSynth(studio.context, 'C1');
 let voices = {};
 
 let midiMap = {
+	20: ['instrument', 'vcf', 'cutoff'],
+	21: ['instrument', 'vcf', 'resonance'],
 	22: ['studio', 'bpm', 60, 200, 0],
 	23: ['studio', 'volume'],
 	24: ['instrument', 'eg', 'attack'],
@@ -13798,20 +13802,20 @@ function BasicSynth(context, note) {
 	this.lfo = this.context.createOscillator();
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
-	this.output = this.context.createGain();
-	// this.vco.connect(this.output);
+	this.vca = this.context.createGain();
+	// this.vco.connect(this.vca);
 	this.lfo.connect(this.lfoGain);
-	this.lfoGain.connect(this.vcf.frequency);
+	// this.lfoGain.connect(this.vcf.frequency);
 	// this.lfoGain.connect(this.vco.frequency);
-	// this.vcf.connect(this.output);
-	this.output.gain.value = 0;
+	// this.vcf.connect(this.vca);
+	this.vca.gain.value = 0;
 	this.vco.type = 'sawtooth';
 	this.lfo.type = 'sawtooth';
 	this.vco.start(this.context.currentTime);
 	this.lfo.start(this.context.currentTime);
 	this.volume = this.context.createGain();
 	this.volume.gain.value = 0.7;
-	this.output.connect(this.volume);
+	this.vca.connect(this.volume);
 	this.volume.connect(this.context.destination);
 }
 
@@ -13871,33 +13875,35 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	console.log(frequency);
 
 	this.vco.frequency.cancelScheduledValues(0);
-	this.output.gain.cancelScheduledValues(0);
+	this.vca.gain.cancelScheduledValues(0);
 
 	this.vco.frequency.setValueAtTime(frequency, now);
 
 	if (state.instrument.lfo.on) {
 		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
 		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
+		this.lfoGain.connect(this.vco.detune);
 	}
 
 	if (state.instrument.vcf.on) {
 		this.vco.connect(this.vcf);
-		this.vcf.connect(this.output);
+		this.vcf.connect(this.vca);
 		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
 		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
 		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
 	} else {
-		this.vco.connect(this.output);
+		this.vco.connect(this.vca);
 	}
+
 	// attack
 	if (state.instrument.eg.attack > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
+		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
 	else
-		this.output.gain.setValueAtTime(velocity, time);
+		this.vca.gain.setValueAtTime(velocity, time);
 
 	// decay
 	if (state.instrument.eg.decay > 0)
-		this.output.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
+		this.vca.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
 			time + state.instrument.eg.attack, state.instrument.eg.decay);
 	// sustain
 	// relase
@@ -13918,8 +13924,8 @@ BasicSynth.prototype.noteoff = function(state, note) {
 	var frequency = this.noteToFrequency(note);
 	console.log(state.instrument.eg);
 
-	this.output.gain.cancelScheduledValues(0);
-	this.output.gain.setValueCurveAtTime(new Float32Array([this.output.gain.value, 0]),
+	this.vca.gain.cancelScheduledValues(0);
+	this.vca.gain.setValueCurveAtTime(new Float32Array([this.vca.gain.value, 0]),
 		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
 
 	this.vco.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
@@ -14042,10 +14048,12 @@ const refresh = ({state, actions}) => {
 	list.filter(el => el.className === 'midi-keyboard')
 		.forEach(el => {
 			const sequencer = document.querySelector('.sequencer');
-			if (sequencer)
+			if (sequencer) {
 				el.style.left = sequencer.style.left;
-			else
+				el.style.top = 80 + sequencer.offsetHeight + 'px';
+			} else {
 				el.style.left = '50%';
+			}
 
 			const keys = arr.fromList(el.querySelector('.keys').children);
 			console.log(keys);
@@ -14206,12 +14214,12 @@ const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adap
 
 module.exports = ({state, actions}) => header([
 	ul([
-		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, 'Media Library')]),
-		li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
-		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, 'Instrument')]),
-		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, 'Sequencer')]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, 'MIDI Map')]),
-		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, 'MIDI Keyboard')])
+		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, [i('.fa.fa-book')])]),
+		// li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
+		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, [i('.fa.fa-sliders')])]),
+		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
+		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
 	]),
 	h1([
 		img('[src="assets/logo.png"]'),
@@ -14258,7 +14266,7 @@ module.exports = ({state, actions}) => div('#ui', [
 
 const {
 	div, h2, span, p, ul, li, hr, button, br,
-	form, label, input, fieldset, legend
+	form, label, input, fieldset, legend, i
 } = require('iblokz/adapters/vdom');
 
 const types = [
@@ -14270,7 +14278,7 @@ const types = [
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
-		h2('Instrument')
+		h2([i('.fa.fa-sliders'), ' Instrument'])
 	]),
 	div('.body', [
 		form([
@@ -14292,43 +14300,6 @@ module.exports = ({state, actions}) => div('.instrument', [
 					[]
 				))
 			]),
-			/*
-			fieldset([
-				legend('LFO'),
-				input('.on-switch[type="checkbox"]', {
-					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
-					attrs: {checked: state.instrument.lfo.on}
-				}),
-				div(types.reduce((list, type) =>
-					list.concat([
-						input(`[name="lfo-type"][id="lfo-type-${type}"][type="radio"][value="${type}"]`, {
-							on: {
-								click: ev => actions.instrument.updateProp('lfo', 'type', ev.target.value)
-							},
-							attrs: {
-								checked: (state.instrument.lfo.type === type)
-							}
-						}),
-						label(`[for="lfo-type-${type}"]`, type.slice(0, 3))
-					]),
-					[]
-				)),
-				label(`Frequency`),
-				span('.right', `${state.instrument.lfo.frequency}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1000, step: 0.05},
-					props: {value: state.instrument.lfo.frequency},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
-				}),
-				label(`Gain`),
-				span('.right', `${state.instrument.lfo.gain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.lfo.gain},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
-				})
-			]),
-			*/
 			// VCF
 			fieldset([
 				legend([span('.on', 'VCF1'), span('VCF2')]),
@@ -14363,7 +14334,46 @@ module.exports = ({state, actions}) => div('.instrument', [
 				// })
 			]),
 			fieldset([
-				legend('EG'),
+				legend('LFO'),
+				div('.on-switch.fa', {
+					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
+					class: {
+						'fa-circle-thin': !state.instrument.lfo.on,
+						'on': state.instrument.lfo.on,
+						'fa-circle': state.instrument.lfo.on
+					}
+				}),
+				div(types.reduce((list, type) =>
+					list.concat([
+						input(`[name="lfo-type"][id="lfo-type-${type}"][type="radio"][value="${type}"]`, {
+							on: {
+								click: ev => actions.instrument.updateProp('lfo', 'type', ev.target.value)
+							},
+							attrs: {
+								checked: (state.instrument.lfo.type === type)
+							}
+						}),
+						label(`[for="lfo-type-${type}"]`, type.slice(0, 3))
+					]),
+					[]
+				)),
+				label(`Frequency`),
+				span('.right', `${state.instrument.lfo.frequency}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 100, step: 0.05},
+					props: {value: state.instrument.lfo.frequency},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
+				}),
+				label(`Gain`),
+				span('.right', `${state.instrument.lfo.gain}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1000, step: 1},
+					props: {value: state.instrument.lfo.gain},
+					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
+				})
+			]),
+			fieldset([
+				legend('VCA1'),
 				label(`Attack`),
 				span('.right', `${state.instrument.eg.attack}`),
 				input('[type="range"]', {
@@ -14443,7 +14453,7 @@ const groupList = list => list.reduce((groups, name) =>
 
 module.exports = ({state, actions}) => div('.media-library', [
 	div('.header', [
-		h2('Media Library')
+		h2([i('.fa.fa-book'), ' Media Library'])
 	]),
 	div('.body', [
 		fieldset([
@@ -14485,7 +14495,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 'use strict';
 
 const {
-	div, h2, span, p, input, fieldset, legend, label, hr, button
+	div, h2, span, p, input, fieldset, legend, label, hr, button, i
 } = require('iblokz/adapters/vdom');
 
 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -14517,7 +14527,7 @@ const generateKeys = (start, end) => [{start: parseKey(start), end: parseKey(end
 
 module.exports = ({state, actions}) => div('.midi-keyboard', [
 	div('.header', [
-		h2('MIDI Keyboard')
+		h2([i('.fa.fa-keyboard-o'), ' MIDI Keyboard'])
 	]),
 	div('.body', [
 		div('.keys', generateKeys('C1', 'C4').map(parseKey).map(key =>
@@ -14532,12 +14542,12 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 'use strict';
 
 const {
-	div, h2, span, p, input, fieldset, legend, label, hr, button
+	div, h2, span, p, input, fieldset, legend, label, hr, button, i
 } = require('iblokz/adapters/vdom');
 
 module.exports = ({state, actions}) => div('.midi-map', [
 	div('.header', [
-		h2('MIDI Map')
+		h2([i('.fa.fa-sitemap'), ' MIDI Map'])
 	]),
 	div('.body', [
 		fieldset([
@@ -14564,7 +14574,7 @@ const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][chann
 
 module.exports = ({state, actions}) => div('.sequencer', [
 	div('.header', [
-		h2('Sequencer'),
+		h2([i('.fa.fa-braille'), ' Sequencer']),
 		button('.fa.fa-play', {
 			class: {on: state.studio.playing},
 			on: {click: () => actions.studio.play()}

@@ -18,6 +18,8 @@ const stream = new Subject();
 
 const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor], !state.ui[editor]));
 
+const ping = () => stream.onNext(state => state);
+
 const initial = {
 	ui: {
 		mediaLibrary: true,
@@ -35,6 +37,7 @@ const initial = {
 module.exports = {
 	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
 	toggleUI,
+	ping,
 	studio,
 	instrument,
 	mediaLibrary,

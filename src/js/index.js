@@ -12,17 +12,35 @@ const BasicSynth = require('./instr/basic-synth');
 
 // app
 let actions = require('./actions');
-const ui = require('./ui');
+let ui = require('./ui');
+let actions$;
 
 // services
 const services = require('./services');
 const studio = require('./services/studio');
 // actions = studio.attach(actions);
-window.actions = actions;
 
+// hot reloading
+if (module.hot) {
+	// actions
+	actions$ = $.fromEventPattern(
+    h => module.hot.accept("./actions", h)
+	).flatMap(() => {
+		actions = require('./actions');
+		return actions.stream.startWith(state => state);
+	}).merge(actions.stream);
+	// ui
+	module.hot.accept("./ui", function() {
+		ui = require('./ui');
+		actions.ping();
+	});
+} else {
+	actions$ = actions.stream;
+}
 // reduce actions to state
-const state$ = actions.stream
-	.scan((state, change) => change(state), actions.initial)
+const state$ = actions$
+	.startWith(() => actions.initial)
+	.scan((state, change) => change(state), {})
 	.share();
 
 state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
@@ -58,7 +76,7 @@ let midiMap = {
 	27: ['instrument', 'eg', 'release']
 };
 
-midi.access$.subscribe(actions.midiMap.connect);
+midi.access$.subscribe(data => actions.midiMap.connect(data));
 midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {

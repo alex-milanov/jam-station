@@ -85,21 +85,20 @@
 				border: 0px
 	.body
 		margin: 0px
-		padding: 0px
+		padding: 0px 0px 10px 0px
 		border-top: 1px solid #eee
 		font-size: 14px
 		fieldset
 			position: relative
-			padding: 10px
+			padding: 0px 10px
 			border: 0px solid #aaa
-			margin: 10px 0px
 			border-top-width: 1px
 			.on-switch
 				position: absolute
 				top: 0px
-				right: 10px
-				height: 16px
-				line-height: 16px
+				right: 8px
+				height: 32px
+				line-height: 32px
 				width: 16px
 				cursor: pointer
 				outline: none
@@ -116,19 +115,21 @@
 			legend
 				font-weight: bold
 				font-size: 14px
+				line-height: 32px
+				height: 32px
 				padding: 0px 5px
+				> :not(:last-child)::after
+					content: ''
+					border-top: 1px solid #999
+					display: inline-block
+					height: 1px
+					width: 7px
+					margin: 0px 3px
+					margin-top: -2px
+					vertical-align: middle
 				span
 					color: #999
 					height: 16px
 					line-height: 16px
-					&:not(:last-child)::after
-						content: ''
-						border-top: 1px solid #999
-						display: inline-block
-						height: 1px
-						width: 7px
-						margin: 0px 3px
-						margin-top: -2px
-						vertical-align: middle
 					&.on
 						color: #333

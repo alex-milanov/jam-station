@@ -2,7 +2,7 @@
 
 const {
 	div, h2, span, p, ul, li, hr, button, br,
-	form, label, input, fieldset, legend, i
+	form, label, input, fieldset, legend, i, img
 } = require('iblokz/adapters/vdom');
 
 const types = [
@@ -17,28 +17,112 @@ module.exports = ({state, actions}) => div('.instrument', [
 		h2([i('.fa.fa-sliders'), ' Instrument'])
 	]),
 	div('.body', [
-		form([
+		form({on: {submit: ev => ev.preventDefault()}}, [
+			// VCO1
 			fieldset([
-				legend([span('.on', 'VCO1'), span('VCO2')]),
-				// legend('VCO'),
-				div(types.reduce((list, type) =>
-					list.concat([
-						input(`[name="vco-type"][id="vco-type-${type}"][type="radio"][value="${type}"]`, {
+				legend([
+					span('.on', 'VCO1'),
+					div(types.reduce((list, type) => list.concat([
+						button(`.btn-opt`, {
 							on: {
-								click: ev => actions.instrument.updateProp('vco', 'type', ev.target.value)
+								click: ev => actions.instrument.updateProp('vco1', 'type', type)
 							},
-							attrs: {
-								checked: (state.instrument.vco.type === type)
-							}
-						}),
-						label(`[for="vco-type-${type}"]`, type.slice(0, 3))
-					]),
-					[]
-				))
+							class: {on: (state.instrument.vco1.type === type)}
+						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+					]), [])),
+					img('[src="assets/tuning-fork.png"]'),
+					div('.knob', {
+						style: {
+							transform: `rotate(${state.instrument.vco1.detune / 100 * 135}deg)`
+						},
+						on: {
+							wheel: ev => (
+								ev.preventDefault(),
+								actions.instrument.updateProp('vco1', 'detune', state.instrument.vco1.detune - ev.deltaY / 53)
+							)
+						}
+					})
+				]),
+				div('.on-switch.fa', {
+					on: {click: ev => actions.instrument.updateProp('vco1', 'on', !state.instrument.vco1.on)},
+					class: {
+						'fa-circle-thin': !state.instrument.vco1.on,
+						'on': state.instrument.vco1.on,
+						'fa-circle': state.instrument.vco1.on
+					}
+				})
+			]),
+			// VCO2
+			fieldset([
+				legend([
+					span('.on', 'VCO2'),
+					div(types.reduce((list, type) => list.concat([
+						button(`.btn-opt`, {
+							on: {
+								click: ev => actions.instrument.updateProp('vco2', 'type', type)
+							},
+							class: {on: (state.instrument.vco2.type === type)}
+						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+					]), [])),
+					img('[src="assets/tuning-fork.png"]'),
+					div('.knob', {
+						style: {
+							transform: `rotate(${state.instrument.vco2.detune / 100 * 135}deg)`
+						},
+						on: {
+							wheel: ev => (
+								ev.preventDefault(),
+								actions.instrument.updateProp('vco2', 'detune', state.instrument.vco2.detune - ev.deltaY / 53)
+							)
+						}
+					})
+				]),
+				div('.on-switch.fa', {
+					on: {click: ev => actions.instrument.updateProp('vco2', 'on', !state.instrument.vco2.on)},
+					class: {
+						'fa-circle-thin': !state.instrument.vco2.on,
+						'on': state.instrument.vco2.on,
+						'fa-circle': state.instrument.vco2.on
+					}
+				})
+			]),
+			fieldset([
+				legend([
+					span('.on', 'VCA1'),
+					span('VCA2')
+				]),
+				label(`Attack`),
+				span('.right', `${state.instrument.eg.attack}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.eg.attack},
+					on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
+				}),
+				label(`Decay`),
+				span('.right', `${state.instrument.eg.decay}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.eg.decay},
+					on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
+				}),
+				label(`Sustain`),
+				span('.right', `${state.instrument.eg.sustain}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.eg.sustain},
+					on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
+				}),
+				label(`Release`),
+				span('.right', `${state.instrument.eg.release}`),
+				input('[type="range"]', {
+					attrs: {min: 0, max: 1, step: 0.005},
+					props: {value: state.instrument.eg.release},
+					on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
+				})
 			]),
 			// VCF
 			fieldset([
-				legend([span('.on', 'VCF1'), span('VCF2')]),
+				legend([span('.on', 'VCF1')]),
 				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
 					class: {
@@ -70,7 +154,17 @@ module.exports = ({state, actions}) => div('.instrument', [
 				// })
 			]),
 			fieldset([
-				legend('LFO'),
+				legend([
+					span('.on', 'LFO'),
+					div(types.reduce((list, type) => list.concat([
+						button(`.btn-opt`, {
+							on: {
+								click: ev => actions.instrument.updateProp('lfo', 'type', type)
+							},
+							class: {on: (state.instrument.lfo.type === type)}
+						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+					]), []))
+				]),
 				div('.on-switch.fa', {
 					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
 					class: {
@@ -79,20 +173,6 @@ module.exports = ({state, actions}) => div('.instrument', [
 						'fa-circle': state.instrument.lfo.on
 					}
 				}),
-				div(types.reduce((list, type) =>
-					list.concat([
-						input(`[name="lfo-type"][id="lfo-type-${type}"][type="radio"][value="${type}"]`, {
-							on: {
-								click: ev => actions.instrument.updateProp('lfo', 'type', ev.target.value)
-							},
-							attrs: {
-								checked: (state.instrument.lfo.type === type)
-							}
-						}),
-						label(`[for="lfo-type-${type}"]`, type.slice(0, 3))
-					]),
-					[]
-				)),
 				label(`Frequency`),
 				span('.right', `${state.instrument.lfo.frequency}`),
 				input('[type="range"]', {
@@ -106,37 +186,6 @@ module.exports = ({state, actions}) => div('.instrument', [
 					attrs: {min: 0, max: 1000, step: 1},
 					props: {value: state.instrument.lfo.gain},
 					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
-				})
-			]),
-			fieldset([
-				legend('VCA1'),
-				label(`Attack`),
-				span('.right', `${state.instrument.eg.attack}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.attack},
-					on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
-				}),
-				label(`Decay`),
-				span('.right', `${state.instrument.eg.decay}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.decay},
-					on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
-				}),
-				label(`Sustain`),
-				span('.right', `${state.instrument.eg.sustain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.sustain},
-					on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
-				}),
-				label(`Release`),
-				span('.right', `${state.instrument.eg.release}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.release},
-					on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
 				})
 			])
 		])

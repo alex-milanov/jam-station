@@ -1,21 +1,49 @@
 .instrument
 	+editor(240px, 60px)
-	min-width: 230px
+	min-width: 260px
 	.body
 		form
 			+no-margin-padding
 			label, input[type=radio]
 				cursor: pointer
-			div
-				margin: 0px 0px 10px 0px
+			legend
+				div
+					display: inline-block
+					margin: 0px
+				img
+					height: 22px
+					vertical-align: middle
+			.knob
+				position: relative
+				margin-left: 0px
+				width: 22px
+				height: 22px
+				vertical-align: middle
+				border-radius: 100%
+				background: #f0f0f0
+				box-sizing: border-box
+				box-shadow: 0 0px 5px 0px #777, 0 0 10px #ccc inset, 0 0 1px 0px #ccc
+				&::after
+					content: ''
+					position: absolute
+					width: 6px
+					height: 6px
+					border-radius: 100px
+					background: #ddd
+					box-shadow: 0px 0px 2px 1px #ccc inset
+					box-sizing: border-box
+					top: 2px
+					left: 50%
+					margin-left: -3px
 			input[type=range]
 				+no-margin-padding
-				margin: 10px 0px
+				margin: 0px
 				display: block
 				width: 100%
 				-webkit-appearance: none
 				background-color: #777
 				outline: none
+				margin: 8px 0px
 				border-radius: 10px
 				height: 2px
 				cursor: pointer
@@ -23,8 +51,30 @@
 				-webkit-appearance: none
 				background-color: #bbb
 				border: 1px solid #777
-				width: 7px
-				height: 20px
+				width: 12px
+				height: 12px
+				border-radius: 10px
 				transition: .3s
 				&:hover
 					background: $jam-station-color-light
+			button.btn-opt
+				height: 20px
+				line-height: 20px
+				padding: 0px 2px
+				box-sizing: border-box
+				border: 0px
+				color: #777
+				cursor: pointer
+				outline: none
+				transition: color .1s
+				&:active
+					outline: none
+				&.on
+					color: #333
+				> *
+					height: 20px
+					line-height: 20px
+					font-size: 20px
+					padding: 0px
+					box-sizing: border-box
+					border: 0px

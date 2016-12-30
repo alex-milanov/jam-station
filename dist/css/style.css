@@ -1,6 +1,7 @@
 @charset "UTF-8";
 @import url(//fonts.googleapis.com/css?family=Open+Sans);
 @import url(//fonts.googleapis.com/css?family=Play:400,700&subset=latin,cyrillic-ext,cyrillic);
+@import url(//cdn.onlinewebfonts.com//svg_info/packs/web/8b/378/icon.css);
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -2474,7 +2475,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 270px; }
+  min-width: 250px; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2549,21 +2550,20 @@ input, label, body {
         border: 0px; }
   .media-library .body {
     margin: 0px;
-    padding: 0px;
+    padding: 0px 0px 10px 0px;
     border-top: 1px solid #eee;
     font-size: 14px; }
     .media-library .body fieldset {
       position: relative;
-      padding: 10px;
+      padding: 0px 10px;
       border: 0px solid #aaa;
-      margin: 10px 0px;
       border-top-width: 1px; }
       .media-library .body fieldset .on-switch {
         position: absolute;
         top: 0px;
-        right: 10px;
-        height: 16px;
-        line-height: 16px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -2580,20 +2580,22 @@ input, label, body {
       .media-library .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
+        line-height: 32px;
+        height: 32px;
         padding: 0px 5px; }
+        .media-library .body fieldset legend > :not(:last-child)::after {
+          content: '';
+          border-top: 1px solid #999;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
         .media-library .body fieldset legend span {
           color: #999;
           height: 16px;
           line-height: 16px; }
-          .media-library .body fieldset legend span:not(:last-child)::after {
-            content: '';
-            border-top: 1px solid #999;
-            display: inline-block;
-            height: 1px;
-            width: 7px;
-            margin: 0px 3px;
-            margin-top: -2px;
-            vertical-align: middle; }
           .media-library .body fieldset legend span.on {
             color: #333; }
   .media-library .body {
@@ -2662,7 +2664,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 230px; }
+  min-width: 260px; }
   .instrument .header {
     cursor: pointer;
     margin: 0px;
@@ -2737,21 +2739,20 @@ input, label, body {
         border: 0px; }
   .instrument .body {
     margin: 0px;
-    padding: 0px;
+    padding: 0px 0px 10px 0px;
     border-top: 1px solid #eee;
     font-size: 14px; }
     .instrument .body fieldset {
       position: relative;
-      padding: 10px;
+      padding: 0px 10px;
       border: 0px solid #aaa;
-      margin: 10px 0px;
       border-top-width: 1px; }
       .instrument .body fieldset .on-switch {
         position: absolute;
         top: 0px;
-        right: 10px;
-        height: 16px;
-        line-height: 16px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -2768,20 +2769,22 @@ input, label, body {
       .instrument .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
+        line-height: 32px;
+        height: 32px;
         padding: 0px 5px; }
+        .instrument .body fieldset legend > :not(:last-child)::after {
+          content: '';
+          border-top: 1px solid #999;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
         .instrument .body fieldset legend span {
           color: #999;
           height: 16px;
           line-height: 16px; }
-          .instrument .body fieldset legend span:not(:last-child)::after {
-            content: '';
-            border-top: 1px solid #999;
-            display: inline-block;
-            height: 1px;
-            width: 7px;
-            margin: 0px 3px;
-            margin-top: -2px;
-            vertical-align: middle; }
           .instrument .body fieldset legend span.on {
             color: #333; }
   .instrument .body form {
@@ -2789,17 +2792,44 @@ input, label, body {
     padding: 0px; }
     .instrument .body form label, .instrument .body form input[type=radio] {
       cursor: pointer; }
-    .instrument .body form div {
-      margin: 0px 0px 10px 0px; }
+    .instrument .body form legend div {
+      display: inline-block;
+      margin: 0px; }
+    .instrument .body form legend img {
+      height: 22px;
+      vertical-align: middle; }
+    .instrument .body form .knob {
+      position: relative;
+      margin-left: 0px;
+      width: 22px;
+      height: 22px;
+      vertical-align: middle;
+      border-radius: 100%;
+      background: #f0f0f0;
+      box-sizing: border-box;
+      box-shadow: 0 0px 5px 0px #777, 0 0 10px #ccc inset, 0 0 1px 0px #ccc; }
+      .instrument .body form .knob::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 100px;
+        background: #ddd;
+        box-shadow: 0px 0px 2px 1px #ccc inset;
+        box-sizing: border-box;
+        top: 2px;
+        left: 50%;
+        margin-left: -3px; }
     .instrument .body form input[type=range] {
       margin: 0px;
       padding: 0px;
-      margin: 10px 0px;
+      margin: 0px;
       display: block;
       width: 100%;
       -webkit-appearance: none;
       background-color: #777;
       outline: none;
+      margin: 8px 0px;
       border-radius: 10px;
       height: 2px;
       cursor: pointer; }
@@ -2807,11 +2837,33 @@ input, label, body {
       -webkit-appearance: none;
       background-color: #bbb;
       border: 1px solid #777;
-      width: 7px;
-      height: 20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 10px;
       transition: .3s; }
       .instrument .body form input[type=range]::-webkit-slider-thumb:hover {
         background: #dfe; }
+    .instrument .body form button.btn-opt {
+      height: 20px;
+      line-height: 20px;
+      padding: 0px 2px;
+      box-sizing: border-box;
+      border: 0px;
+      color: #777;
+      cursor: pointer;
+      outline: none;
+      transition: color .1s; }
+      .instrument .body form button.btn-opt:active {
+        outline: none; }
+      .instrument .body form button.btn-opt.on {
+        color: #333; }
+      .instrument .body form button.btn-opt > * {
+        height: 20px;
+        line-height: 20px;
+        font-size: 20px;
+        padding: 0px;
+        box-sizing: border-box;
+        border: 0px; }
 
 .sequencer {
   position: absolute;
@@ -2894,21 +2946,20 @@ input, label, body {
         border: 0px; }
   .sequencer .body {
     margin: 0px;
-    padding: 0px;
+    padding: 0px 0px 10px 0px;
     border-top: 1px solid #eee;
     font-size: 14px; }
     .sequencer .body fieldset {
       position: relative;
-      padding: 10px;
+      padding: 0px 10px;
       border: 0px solid #aaa;
-      margin: 10px 0px;
       border-top-width: 1px; }
       .sequencer .body fieldset .on-switch {
         position: absolute;
         top: 0px;
-        right: 10px;
-        height: 16px;
-        line-height: 16px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -2925,20 +2976,22 @@ input, label, body {
       .sequencer .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
+        line-height: 32px;
+        height: 32px;
         padding: 0px 5px; }
+        .sequencer .body fieldset legend > :not(:last-child)::after {
+          content: '';
+          border-top: 1px solid #999;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
         .sequencer .body fieldset legend span {
           color: #999;
           height: 16px;
           line-height: 16px; }
-          .sequencer .body fieldset legend span:not(:last-child)::after {
-            content: '';
-            border-top: 1px solid #999;
-            display: inline-block;
-            height: 1px;
-            width: 7px;
-            margin: 0px 3px;
-            margin-top: -2px;
-            vertical-align: middle; }
           .sequencer .body fieldset legend span.on {
             color: #333; }
   .sequencer .body {
@@ -3140,21 +3193,20 @@ input, label, body {
         border: 0px; }
   .midi-map .body {
     margin: 0px;
-    padding: 0px;
+    padding: 0px 0px 10px 0px;
     border-top: 1px solid #eee;
     font-size: 14px; }
     .midi-map .body fieldset {
       position: relative;
-      padding: 10px;
+      padding: 0px 10px;
       border: 0px solid #aaa;
-      margin: 10px 0px;
       border-top-width: 1px; }
       .midi-map .body fieldset .on-switch {
         position: absolute;
         top: 0px;
-        right: 10px;
-        height: 16px;
-        line-height: 16px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -3171,20 +3223,22 @@ input, label, body {
       .midi-map .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
+        line-height: 32px;
+        height: 32px;
         padding: 0px 5px; }
+        .midi-map .body fieldset legend > :not(:last-child)::after {
+          content: '';
+          border-top: 1px solid #999;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
         .midi-map .body fieldset legend span {
           color: #999;
           height: 16px;
           line-height: 16px; }
-          .midi-map .body fieldset legend span:not(:last-child)::after {
-            content: '';
-            border-top: 1px solid #999;
-            display: inline-block;
-            height: 1px;
-            width: 7px;
-            margin: 0px 3px;
-            margin-top: -2px;
-            vertical-align: middle; }
           .midi-map .body fieldset legend span.on {
             color: #333; }
 
@@ -3270,21 +3324,20 @@ input, label, body {
         border: 0px; }
   .midi-keyboard .body {
     margin: 0px;
-    padding: 0px;
+    padding: 0px 0px 10px 0px;
     border-top: 1px solid #eee;
     font-size: 14px; }
     .midi-keyboard .body fieldset {
       position: relative;
-      padding: 10px;
+      padding: 0px 10px;
       border: 0px solid #aaa;
-      margin: 10px 0px;
       border-top-width: 1px; }
       .midi-keyboard .body fieldset .on-switch {
         position: absolute;
         top: 0px;
-        right: 10px;
-        height: 16px;
-        line-height: 16px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -3301,20 +3354,22 @@ input, label, body {
       .midi-keyboard .body fieldset legend {
         font-weight: bold;
         font-size: 14px;
+        line-height: 32px;
+        height: 32px;
         padding: 0px 5px; }
+        .midi-keyboard .body fieldset legend > :not(:last-child)::after {
+          content: '';
+          border-top: 1px solid #999;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
         .midi-keyboard .body fieldset legend span {
           color: #999;
           height: 16px;
           line-height: 16px; }
-          .midi-keyboard .body fieldset legend span:not(:last-child)::after {
-            content: '';
-            border-top: 1px solid #999;
-            display: inline-block;
-            height: 1px;
-            width: 7px;
-            margin: 0px 3px;
-            margin-top: -2px;
-            vertical-align: middle; }
           .midi-keyboard .body fieldset legend span.on {
             color: #333; }
   .midi-keyboard .body .keys {

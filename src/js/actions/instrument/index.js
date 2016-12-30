@@ -19,8 +19,15 @@ const initial = {
 		sustain: 0.8,
 		release: 0.08
 	},
-	vco: {
-		type: 'square'
+	vco1: {
+		on: true,
+		type: 'square',
+		detune: 0
+	},
+	vco2: {
+		on: false,
+		type: 'square',
+		detune: 0
 	},
 	lfo: {
 		on: false,

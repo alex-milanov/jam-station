@@ -25,8 +25,10 @@ function BasicSynth(context, note) {
 	this.context = context;
 	this.note = note;
 
-	this.vco = this.context.createOscillator();
-	this.vco.frequency.value = this.noteToFrequency(note);
+	this.vco1 = this.context.createOscillator();
+	this.vco1.frequency.value = this.noteToFrequency(note);
+	this.vco2 = this.context.createOscillator();
+	this.vco2.frequency.value = this.noteToFrequency(note);
 	this.lfo = this.context.createOscillator();
 	this.lfoGain = this.context.createGain();
 	this.vcf = this.context.createBiquadFilter();
@@ -37,9 +39,11 @@ function BasicSynth(context, note) {
 	// this.lfoGain.connect(this.vco.frequency);
 	// this.vcf.connect(this.vca);
 	this.vca.gain.value = 0;
-	this.vco.type = 'sawtooth';
+	this.vco1.type = 'sawtooth';
+	this.vco2.type = 'sawtooth';
 	this.lfo.type = 'sawtooth';
-	this.vco.start(this.context.currentTime);
+	this.vco1.start(this.context.currentTime);
+	this.vco2.start(this.context.currentTime);
 	this.lfo.start(this.context.currentTime);
 	this.volume = this.context.createGain();
 	this.volume.gain.value = 0.7;
@@ -92,8 +96,14 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	console.log(time, state.instrument, velocity);
 
 	// this.setup(note);
-	if (state.instrument.vco.type)
-		this.vco.type = state.instrument.vco.type;
+	if (state.instrument.vco1.type)
+		this.vco1.type = state.instrument.vco1.type;
+	if (state.instrument.vco1.detune)
+		this.vco1.detune.value = state.instrument.vco1.detune;
+	if (state.instrument.vco2.type)
+		this.vco2.type = state.instrument.vco2.type;
+	if (state.instrument.vco2.detune)
+		this.vco2.detune.value = state.instrument.vco2.detune;
 	if (state.instrument.lfo.type)
 		this.lfo.type = state.instrument.lfo.type;
 	if (state.studio.volume)
@@ -102,25 +112,30 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	var frequency = this.noteToFrequency(note);
 	console.log(frequency);
 
-	this.vco.frequency.cancelScheduledValues(0);
+	this.vco1.frequency.cancelScheduledValues(0);
+	this.vco2.frequency.cancelScheduledValues(0);
 	this.vca.gain.cancelScheduledValues(0);
 
-	this.vco.frequency.setValueAtTime(frequency, now);
+	this.vco1.frequency.setValueAtTime(frequency, now);
+	this.vco2.frequency.setValueAtTime(frequency, now);
 
 	if (state.instrument.lfo.on) {
 		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
 		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
-		this.lfoGain.connect(this.vco.detune);
+		this.lfoGain.connect(this.vco1.detune);
+		this.lfoGain.connect(this.vco2.detune);
 	}
 
 	if (state.instrument.vcf.on) {
-		this.vco.connect(this.vcf);
+		if (state.instrument.vco1.on) this.vco1.connect(this.vcf);
+		if (state.instrument.vco2.on) this.vco2.connect(this.vcf);
 		this.vcf.connect(this.vca);
 		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
 		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
 		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
 	} else {
-		this.vco.connect(this.vca);
+		if (state.instrument.vco1.on) this.vco1.connect(this.vca);
+		if (state.instrument.vco2.on) this.vco2.connect(this.vca);
 	}
 
 	// attack
@@ -156,7 +171,8 @@ BasicSynth.prototype.noteoff = function(state, note) {
 	this.vca.gain.setValueCurveAtTime(new Float32Array([this.vca.gain.value, 0]),
 		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
 
-	this.vco.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
+	this.vco1.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
+	this.vco2.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
 };
 
 BasicSynth.prototype.play = function(state, note) {

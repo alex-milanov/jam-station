@@ -142,7 +142,7 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	if (state.instrument.eg.attack > 0)
 		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
 	else
-		this.vca.gain.setValueAtTime(velocity, time);
+		this.vca.gain.setValueAtTime(velocity, now);
 
 	// decay
 	if (state.instrument.eg.decay > 0)

@@ -81,7 +81,8 @@ midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
-		if (midiMsg.state !== false) console.log('msg', data, midiMsg);
+		// if (midiMsg.state !== false)
+		console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':

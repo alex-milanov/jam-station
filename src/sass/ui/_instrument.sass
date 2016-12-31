@@ -11,7 +11,7 @@
 					display: inline-block
 					margin: 0px
 				img
-					height: 18px
+					height: 22px
 					vertical-align: middle
 			.knob
 				position: relative
@@ -57,6 +57,33 @@
 				transition: .3s
 				&:hover
 					background: $jam-station-color-light
+			.vertical
+				height: 90px
+				position: relative
+				> *
+					display: inline-block
+					float: none
+					position: absolute
+					&:nth-of-type(1)
+						left: 0px
+					&:nth-of-type(2)
+						left: 25%
+					&:nth-of-type(3)
+						left: 50%
+					&:nth-of-type(4)
+						left: 75%
+				label
+					top: 80px
+					width: 25%
+				input[type=range]
+					top: 0px
+					width: 70px
+					transform: rotate(-90deg)
+					margin: 38px 0px 0px -30px
+				.right
+					top: 0px
+					width: 25%
+					margin-left: 10%
 			button.btn-opt
 				height: 20px
 				line-height: 20px

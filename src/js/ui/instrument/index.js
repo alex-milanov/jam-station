@@ -91,34 +91,36 @@ module.exports = ({state, actions}) => div('.instrument', [
 					span('.on', 'VCA1'),
 					span('VCA2')
 				]),
-				label(`Attack`),
-				span('.right', `${state.instrument.eg.attack}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.attack},
-					on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
-				}),
-				label(`Decay`),
-				span('.right', `${state.instrument.eg.decay}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.decay},
-					on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
-				}),
-				label(`Sustain`),
-				span('.right', `${state.instrument.eg.sustain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.sustain},
-					on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
-				}),
-				label(`Release`),
-				span('.right', `${state.instrument.eg.release}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.release},
-					on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
-				})
+				div('.vertical', [
+					label(`Attack`),
+					span('.right', `${state.instrument.eg.attack}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.attack},
+						on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
+					}),
+					label(`Decay`),
+					span('.right', `${state.instrument.eg.decay}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.decay},
+						on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
+					}),
+					label(`Sustain`),
+					span('.right', `${state.instrument.eg.sustain}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.sustain},
+						on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
+					}),
+					label(`Release`),
+					span('.right', `${state.instrument.eg.release}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.release},
+						on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
+					})
+				])
 			]),
 			// VCF
 			fieldset([

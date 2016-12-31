@@ -2796,7 +2796,7 @@ input, label, body {
       display: inline-block;
       margin: 0px; }
     .instrument .body form legend img {
-      height: 18px;
+      height: 22px;
       vertical-align: middle; }
     .instrument .body form .knob {
       position: relative;
@@ -2843,6 +2843,33 @@ input, label, body {
       transition: .3s; }
       .instrument .body form input[type=range]::-webkit-slider-thumb:hover {
         background: #dfe; }
+    .instrument .body form .vertical {
+      height: 90px;
+      position: relative; }
+      .instrument .body form .vertical > * {
+        display: inline-block;
+        float: none;
+        position: absolute; }
+        .instrument .body form .vertical > *:nth-of-type(1) {
+          left: 0px; }
+        .instrument .body form .vertical > *:nth-of-type(2) {
+          left: 25%; }
+        .instrument .body form .vertical > *:nth-of-type(3) {
+          left: 50%; }
+        .instrument .body form .vertical > *:nth-of-type(4) {
+          left: 75%; }
+      .instrument .body form .vertical label {
+        top: 80px;
+        width: 25%; }
+      .instrument .body form .vertical input[type=range] {
+        top: 0px;
+        width: 70px;
+        transform: rotate(-90deg);
+        margin: 38px 0px 0px -30px; }
+      .instrument .body form .vertical .right {
+        top: 0px;
+        width: 25%;
+        margin-left: 10%; }
     .instrument .body form button.btn-opt {
       height: 20px;
       line-height: 20px;

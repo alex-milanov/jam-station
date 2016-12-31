@@ -13800,7 +13800,8 @@ midi.state$.subscribe(data => console.log('state', data));
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
-		if (midiMsg.state !== false) console.log('msg', data, midiMsg);
+		// if (midiMsg.state !== false)
+		console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':
@@ -13990,7 +13991,7 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	if (state.instrument.eg.attack > 0)
 		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
 	else
-		this.vca.gain.setValueAtTime(velocity, time);
+		this.vca.gain.setValueAtTime(velocity, now);
 
 	// decay
 	if (state.instrument.eg.decay > 0)
@@ -14073,6 +14074,8 @@ Sampler.prototype.setup = function(state) {
 
 Sampler.prototype.trigger = function(state, start, end) {
 	this.setup();
+
+	start = start || this.context.currentTime;
 
 	if (state.studio.volume)
 		this.volume.gain.value = state.studio.volume;
@@ -14447,34 +14450,36 @@ module.exports = ({state, actions}) => div('.instrument', [
 					span('.on', 'VCA1'),
 					span('VCA2')
 				]),
-				label(`Attack`),
-				span('.right', `${state.instrument.eg.attack}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.attack},
-					on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
-				}),
-				label(`Decay`),
-				span('.right', `${state.instrument.eg.decay}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.decay},
-					on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
-				}),
-				label(`Sustain`),
-				span('.right', `${state.instrument.eg.sustain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.sustain},
-					on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
-				}),
-				label(`Release`),
-				span('.right', `${state.instrument.eg.release}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.005},
-					props: {value: state.instrument.eg.release},
-					on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
-				})
+				div('.vertical', [
+					label(`Attack`),
+					span('.right', `${state.instrument.eg.attack}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.attack},
+						on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
+					}),
+					label(`Decay`),
+					span('.right', `${state.instrument.eg.decay}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.decay},
+						on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
+					}),
+					label(`Sustain`),
+					span('.right', `${state.instrument.eg.sustain}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.sustain},
+						on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
+					}),
+					label(`Release`),
+					span('.right', `${state.instrument.eg.release}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.eg.release},
+						on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
+					})
+				])
 			]),
 			// VCF
 			fieldset([

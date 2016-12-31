@@ -35,6 +35,8 @@ Sampler.prototype.setup = function(state) {
 Sampler.prototype.trigger = function(state, start, end) {
 	this.setup();
 
+	start = start || this.context.currentTime;
+
 	if (state.studio.volume)
 		this.volume.gain.value = state.studio.volume;
 

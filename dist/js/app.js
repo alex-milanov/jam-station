@@ -106,22 +106,33 @@ const keyValue = (k, v) => {
 	return o;
 };
 
-const patch = (o, k, v) => Object.assign({}, o,
-	(k instanceof Array)
-		? keyValue(k[0], (k.length > 1)
-			? patch(o[k[0]] || {}, k.slice(1), v)
-			: typeof o[k[0]] === 'object' && Object.assign({}, o[k[0]], v) || v)
-		: keyValue(k, typeof o[k] === 'object' && Object.assign({}, o[k], v) || v)
-);
+const clone = o => Object.assign(Object.create(Object.getPrototypeOf(o) || {}), o);
 
 const sub = (o, p) => (p instanceof Array)
 	&& o[p[0]] && sub(o[p[0]], p.slice(1))
 	|| o[p] || false;
 
+const patch = (o, k, v) => Object.assign(clone(o),
+	(k instanceof Array)
+		? keyValue(k[0], (k.length > 1)
+			? patch(o[k[0]] || {}, k.slice(1), v)
+			: typeof o[k[0]] === 'object' && Object.assign(clone(o[k[0]]), v) || v)
+		: keyValue(k, typeof o[k] === 'object' && Object.assign(clone(o[k]), v) || v)
+);
+
+const chainCall = (o, chain) => chain.reduce(
+	(o, link) => (typeof link[1] === 'undefined')
+		? o[link[0]]()
+		: o[link[0]](link[1]),
+	o
+);
+
 module.exports = {
 	keyValue,
+	clone,
+	sub,
 	patch,
-	sub
+	chainCall
 };
 
 },{}],4:[function(require,module,exports){
@@ -13725,8 +13736,8 @@ const vdom = require('iblokz/adapters/vdom');
 const {h, div, input, hr, p, button} = vdom;
 
 const midi = require('./util/midi')();
-const audio = require('./util/audio');
-window.a = audio;
+const a = require('./util/audio');
+window.a = a;
 const BasicSynth = require('./instr/basic-synth');
 
 // app
@@ -13737,6 +13748,7 @@ let actions$;
 // services
 const services = require('./services');
 const studio = require('./services/studio');
+// const audio = require('./services/audio');
 // actions = studio.attach(actions);
 
 // hot reloading
@@ -14782,6 +14794,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 },{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
 'use strict';
 
+const arr = require('iblokz/common/arr');
 const obj = require('iblokz/common/obj');
 
 const prefsMap = {
@@ -14800,10 +14813,13 @@ const prefsMap = {
 	}
 };
 
-const context = new (
-	window.AudioContext || window.webkitAudioContext
-	|| window.mozAudioContext || window.oAudioContext
-	|| window.msAudioContext)();
+let context = new (
+	window.AudioContext
+	|| window.webkitAudioContext
+	|| window.mozAudioContext
+	|| window.oAudioContext
+	|| window.msAudioContext
+)();
 
 const create = (type, context) => ({
 	type,
@@ -14831,14 +14847,18 @@ const chain = nodes => nodes.forEach(
 
 const apply = (node, prefs) => Object.keys(prefs)
 	.filter(pref => prefsMap[node.type][pref] !== undefined)
-	.reduce((node, pref) => {
-		// console.log(pref, prefs[pref]);
-		if (pref === 'type')
-			node.node[prefsMap[node.type][pref]] = prefs[pref];
-		else
-			node.node[prefsMap[node.type][pref]].value = prefs[pref];
-		return node;
-	}, node);
+	.map(pref => (console.log('pref', node, pref), pref))
+	.reduce(
+		(node, pref) => {
+			if (pref === 'type') {
+				node.node[prefsMap[node.type][pref]] = prefs[pref];
+			} else {
+				node.node[prefsMap[node.type][pref]].value = prefs[pref];
+			}
+			return node;
+		},
+		node
+	);
 
 const add = (type, prefs, context) => apply(create(type, context), prefs);
 
@@ -14860,10 +14880,14 @@ module.exports = {
 	apply,
 	add,
 	start,
-	stop
+	stop,
+	vco: prefs => apply(create('vco', context), prefs),
+	vcf: prefs => apply(create('vcf', context), prefs),
+	lfo: prefs => apply(create('lfo', context), prefs),
+	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz/common/obj":3}],38:[function(require,module,exports){
+},{"iblokz/common/arr":2,"iblokz/common/obj":3}],38:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||

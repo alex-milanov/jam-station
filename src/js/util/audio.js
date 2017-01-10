@@ -1,5 +1,6 @@
 'use strict';
 
+const arr = require('iblokz/common/arr');
 const obj = require('iblokz/common/obj');
 
 const prefsMap = {
@@ -18,10 +19,13 @@ const prefsMap = {
 	}
 };
 
-const context = new (
-	window.AudioContext || window.webkitAudioContext
-	|| window.mozAudioContext || window.oAudioContext
-	|| window.msAudioContext)();
+let context = new (
+	window.AudioContext
+	|| window.webkitAudioContext
+	|| window.mozAudioContext
+	|| window.oAudioContext
+	|| window.msAudioContext
+)();
 
 const create = (type, context) => ({
 	type,
@@ -49,14 +53,18 @@ const chain = nodes => nodes.forEach(
 
 const apply = (node, prefs) => Object.keys(prefs)
 	.filter(pref => prefsMap[node.type][pref] !== undefined)
-	.reduce((node, pref) => {
-		// console.log(pref, prefs[pref]);
-		if (pref === 'type')
-			node.node[prefsMap[node.type][pref]] = prefs[pref];
-		else
-			node.node[prefsMap[node.type][pref]].value = prefs[pref];
-		return node;
-	}, node);
+	.map(pref => (console.log('pref', node, pref), pref))
+	.reduce(
+		(node, pref) => {
+			if (pref === 'type') {
+				node.node[prefsMap[node.type][pref]] = prefs[pref];
+			} else {
+				node.node[prefsMap[node.type][pref]].value = prefs[pref];
+			}
+			return node;
+		},
+		node
+	);
 
 const add = (type, prefs, context) => apply(create(type, context), prefs);
 
@@ -78,5 +86,9 @@ module.exports = {
 	apply,
 	add,
 	start,
-	stop
+	stop,
+	vco: prefs => apply(create('vco', context), prefs),
+	vcf: prefs => apply(create('vcf', context), prefs),
+	lfo: prefs => apply(create('lfo', context), prefs),
+	vca: prefs => apply(create('vca', context), prefs)
 };

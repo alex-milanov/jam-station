@@ -14,6 +14,7 @@
 		"no-sequences": 0,
 		"dot-notation": 0,
 		"no-negated-condition": 0,
-		"no-unused-vars": 0
+		"no-unused-vars": 0,
+		"no-loop-func": 0
 	}
 }

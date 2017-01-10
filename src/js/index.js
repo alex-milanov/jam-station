@@ -6,8 +6,8 @@ const vdom = require('iblokz/adapters/vdom');
 const {h, div, input, hr, p, button} = vdom;
 
 const midi = require('./util/midi')();
-const audio = require('./util/audio');
-window.a = audio;
+const a = require('./util/audio');
+window.a = a;
 const BasicSynth = require('./instr/basic-synth');
 
 // app
@@ -18,6 +18,7 @@ let actions$;
 // services
 const services = require('./services');
 const studio = require('./services/studio');
+// const audio = require('./services/audio');
 // actions = studio.attach(actions);
 
 // hot reloading

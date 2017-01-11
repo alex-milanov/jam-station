@@ -88,7 +88,7 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"../common/obj":3,"snabbdom":13,"snabbdom/h":5,"snabbdom/modules/attributes":8,"snabbdom/modules/class":9,"snabbdom/modules/eventlisteners":10,"snabbdom/modules/props":11,"snabbdom/modules/style":12}],2:[function(require,module,exports){
+},{"../common/obj":4,"snabbdom":14,"snabbdom/h":6,"snabbdom/modules/attributes":9,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],2:[function(require,module,exports){
 'use strict';
 
 const fromList = list => Array.prototype.slice.call(list);
@@ -98,6 +98,21 @@ module.exports = {
 };
 
 },{}],3:[function(require,module,exports){
+'use strict';
+
+const compose = (...fList) => (...args) => fList.reduce(
+	(r, f) => (r instanceof Array) && f.apply(null, r) || f(r), args
+);
+
+const _switch = (value, cases) => (typeof cases[value] !== 'undefined')
+	&& cases[value] || cases['default'] || false;
+
+module.exports = {
+	compose,
+	switch: _switch
+};
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 const keyValue = (k, v) => {
@@ -135,7 +150,7 @@ module.exports = {
 	chainCall
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 const toCamelCase = (str, glue) =>
@@ -167,7 +182,7 @@ module.exports = {
 	toDocumentId
 };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var VNode = require('./vnode');
 var is = require('./is');
 
@@ -203,7 +218,7 @@ module.exports = function h(sel, b, c) {
   return VNode(sel, data, children, text, undefined);
 };
 
-},{"./is":7,"./vnode":14}],6:[function(require,module,exports){
+},{"./is":8,"./vnode":15}],7:[function(require,module,exports){
 function createElement(tagName){
   return document.createElement(tagName);
 }
@@ -259,13 +274,13 @@ module.exports = {
   setTextContent: setTextContent
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var NamespaceURIs = {
   "xlink": "http://www.w3.org/1999/xlink"
 };
@@ -318,7 +333,7 @@ function updateAttrs(oldVnode, vnode) {
 
 module.exports = {create: updateAttrs, update: updateAttrs};
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class,
@@ -343,7 +358,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function invokeHandler(handler, vnode, event) {
   if (typeof handler === "function") {
     // call function handler
@@ -446,7 +461,7 @@ module.exports = {
   destroy: updateEventListeners
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -471,7 +486,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -542,7 +557,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Node */
 'use strict';
@@ -804,14 +819,14 @@ function init(modules, api) {
 
 module.exports = {init: init};
 
-},{"./htmldomapi":6,"./is":7,"./vnode":14}],14:[function(require,module,exports){
+},{"./htmldomapi":7,"./is":8,"./vnode":15}],15:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -973,7 +988,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -13365,7 +13380,7 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":15}],17:[function(require,module,exports){
+},{"_process":16}],18:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13390,10 +13405,10 @@ const ping = () => stream.onNext(state => state);
 
 const initial = {
 	ui: {
-		mediaLibrary: true,
+		mediaLibrary: false,
 		patches: true,
 		instrument: true,
-		sequencer: true,
+		sequencer: false,
 		midiMap: true
 	},
 	midi: {
@@ -13419,7 +13434,7 @@ module.exports = {
 	})
 };
 
-},{"../util/math":39,"./instrument":18,"./media-library":19,"./midi-map":20,"./sequencer":21,"./studio":22,"iblokz/common/obj":3,"rx":16}],18:[function(require,module,exports){
+},{"../util/math":41,"./instrument":19,"./media-library":20,"./midi-map":21,"./sequencer":22,"./studio":23,"iblokz/common/obj":4,"rx":17}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13435,7 +13450,8 @@ const updateProp = (param, prop, value) => stream.onNext(
 );
 
 const initial = {
-	eg: {
+	vca1: {
+		volume: 0.7,
 		attack: 0,
 		decay: 0.04,
 		sustain: 0.8,
@@ -13471,7 +13487,7 @@ module.exports = {
 	updateProp
 };
 
-},{"iblokz/common/obj":3,"rx":16}],19:[function(require,module,exports){
+},{"iblokz/common/obj":4,"rx":17}],20:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13539,7 +13555,7 @@ module.exports = {
 	initial
 };
 
-},{"../../util/math":39,"iblokz/common/obj":3,"rx":16}],20:[function(require,module,exports){
+},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],21:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13560,7 +13576,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":39,"iblokz/common/obj":3,"rx":16}],21:[function(require,module,exports){
+},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],22:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13652,7 +13668,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":39,"iblokz/common/obj":3,"rx":16}],22:[function(require,module,exports){
+},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],23:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13727,7 +13743,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":39,"iblokz/common/obj":3,"rx":16}],23:[function(require,module,exports){
+},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],24:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13748,7 +13764,7 @@ let actions$;
 // services
 const services = require('./services');
 const studio = require('./services/studio');
-// const audio = require('./services/audio');
+const audio = require('./services/audio');
 // actions = studio.attach(actions);
 
 // hot reloading
@@ -13783,6 +13799,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 studio.hook({state$, actions});
+audio.hook({state$, midi, actions});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -13806,14 +13823,12 @@ let midiMap = {
 	26: ['instrument', 'eg', 'sustain'],
 	27: ['instrument', 'eg', 'release']
 };
-
-midi.access$.subscribe(data => actions.midiMap.connect(data));
-midi.state$.subscribe(data => console.log('state', data));
+/*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		// if (midiMsg.state !== false)
-		console.log('msg', data, midiMsg);
+		// console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':
@@ -13857,8 +13872,9 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 				break;
 		}
 	});
+	*/
 
-},{"./actions":17,"./instr/basic-synth":24,"./services":26,"./services/studio":29,"./ui":31,"./util/audio":37,"./util/midi":40,"iblokz/adapters/vdom":1,"rx":16}],24:[function(require,module,exports){
+},{"./actions":18,"./instr/basic-synth":25,"./services":28,"./services/audio":27,"./services/studio":31,"./ui":33,"./util/audio":39,"./util/midi":42,"iblokz/adapters/vdom":1,"rx":17}],25:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -14049,7 +14065,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 /**
@@ -14113,7 +14129,148 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
+'use strict';
+
+const Rx = require('rx');
+const $ = Rx.Observable;
+const Subject = Rx.Subject;
+
+const obj = require('iblokz/common/obj');
+const a = require('../util/audio');
+
+let changes$ = new Subject();
+
+const initial = {
+	vco1: a.start(a.vco({type: 'square'})),
+	vco2: a.start(a.vco({type: 'square'})),
+	vca1: a.vca({gain: 0}),
+	vcf: a.vcf({}),
+	// lfo: a.lfo({}),
+	volume: a.vca({gain: 0.7}),
+	context: a.context
+};
+
+const updatePrefs = instr => changes$.onNext(nodes =>
+	Object.keys(nodes).reduce((o, node) =>
+		(instr[node])
+			? obj.patch(o, node, a.apply(nodes[node], instr[node]))
+			: o,
+		nodes
+	)
+);
+
+const updateConnections = instr => changes$.onNext(nodes => {
+	//
+	const {vco1, vco2, vca1, vcf, volume, context} = nodes;
+
+	// oscillators
+	if (!instr.vco1.on) a.disconnect(vco1);
+	if (!instr.vco2.on) a.disconnect(vco2);
+
+	// vcf
+	if (instr.vcf.on) {
+		if (instr.vco1.on) a.reroute(vco1, vcf);
+		if (instr.vco2.on) a.reroute(vco1, vcf);
+		a.connect(vcf, vca1);
+	} else {
+		a.disconnect(vcf, vca1);
+		if (instr.vco1.on) a.reroute(vco1, vca1);
+		if (instr.vco2.on) a.reroute(vco2, vca1);
+	}
+
+	a.connect(vca1, volume);
+	a.connect(volume, context.destination);
+
+	return Object.assign({}, nodes, {vco1, vco2, vca1, vcf, volume, context});
+});
+
+const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
+	const {vco1, vco2, vca1, context} = nodes;
+
+	const now = context.currentTime;
+	const time = now + 0.0001;
+
+	console.log(instr, note, velocity);
+
+	vco1.node.frequency.cancelScheduledValues(0);
+	vco2.node.frequency.cancelScheduledValues(0);
+	vca1.node.gain.cancelScheduledValues(0);
+
+	const freq = a.noteToFrequency(note.key + note.octave);
+
+	vco1.node.frequency.value = freq;
+	vco2.node.frequency.value = freq;
+
+	// attack
+	if (instr.vca1.attack > 0)
+		vca1.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca1.volume]), time, instr.vca1.attack);
+	else
+		vca1.node.gain.setValueAtTime(velocity, now);
+
+	// decay
+	if (instr.vca1.decay > 0)
+		vca1.node.gain.setValueCurveAtTime(
+			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
+			time + instr.vca1.attack, instr.vca1.decay);
+
+	return Object.assign({}, nodes, {vco1, vco2, vca1, context});
+});
+
+const noteOff = (instr, note) => changes$.onNext(nodes => {
+	const {vca1, context} = nodes;
+	const now = context.currentTime;
+	const time = now + 0.0001;
+
+	vca1.node.gain.cancelScheduledValues(0);
+	vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
+		time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+
+	return Object.assign({}, nodes, {vca1, context});
+});
+
+const engine$ = changes$
+	.startWith(() => initial)
+	.scan((state, change) => change(state), {})
+	.subscribe();
+
+const hook = ({state$, midi, actions}) => {
+	// hook state changes
+	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument);
+	// update connections
+	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
+		.subscribe(updateConnections);
+	// update prefs
+	instrUpdates$
+		.subscribe(updatePrefs);
+
+	// hook midi signals
+	midi.access$.subscribe(data => actions.midiMap.connect(data));
+	midi.state$.subscribe(data => console.log('state', data));
+	midi.msg$
+		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
+		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		.map(data => (console.log('midi: ', data.msg), data))
+		.withLatestFrom(state$, (data, state) => ({data, state}))
+		.subscribe(({data, state}) => {
+			switch (data.msg.state) {
+				case 'noteOn':
+					noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					break;
+				case 'noteOff':
+					noteOff(state.instrument, data.msg.note);
+					break;
+				default:
+					break;
+			}
+		});
+};
+
+module.exports = {
+	hook
+};
+
+},{"../util/audio":39,"iblokz/common/obj":4,"rx":17}],28:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -14134,7 +14291,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":27,"./midi":28,"./studio":29}],27:[function(require,module,exports){
+},{"./layout":29,"./midi":30,"./studio":31}],29:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -14187,7 +14344,7 @@ module.exports = {
 	refresh
 };
 
-},{"iblokz/common/arr":2}],28:[function(require,module,exports){
+},{"iblokz/common/arr":2}],30:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -14198,7 +14355,7 @@ module.exports = {
 	refresh
 };
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -14314,7 +14471,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":25,"../util/context":38,"../util/math":39,"iblokz/common/obj":3,"rx":16}],30:[function(require,module,exports){
+},{"../instr/sampler":26,"../util/context":40,"../util/math":41,"iblokz/common/obj":4,"rx":17}],32:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -14348,7 +14505,7 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],31:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz/adapters/vdom');
@@ -14368,7 +14525,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
 ]);
 
-},{"./header":30,"./instrument":32,"./media-library":33,"./midi-keyboard":34,"./midi-map":35,"./sequencer":36,"iblokz/adapters/vdom":1}],32:[function(require,module,exports){
+},{"./header":32,"./instrument":34,"./media-library":35,"./midi-keyboard":36,"./midi-map":37,"./sequencer":38,"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14412,6 +14569,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 								actions.instrument.updateProp('vco1', 'detune', state.instrument.vco1.detune - ev.deltaY / 53)
 							)
 						}
+					}),
+					input('[size="3"][type="number"]', {
+						props: {value: state.instrument.vco1.detune},
+						on: {input: ev => actions.instrument.updateProp('vco1', 'detune', ev.target.value)}
 					})
 				]),
 				div('.on-switch.fa', {
@@ -14446,6 +14607,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 								actions.instrument.updateProp('vco2', 'detune', state.instrument.vco2.detune - ev.deltaY / 53)
 							)
 						}
+					}),
+					input('[size="3"][type="number"]', {
+						props: {value: state.instrument.vco2.detune},
+						on: {input: ev => actions.instrument.updateProp('vco2', 'detune', ev.target.value)}
 					})
 				]),
 				div('.on-switch.fa', {
@@ -14463,33 +14628,40 @@ module.exports = ({state, actions}) => div('.instrument', [
 					span('VCA2')
 				]),
 				div('.vertical', [
-					label(`Attack`),
-					span('.right', `${state.instrument.eg.attack}`),
+					label(`Volume`),
+					span('.right', `${state.instrument.vca1.volume}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.attack},
-						on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.volume},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value))}
+					}),
+					label(`Attack`),
+					span('.right', `${state.instrument.vca1.attack}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.vca1.attack},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
 					}),
 					label(`Decay`),
-					span('.right', `${state.instrument.eg.decay}`),
+					span('.right', `${state.instrument.vca1.decay}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.decay},
-						on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.decay},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
 					}),
 					label(`Sustain`),
-					span('.right', `${state.instrument.eg.sustain}`),
+					span('.right', `${state.instrument.vca1.sustain}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.sustain},
-						on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.sustain},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
 					}),
 					label(`Release`),
-					span('.right', `${state.instrument.eg.release}`),
+					span('.right', `${state.instrument.vca1.release}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.release},
-						on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.release},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
 					})
 				])
 			]),
@@ -14565,7 +14737,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],33:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14649,7 +14821,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1,"iblokz/common/obj":3,"iblokz/common/str":4}],34:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],36:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14696,7 +14868,7 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14721,7 +14893,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],36:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],38:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -14791,25 +14963,36 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],39:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
 const obj = require('iblokz/common/obj');
+const fn = require('iblokz/common/fn');
 
 const prefsMap = {
 	vco: {
-		freq: 'frequency',
-		type: 'type',
-		detune: 'detune'
+		type: (node, value) => ((node.node.type = value), node),
+		freq: (node, value) => ((node.node.frequency.value = value), node),
+		detune: (node, value) => ((node.node.detune.value = value), node)
 	},
 	vcf: {
-		type: 'type',
-		cutoff: 'frequency',
-		resonance: 'Q'
+		type: (node, value) => ((node.node.type = value), node),
+		cutoff: (node, value) => {
+			const minValue = 40;
+			const maxValue = node.node.context.sampleRate / 2;
+			// Logarithm (base 2) to compute how many octaves fall in the range.
+			var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+			// Compute a multiplier from 0 to 1 based on an exponential scale.
+			var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
+			// Get back to the frequency value between min and max.
+			node.node.frequency.value = maxValue * multiplier;
+			return node;
+		},
+		resonance: (node, value) => ((node.node.Q.value = value * 30), node)
 	},
 	vca: {
-		gain: 'gain'
+		gain: (node, value) => ((node.node.gain.value = value), node)
 	}
 };
 
@@ -14828,16 +15011,36 @@ const create = (type, context) => ({
 		lfo: () => context.createOscillator(),
 		vca: () => context.createGain(),
 		vcf: () => context.createBiquadFilter()
-	}[type]()
+	}[type](),
+	out: []
 });
 
 const connect = (node1, node2) => (
-	((node1.node && node1.node.connect)
+	((node1.node && node1.node.connect && !(node1.out && node1.out.indexOf(node2) > -1))
 		? node1.node
 		: node1).connect(
 		node2.node || node2
-	), node1
+	), Object.assign({}, node1, {
+		out: [].concat(node1.out, [node2])
+	})
 );
+
+const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
+	? (((node1.node && node1.node.connect)
+		? node1.node
+		: node1).disconnect(
+			node2.node || node2
+		), Object.assign({}, node1, {
+			out: [].concat(
+				node1.out.slice(0, node1.out.indexOf(node2)),
+				node1.out.slice(node1.out.indexOf(node2) + 1)
+			)
+		}))
+	: (typeof node2 === 'undefined')
+		&& node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
+		|| node1;
+
+const reroute = (node1, node2) => connect(disconnect(node1), node2);
 
 const chain = nodes => nodes.forEach(
 	(node, i) => {
@@ -14849,14 +15052,7 @@ const apply = (node, prefs) => Object.keys(prefs)
 	.filter(pref => prefsMap[node.type][pref] !== undefined)
 	.map(pref => (console.log('pref', node, pref), pref))
 	.reduce(
-		(node, pref) => {
-			if (pref === 'type') {
-				node.node[prefsMap[node.type][pref]] = prefs[pref];
-			} else {
-				node.node[prefsMap[node.type][pref]].value = prefs[pref];
-			}
-			return node;
-		},
+		(node, pref) => prefsMap[node.type][pref](node, prefs[pref]),
 		node
 	);
 
@@ -14872,22 +15068,47 @@ const stop = function(node) {
 	return node;
 };
 
+const noteToFrequency = function(note) {
+	var notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+	var keyNumber;
+	var octave;
+
+	if (note.length === 3) {
+		octave = note.charAt(2);
+	} else {
+		octave = note.charAt(1);
+	}
+
+	keyNumber = notes.indexOf(note.slice(0, -1));
+
+	if (keyNumber < 3) {
+		keyNumber = keyNumber + 12 + ((octave - 1) * 12) + 1;
+	} else {
+		keyNumber = keyNumber + ((octave - 1) * 12) + 1;
+	}
+
+	return 440 * Math.pow(2, (keyNumber - 49) / 12);
+};
+
 module.exports = {
 	context,
 	create,
 	connect,
+	disconnect,
+	reroute,
 	chain,
 	apply,
 	add,
 	start,
 	stop,
+	noteToFrequency,
 	vco: prefs => apply(create('vco', context), prefs),
 	vcf: prefs => apply(create('vcf', context), prefs),
 	lfo: prefs => apply(create('lfo', context), prefs),
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz/common/arr":2,"iblokz/common/obj":3}],38:[function(require,module,exports){
+},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],40:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -14898,7 +15119,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -14912,32 +15133,27 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
 const $ = Rx.Observable;
 
-const numberToNote = number => {
-	var notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-	var octave = parseInt(number / 12, 10);
-	var step = number - octave * 12;
-	var pitch = notes[step];
-	return {
-		pitch: `${pitch}${octave}`,
-		midi: number
-	};
-};
+const numberToNote = number => ({
+	key: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][number - parseInt(number / 12, 10) * 12],
+	octave: parseInt(number / 12, 10),
+	number
+});
 
 const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
 	const status = event.data[0] & 0xf0;
-	const binary = status.toString(2).slice(0, 4);
+	const binary = event.data[0].toString(2);
 	const channel = event.data[0] - status + 1;
 	let msg = {};
 
-	switch (binary) {
+	switch (binary.slice(0, 4)) {
 		// noteoff
 		case "1000":
 			msg = {
@@ -14973,9 +15189,9 @@ const parseMidiMsg = event => {
 	}
 
 	return Object.assign({}, msg, {
+		binary,
 		status,
 		channel,
-		binary,
 		data: event.data
 	});
 };
@@ -15038,4 +15254,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":16}]},{},[23]);
+},{"rx":17}]},{},[24]);

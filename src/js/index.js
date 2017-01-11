@@ -18,7 +18,7 @@ let actions$;
 // services
 const services = require('./services');
 const studio = require('./services/studio');
-// const audio = require('./services/audio');
+const audio = require('./services/audio');
 // actions = studio.attach(actions);
 
 // hot reloading
@@ -53,6 +53,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 studio.hook({state$, actions});
+audio.hook({state$, midi, actions});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -76,14 +77,12 @@ let midiMap = {
 	26: ['instrument', 'eg', 'sustain'],
 	27: ['instrument', 'eg', 'release']
 };
-
-midi.access$.subscribe(data => actions.midiMap.connect(data));
-midi.state$.subscribe(data => console.log('state', data));
+/*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		// if (midiMsg.state !== false)
-		console.log('msg', data, midiMsg);
+		// console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':
@@ -127,3 +126,4 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 				break;
 		}
 	});
+	*/

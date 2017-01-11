@@ -13,7 +13,8 @@ const updateProp = (param, prop, value) => stream.onNext(
 );
 
 const initial = {
-	eg: {
+	vca1: {
+		volume: 0.7,
 		attack: 0,
 		decay: 0.04,
 		sustain: 0.8,

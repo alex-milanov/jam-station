@@ -3,26 +3,21 @@
 const Rx = require('rx');
 const $ = Rx.Observable;
 
-const numberToNote = number => {
-	var notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-	var octave = parseInt(number / 12, 10);
-	var step = number - octave * 12;
-	var pitch = notes[step];
-	return {
-		pitch: `${pitch}${octave}`,
-		midi: number
-	};
-};
+const numberToNote = number => ({
+	key: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][number - parseInt(number / 12, 10) * 12],
+	octave: parseInt(number / 12, 10),
+	number
+});
 
 const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
 	const status = event.data[0] & 0xf0;
-	const binary = status.toString(2).slice(0, 4);
+	const binary = event.data[0].toString(2);
 	const channel = event.data[0] - status + 1;
 	let msg = {};
 
-	switch (binary) {
+	switch (binary.slice(0, 4)) {
 		// noteoff
 		case "1000":
 			msg = {
@@ -58,9 +53,9 @@ const parseMidiMsg = event => {
 	}
 
 	return Object.assign({}, msg, {
+		binary,
 		status,
 		channel,
-		binary,
 		data: event.data
 	});
 };

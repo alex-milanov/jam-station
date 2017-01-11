@@ -1,6 +1,6 @@
 .instrument
 	+editor(240px, 60px)
-	min-width: 260px
+	min-width: 320px
 	.body
 		form
 			+no-margin-padding
@@ -15,7 +15,7 @@
 					vertical-align: middle
 			.knob
 				position: relative
-				margin-left: 0px
+				margin-right: 8px
 				width: 22px
 				height: 22px
 				vertical-align: middle
@@ -67,14 +67,16 @@
 					&:nth-of-type(1)
 						left: 0px
 					&:nth-of-type(2)
-						left: 25%
+						left: 20%
 					&:nth-of-type(3)
-						left: 50%
+						left: 40%
 					&:nth-of-type(4)
-						left: 75%
+						left: 60%
+					&:nth-of-type(5)
+						left: 80%
 				label
 					top: 80px
-					width: 25%
+					width: 20%
 				input[type=range]
 					top: 0px
 					width: 70px
@@ -84,6 +86,29 @@
 					top: 0px
 					width: 25%
 					margin-left: 10%
+			input[type=number]
+				display: inline-block
+				text-align: center
+				border: 0px
+				box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+				color: #333
+				// text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5)
+				border-radius: 4px
+				// background: #cff5da
+				background: #dfe
+				-moz-appearance: textfield
+				-webkit-appearance: textfield
+				appearance: textfield
+				position: relative
+				width: 32px
+				height: 20px
+				&::-webkit-inner-spin-button,
+				&::-webkit-outer-spin-button
+					-webkit-appearance: none
+					margin: 0
+				outline: none
+				&:active
+					outline: none
 			button.btn-opt
 				height: 20px
 				line-height: 20px

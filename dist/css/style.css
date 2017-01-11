@@ -2583,7 +2583,7 @@ input, label, body {
         line-height: 32px;
         height: 32px;
         padding: 0px 5px; }
-        .media-library .body fieldset legend > :not(:last-child)::after {
+        .media-library .body fieldset legend > :not(:last-child):not(.knob)::after {
           content: '';
           border-top: 1px solid #999;
           display: inline-block;
@@ -2664,7 +2664,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 260px; }
+  min-width: 320px; }
   .instrument .header {
     cursor: pointer;
     margin: 0px;
@@ -2772,7 +2772,7 @@ input, label, body {
         line-height: 32px;
         height: 32px;
         padding: 0px 5px; }
-        .instrument .body fieldset legend > :not(:last-child)::after {
+        .instrument .body fieldset legend > :not(:last-child):not(.knob)::after {
           content: '';
           border-top: 1px solid #999;
           display: inline-block;
@@ -2800,7 +2800,7 @@ input, label, body {
       vertical-align: middle; }
     .instrument .body form .knob {
       position: relative;
-      margin-left: 0px;
+      margin-right: 8px;
       width: 22px;
       height: 22px;
       vertical-align: middle;
@@ -2853,14 +2853,16 @@ input, label, body {
         .instrument .body form .vertical > *:nth-of-type(1) {
           left: 0px; }
         .instrument .body form .vertical > *:nth-of-type(2) {
-          left: 25%; }
+          left: 20%; }
         .instrument .body form .vertical > *:nth-of-type(3) {
-          left: 50%; }
+          left: 40%; }
         .instrument .body form .vertical > *:nth-of-type(4) {
-          left: 75%; }
+          left: 60%; }
+        .instrument .body form .vertical > *:nth-of-type(5) {
+          left: 80%; }
       .instrument .body form .vertical label {
         top: 80px;
-        width: 25%; }
+        width: 20%; }
       .instrument .body form .vertical input[type=range] {
         top: 0px;
         width: 70px;
@@ -2870,6 +2872,26 @@ input, label, body {
         top: 0px;
         width: 25%;
         margin-left: 10%; }
+    .instrument .body form input[type=number] {
+      display: inline-block;
+      text-align: center;
+      border: 0px;
+      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+      color: #333;
+      border-radius: 4px;
+      background: #dfe;
+      -moz-appearance: textfield;
+      -webkit-appearance: textfield;
+      appearance: textfield;
+      position: relative;
+      width: 32px;
+      height: 20px;
+      outline: none; }
+      .instrument .body form input[type=number]::-webkit-inner-spin-button, .instrument .body form input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0; }
+      .instrument .body form input[type=number]:active {
+        outline: none; }
     .instrument .body form button.btn-opt {
       height: 20px;
       line-height: 20px;
@@ -3006,7 +3028,7 @@ input, label, body {
         line-height: 32px;
         height: 32px;
         padding: 0px 5px; }
-        .sequencer .body fieldset legend > :not(:last-child)::after {
+        .sequencer .body fieldset legend > :not(:last-child):not(.knob)::after {
           content: '';
           border-top: 1px solid #999;
           display: inline-block;
@@ -3253,7 +3275,7 @@ input, label, body {
         line-height: 32px;
         height: 32px;
         padding: 0px 5px; }
-        .midi-map .body fieldset legend > :not(:last-child)::after {
+        .midi-map .body fieldset legend > :not(:last-child):not(.knob)::after {
           content: '';
           border-top: 1px solid #999;
           display: inline-block;
@@ -3384,7 +3406,7 @@ input, label, body {
         line-height: 32px;
         height: 32px;
         padding: 0px 5px; }
-        .midi-keyboard .body fieldset legend > :not(:last-child)::after {
+        .midi-keyboard .body fieldset legend > :not(:last-child):not(.knob)::after {
           content: '';
           border-top: 1px solid #999;
           display: inline-block;

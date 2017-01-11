@@ -41,6 +41,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 								actions.instrument.updateProp('vco1', 'detune', state.instrument.vco1.detune - ev.deltaY / 53)
 							)
 						}
+					}),
+					input('[size="3"][type="number"]', {
+						props: {value: state.instrument.vco1.detune},
+						on: {input: ev => actions.instrument.updateProp('vco1', 'detune', ev.target.value)}
 					})
 				]),
 				div('.on-switch.fa', {
@@ -75,6 +79,10 @@ module.exports = ({state, actions}) => div('.instrument', [
 								actions.instrument.updateProp('vco2', 'detune', state.instrument.vco2.detune - ev.deltaY / 53)
 							)
 						}
+					}),
+					input('[size="3"][type="number"]', {
+						props: {value: state.instrument.vco2.detune},
+						on: {input: ev => actions.instrument.updateProp('vco2', 'detune', ev.target.value)}
 					})
 				]),
 				div('.on-switch.fa', {
@@ -92,33 +100,40 @@ module.exports = ({state, actions}) => div('.instrument', [
 					span('VCA2')
 				]),
 				div('.vertical', [
-					label(`Attack`),
-					span('.right', `${state.instrument.eg.attack}`),
+					label(`Volume`),
+					span('.right', `${state.instrument.vca1.volume}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.attack},
-						on: {change: ev => actions.instrument.updateProp('eg', 'attack', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.volume},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value))}
+					}),
+					label(`Attack`),
+					span('.right', `${state.instrument.vca1.attack}`),
+					input('[type="range"]', {
+						attrs: {min: 0, max: 1, step: 0.005},
+						props: {value: state.instrument.vca1.attack},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
 					}),
 					label(`Decay`),
-					span('.right', `${state.instrument.eg.decay}`),
+					span('.right', `${state.instrument.vca1.decay}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.decay},
-						on: {change: ev => actions.instrument.updateProp('eg', 'decay', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.decay},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
 					}),
 					label(`Sustain`),
-					span('.right', `${state.instrument.eg.sustain}`),
+					span('.right', `${state.instrument.vca1.sustain}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.sustain},
-						on: {change: ev => actions.instrument.updateProp('eg', 'sustain', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.sustain},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
 					}),
 					label(`Release`),
-					span('.right', `${state.instrument.eg.release}`),
+					span('.right', `${state.instrument.vca1.release}`),
 					input('[type="range"]', {
 						attrs: {min: 0, max: 1, step: 0.005},
-						props: {value: state.instrument.eg.release},
-						on: {change: ev => actions.instrument.updateProp('eg', 'release', parseFloat(ev.target.value))}
+						props: {value: state.instrument.vca1.release},
+						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
 					})
 				])
 			]),

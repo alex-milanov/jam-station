@@ -7,11 +7,19 @@ const Subject = Rx.Subject;
 const obj = require('iblokz/common/obj');
 const a = require('../util/audio');
 
+// util
+const mapObj = (o, cb) => Object.keys(o)
+	.reduce(
+		(o2, k, i) =>
+			((o2[k] = cb(o[k], k, i)), o2),
+		{});
+
 let changes$ = new Subject();
 
 const initial = {
-	vco1: a.start(a.vco({type: 'square'})),
-	vco2: a.start(a.vco({type: 'square'})),
+	// an dictionary midikey : vco
+	vco1: {}, // a.start(a.vco({type: 'square'})),
+	vco2: {}, // a.start(a.vco({type: 'square'})),
 	vca1: a.vca({gain: 0}),
 	vcf: a.vcf({}),
 	// lfo: a.lfo({}),
@@ -20,31 +28,38 @@ const initial = {
 };
 
 const updatePrefs = instr => changes$.onNext(nodes =>
-	Object.keys(nodes).reduce((o, node) =>
-		(instr[node])
-			? obj.patch(o, node, a.apply(nodes[node], instr[node]))
-			: o,
-		nodes
-	)
-);
+	mapObj(nodes,
+		(node, key) => (instr[key])
+			? ['vco1', 'vco2'].indexOf(key) > -1
+				? mapObj(node, n => a.apply(n, instr[key]))
+				: a.apply(node, instr[key])
+			: node));
+/*
+Object.keys(nodes).reduce((o, node) =>
+(instr[node])
+? obj.patch(o, node, a.apply(nodes[node], instr[node]))
+: o,
+nodes
+)
+*/
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
 	let {vco1, vco2, vca1, vcf, volume, context} = nodes;
 
 	// oscillators
-	if (!instr.vco1.on) vco1 = a.disconnect(vco1);
-	if (!instr.vco2.on) vco2 = a.disconnect(vco2);
+	if (!instr.vco1.on) vco1 = mapObj(vco1, vco => a.disconnect(vco));
+	if (!instr.vco2.on) vco2 = mapObj(vco2, vco => a.disconnect(vco));
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) vco1 = a.reroute(vco1, vcf);
-		if (instr.vco2.on) vco2 = a.reroute(vco2, vcf);
+		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vcf));
+		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vcf));
 		vcf = a.connect(vcf, vca1);
 	} else {
 		vcf = a.disconnect(vcf, vca1);
-		if (instr.vco1.on) vco1 = a.reroute(vco1, vca1);
-		if (instr.vco2.on) vco2 = a.reroute(vco2, vca1);
+		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vca1));
+		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vca1));
 	}
 
 	vca1 = a.connect(vca1, volume);
@@ -54,12 +69,26 @@ const updateConnections = instr => changes$.onNext(nodes => {
 });
 
 const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
-	const {vco1, vco2, vca1, context} = nodes;
+	let {vca1, vcf, context} = nodes;
 
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
 	console.log(instr, note, velocity);
+
+	let vco1 = a.start(a.vco(instr.vco1));
+	let vco2 = a.start(a.vco(instr.vco2));
+
+	// vcf
+	if (instr.vcf.on) {
+		if (instr.vco1.on) vco1 = a.connect(vco1, vcf);
+		if (instr.vco2.on) vco2 = a.connect(vco2, vcf);
+		vcf = a.connect(vcf, vca1);
+	} else {
+		vcf = a.disconnect(vcf, vca1);
+		if (instr.vco1.on) vco1 = a.connect(vco1, vca1);
+		if (instr.vco2.on) vco2 = a.connect(vco2, vca1);
+	}
 
 	vco1.node.frequency.cancelScheduledValues(0);
 	vco2.node.frequency.cancelScheduledValues(0);
@@ -82,7 +111,11 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
 			time + instr.vca1.attack, instr.vca1.decay);
 
-	return Object.assign({}, nodes, {vco1, vco2, vca1, context});
+	return Object.assign({}, nodes, {
+		vco1: obj.patch(nodes.vco1, note.number, vco1),
+		vco2: obj.patch(nodes.vco2, note.number, vco2),
+		vcf,
+		vca1, context});
 });
 
 const noteOff = (instr, note) => changes$.onNext(nodes => {
@@ -93,6 +126,13 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 	vca1.node.gain.cancelScheduledValues(0);
 	vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
 		time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+
+	if (nodes.vco1[note.number])
+		a.stop(nodes.vco1[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+	if (nodes.vco2[note.number])
+		a.stop(nodes.vco2[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+
+	// todo maybe delete vco nodes as well
 
 	return Object.assign({}, nodes, {vca1, context});
 });

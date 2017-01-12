@@ -15,6 +15,7 @@
 		"dot-notation": 0,
 		"no-negated-condition": 0,
 		"no-unused-vars": 0,
-		"no-loop-func": 0
+		"no-loop-func": 0,
+		"no-warning-comments": 0
 	}
 }

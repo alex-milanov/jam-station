@@ -49,15 +49,15 @@ const create = (type, context) => ({
 	out: []
 });
 
-const connect = (node1, node2) => (
-	((node1.node && node1.node.connect && !(node1.out && node1.out.indexOf(node2) > -1))
-		? node1.node
-		: node1).connect(
-		node2.node || node2
-	), Object.assign({}, node1, {
-		out: [].concat(node1.out, [node2])
-	})
-);
+const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
+	? (((node1.node && node1.node.connect)
+			? node1.node
+			: node1).connect(
+			node2.node || node2
+		), Object.assign({}, node1, {
+			out: [].concat(node1.out, [node2])
+		}))
+	: node1;
 
 const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
 	? (((node1.node && node1.node.connect)
@@ -84,7 +84,7 @@ const chain = nodes => nodes.forEach(
 
 const apply = (node, prefs) => Object.keys(prefs)
 	.filter(pref => prefsMap[node.type][pref] !== undefined)
-	.map(pref => (console.log('pref', node, pref), pref))
+	// .map(pref => (console.log('pref', node, pref), pref))
 	.reduce(
 		(node, pref) => prefsMap[node.type][pref](node, prefs[pref]),
 		node

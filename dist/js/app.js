@@ -14162,25 +14162,25 @@ const updatePrefs = instr => changes$.onNext(nodes =>
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
-	const {vco1, vco2, vca1, vcf, volume, context} = nodes;
+	let {vco1, vco2, vca1, vcf, volume, context} = nodes;
 
 	// oscillators
-	if (!instr.vco1.on) a.disconnect(vco1);
-	if (!instr.vco2.on) a.disconnect(vco2);
+	if (!instr.vco1.on) vco1 = a.disconnect(vco1);
+	if (!instr.vco2.on) vco2 = a.disconnect(vco2);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) a.reroute(vco1, vcf);
-		if (instr.vco2.on) a.reroute(vco1, vcf);
-		a.connect(vcf, vca1);
+		if (instr.vco1.on) vco1 = a.reroute(vco1, vcf);
+		if (instr.vco2.on) vco2 = a.reroute(vco2, vcf);
+		vcf = a.connect(vcf, vca1);
 	} else {
-		a.disconnect(vcf, vca1);
-		if (instr.vco1.on) a.reroute(vco1, vca1);
-		if (instr.vco2.on) a.reroute(vco2, vca1);
+		vcf = a.disconnect(vcf, vca1);
+		if (instr.vco1.on) vco1 = a.reroute(vco1, vca1);
+		if (instr.vco2.on) vco2 = a.reroute(vco2, vca1);
 	}
 
-	a.connect(vca1, volume);
-	a.connect(volume, context.destination);
+	vca1 = a.connect(vca1, volume);
+	volume = a.connect(volume, context.destination);
 
 	return Object.assign({}, nodes, {vco1, vco2, vca1, vcf, volume, context});
 });
@@ -14232,7 +14232,7 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 const engine$ = changes$
 	.startWith(() => initial)
 	.scan((state, change) => change(state), {})
-	.subscribe();
+	.subscribe(state => console.log(state));
 
 const hook = ({state$, midi, actions}) => {
 	// hook state changes
@@ -14631,35 +14631,43 @@ module.exports = ({state, actions}) => div('.instrument', [
 					label(`Volume`),
 					span('.right', `${state.instrument.vca1.volume}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.volume},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value))}
+						on: {
+							change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value)),
+							wheel: ev => (
+								ev.preventDefault(),
+								actions.instrument.updateProp('vca1', 'volume',
+									parseFloat((state.instrument.vca1.volume - ev.deltaY / 53 * 0.01).toFixed(2))
+								)
+							)
+						}
 					}),
 					label(`Attack`),
 					span('.right', `${state.instrument.vca1.attack}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.attack},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
 					}),
 					label(`Decay`),
 					span('.right', `${state.instrument.vca1.decay}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.decay},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
 					}),
 					label(`Sustain`),
 					span('.right', `${state.instrument.vca1.sustain}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.sustain},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
 					}),
 					label(`Release`),
 					span('.right', `${state.instrument.vca1.release}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.release},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
 					})
@@ -15015,15 +15023,15 @@ const create = (type, context) => ({
 	out: []
 });
 
-const connect = (node1, node2) => (
-	((node1.node && node1.node.connect && !(node1.out && node1.out.indexOf(node2) > -1))
-		? node1.node
-		: node1).connect(
-		node2.node || node2
-	), Object.assign({}, node1, {
-		out: [].concat(node1.out, [node2])
-	})
-);
+const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
+	? (((node1.node && node1.node.connect)
+			? node1.node
+			: node1).connect(
+			node2.node || node2
+		), Object.assign({}, node1, {
+			out: [].concat(node1.out, [node2])
+		}))
+	: node1;
 
 const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
 	? (((node1.node && node1.node.connect)
@@ -15050,7 +15058,7 @@ const chain = nodes => nodes.forEach(
 
 const apply = (node, prefs) => Object.keys(prefs)
 	.filter(pref => prefsMap[node.type][pref] !== undefined)
-	.map(pref => (console.log('pref', node, pref), pref))
+	// .map(pref => (console.log('pref', node, pref), pref))
 	.reduce(
 		(node, pref) => prefsMap[node.type][pref](node, prefs[pref]),
 		node

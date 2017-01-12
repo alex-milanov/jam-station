@@ -30,25 +30,25 @@ const updatePrefs = instr => changes$.onNext(nodes =>
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
-	const {vco1, vco2, vca1, vcf, volume, context} = nodes;
+	let {vco1, vco2, vca1, vcf, volume, context} = nodes;
 
 	// oscillators
-	if (!instr.vco1.on) a.disconnect(vco1);
-	if (!instr.vco2.on) a.disconnect(vco2);
+	if (!instr.vco1.on) vco1 = a.disconnect(vco1);
+	if (!instr.vco2.on) vco2 = a.disconnect(vco2);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) a.reroute(vco1, vcf);
-		if (instr.vco2.on) a.reroute(vco1, vcf);
-		a.connect(vcf, vca1);
+		if (instr.vco1.on) vco1 = a.reroute(vco1, vcf);
+		if (instr.vco2.on) vco2 = a.reroute(vco2, vcf);
+		vcf = a.connect(vcf, vca1);
 	} else {
-		a.disconnect(vcf, vca1);
-		if (instr.vco1.on) a.reroute(vco1, vca1);
-		if (instr.vco2.on) a.reroute(vco2, vca1);
+		vcf = a.disconnect(vcf, vca1);
+		if (instr.vco1.on) vco1 = a.reroute(vco1, vca1);
+		if (instr.vco2.on) vco2 = a.reroute(vco2, vca1);
 	}
 
-	a.connect(vca1, volume);
-	a.connect(volume, context.destination);
+	vca1 = a.connect(vca1, volume);
+	volume = a.connect(volume, context.destination);
 
 	return Object.assign({}, nodes, {vco1, vco2, vca1, vcf, volume, context});
 });
@@ -100,7 +100,7 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 const engine$ = changes$
 	.startWith(() => initial)
 	.scan((state, change) => change(state), {})
-	.subscribe();
+	.subscribe(state => console.log(state));
 
 const hook = ({state$, midi, actions}) => {
 	// hook state changes

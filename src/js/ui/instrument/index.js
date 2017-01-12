@@ -103,35 +103,43 @@ module.exports = ({state, actions}) => div('.instrument', [
 					label(`Volume`),
 					span('.right', `${state.instrument.vca1.volume}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.volume},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value))}
+						on: {
+							change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value)),
+							wheel: ev => (
+								ev.preventDefault(),
+								actions.instrument.updateProp('vca1', 'volume',
+									parseFloat((state.instrument.vca1.volume - ev.deltaY / 53 * 0.01).toFixed(2))
+								)
+							)
+						}
 					}),
 					label(`Attack`),
 					span('.right', `${state.instrument.vca1.attack}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.attack},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
 					}),
 					label(`Decay`),
 					span('.right', `${state.instrument.vca1.decay}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.decay},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
 					}),
 					label(`Sustain`),
 					span('.right', `${state.instrument.vca1.sustain}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.sustain},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
 					}),
 					label(`Release`),
 					span('.right', `${state.instrument.vca1.release}`),
 					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.005},
+						attrs: {min: 0, max: 1, step: 0.01},
 						props: {value: state.instrument.vca1.release},
 						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
 					})

@@ -7,6 +7,9 @@ const {
 
 const vco = require('./vco');
 const vca = require('./vca');
+const vcf = require('./vcf');
+const lfo = require('./lfo');
+const delay = require('./delay');
 
 const types = [
 	'sine',
@@ -36,73 +39,11 @@ module.exports = ({state, actions}) => div('.instrument', [
 				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
-			fieldset([
-				legend([span('.on', 'VCF1')]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vcf.on,
-						'on': state.instrument.vcf.on,
-						'fa-circle': state.instrument.vcf.on
-					}
-				}),
-				label(`Cutoff`),
-				span('.right', `${state.instrument.vcf.cutoff}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.01},
-					props: {value: state.instrument.vcf.cutoff},
-					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
-				}),
-				label(`Resonance`),
-				span('.right', `${state.instrument.vcf.resonance}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.01},
-					props: {value: state.instrument.vcf.resonance},
-					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
-				})
-				// label(`Gain`),
-				// span('.right', `${state.instrument.vcf.gain}`),
-				// input('[type="range"]', {
-				// 	attrs: {min: 0, max: 1, step: 0.005},
-				// 	props: {value: state.instrument.vcf.gain},
-				// 	on: {change: ev => actions.instrument.updateProp('vcf', 'gain', parseFloat(ev.target.value))}
-				// })
-			]),
-			fieldset([
-				legend([
-					span('.on', 'LFO'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('lfo', 'type', type)
-							},
-							class: {on: (state.instrument.lfo.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), []))
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.lfo.on,
-						'on': state.instrument.lfo.on,
-						'fa-circle': state.instrument.lfo.on
-					}
-				}),
-				label(`Frequency`),
-				span('.right', `${state.instrument.lfo.frequency}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 100, step: 0.05},
-					props: {value: state.instrument.lfo.frequency},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
-				}),
-				label(`Gain`),
-				span('.right', `${state.instrument.lfo.gain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1000, step: 1},
-					props: {value: state.instrument.lfo.gain},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
-				})
-			])
+			vcf({state, actions, name: 'vcf'})
+			// LFO
+			// lfo({state, actions, name: 'lfo'})
+			// DELAY
+			// delay({state, actions, name: 'delay'})
 		])
 	])
 ]);

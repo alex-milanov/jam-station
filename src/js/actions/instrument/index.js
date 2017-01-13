@@ -59,6 +59,12 @@ const initial = {
 		cutoff: 0.64,
 		resonance: 0,
 		gain: 0
+	},
+	delay: {
+		on: false,
+		time: 1,
+		dry: 1,
+		wet: 0
 	}
 };
 

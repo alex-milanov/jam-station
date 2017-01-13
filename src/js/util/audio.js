@@ -4,6 +4,36 @@ const arr = require('iblokz/common/arr');
 const obj = require('iblokz/common/obj');
 const fn = require('iblokz/common/fn');
 
+let context = new (
+	window.AudioContext
+	|| window.webkitAudioContext
+	|| window.mozAudioContext
+	|| window.oAudioContext
+	|| window.msAudioContext
+)();
+
+/*
+	type
+	node1 (vco1)
+	node1 (vco2)
+	in
+	out
+	connections
+*/
+
+const createMap = {
+	default: (type, context) => ({
+		type,
+		node: {
+			vco: () => context.createOscillator(),
+			lfo: () => context.createOscillator(),
+			vca: () => context.createGain(),
+			vcf: () => context.createBiquadFilter()
+		}[type](),
+		out: []
+	})
+};
+
 const prefsMap = {
 	vco: {
 		type: (node, value) => ((node.node.type = value), node),
@@ -27,27 +57,15 @@ const prefsMap = {
 	},
 	vca: {
 		gain: (node, value) => ((node.node.gain.value = value), node)
+	},
+	delay: {
+		time: (node, value) => ((node.delay.delayTime.value = value), node),
+		dry: (node, value) => ((node.dry.gain.value = value), node),
+		wet: (node, value) => ((node.wet.gain.value = value), node)
 	}
 };
 
-let context = new (
-	window.AudioContext
-	|| window.webkitAudioContext
-	|| window.mozAudioContext
-	|| window.oAudioContext
-	|| window.msAudioContext
-)();
-
-const create = (type, context) => ({
-	type,
-	node: {
-		vco: () => context.createOscillator(),
-		lfo: () => context.createOscillator(),
-		vca: () => context.createGain(),
-		vcf: () => context.createBiquadFilter()
-	}[type](),
-	out: []
-});
+const create = (type, context) => fn.switch(type, createMap)(type, context);
 
 const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 	? (((node1.node && node1.node.connect)

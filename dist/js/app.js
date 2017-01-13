@@ -13434,7 +13434,7 @@ module.exports = {
 	})
 };
 
-},{"../util/math":43,"./instrument":19,"./media-library":20,"./midi-map":21,"./sequencer":22,"./studio":23,"iblokz/common/obj":4,"rx":17}],19:[function(require,module,exports){
+},{"../util/math":46,"./instrument":19,"./media-library":20,"./midi-map":21,"./sequencer":22,"./studio":23,"iblokz/common/obj":4,"rx":17}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13496,6 +13496,12 @@ const initial = {
 		cutoff: 0.64,
 		resonance: 0,
 		gain: 0
+	},
+	delay: {
+		on: false,
+		time: 1,
+		dry: 1,
+		wet: 0
 	}
 };
 
@@ -13582,7 +13588,7 @@ module.exports = {
 	initial
 };
 
-},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],21:[function(require,module,exports){
+},{"../../util/math":46,"iblokz/common/obj":4,"rx":17}],21:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13603,7 +13609,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],22:[function(require,module,exports){
+},{"../../util/math":46,"iblokz/common/obj":4,"rx":17}],22:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13695,7 +13701,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],23:[function(require,module,exports){
+},{"../../util/math":46,"iblokz/common/obj":4,"rx":17}],23:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13770,7 +13776,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],24:[function(require,module,exports){
+},{"../../util/math":46,"iblokz/common/obj":4,"rx":17}],24:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13901,7 +13907,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":18,"./instr/basic-synth":25,"./services":28,"./services/audio":27,"./services/studio":31,"./ui":33,"./util/audio":41,"./util/midi":44,"iblokz/adapters/vdom":1,"rx":17}],25:[function(require,module,exports){
+},{"./actions":18,"./instr/basic-synth":25,"./services":28,"./services/audio":27,"./services/studio":31,"./ui":33,"./util/audio":44,"./util/midi":47,"iblokz/adapters/vdom":1,"rx":17}],25:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -14375,7 +14381,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":41,"iblokz/common/obj":4,"rx":17}],28:[function(require,module,exports){
+},{"../util/audio":44,"iblokz/common/obj":4,"rx":17}],28:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -14576,7 +14582,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":26,"../util/context":42,"../util/math":43,"iblokz/common/obj":4,"rx":17}],32:[function(require,module,exports){
+},{"../instr/sampler":26,"../util/context":45,"../util/math":46,"iblokz/common/obj":4,"rx":17}],32:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -14630,7 +14636,55 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
 ]);
 
-},{"./header":32,"./instrument":34,"./media-library":37,"./midi-keyboard":38,"./midi-map":39,"./sequencer":40,"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
+},{"./header":32,"./instrument":35,"./media-library":40,"./midi-keyboard":41,"./midi-map":42,"./sequencer":43,"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz/adapters/vdom');
+
+module.exports = ({name, state, actions}) => fieldset([
+	legend([span('.on', name.toUpperCase())]),
+	div('.on-switch.fa', {
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		class: {
+			'fa-circle-thin': !state.instrument[name].on,
+			'on': state.instrument[name].on,
+			'fa-circle': state.instrument[name].on
+		}
+	}),
+	label(`Time`),
+	span('.right', `${state.instrument[name].time}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 3, step: 0.01},
+		props: {value: state.instrument[name].cutoff},
+		on: {change: ev => actions.instrument.updateProp(name, 'time', parseFloat(ev.target.value))}
+	}),
+	label(`Dry`),
+	span('.right', `${state.instrument[name].dry}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].dry},
+		on: {change: ev => actions.instrument.updateProp(name, 'dry', parseFloat(ev.target.value))}
+	}),
+	label(`Wet`),
+	span('.right', `${state.instrument[name].wet}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].wet},
+		on: {change: ev => actions.instrument.updateProp(name, 'wet', parseFloat(ev.target.value))}
+	})
+	// label(`Gain`),
+	// span('.right', `${state.instrument[name].gain}`),
+	// input('[type="range"]', {
+	// 	attrs: {min: 0, max: 1, step: 0.005},
+	// 	props: {value: state.instrument[name].gain},
+	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+	// })
+]);
+
+},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14640,6 +14694,9 @@ const {
 
 const vco = require('./vco');
 const vca = require('./vca');
+const vcf = require('./vcf');
+const lfo = require('./lfo');
+const delay = require('./delay');
 
 const types = [
 	'sine',
@@ -14669,78 +14726,67 @@ module.exports = ({state, actions}) => div('.instrument', [
 				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
-			fieldset([
-				legend([span('.on', 'VCF1')]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vcf', 'on', !state.instrument.vcf.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vcf.on,
-						'on': state.instrument.vcf.on,
-						'fa-circle': state.instrument.vcf.on
-					}
-				}),
-				label(`Cutoff`),
-				span('.right', `${state.instrument.vcf.cutoff}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.01},
-					props: {value: state.instrument.vcf.cutoff},
-					on: {change: ev => actions.instrument.updateProp('vcf', 'cutoff', parseFloat(ev.target.value))}
-				}),
-				label(`Resonance`),
-				span('.right', `${state.instrument.vcf.resonance}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1, step: 0.01},
-					props: {value: state.instrument.vcf.resonance},
-					on: {change: ev => actions.instrument.updateProp('vcf', 'resonance', parseFloat(ev.target.value))}
-				})
-				// label(`Gain`),
-				// span('.right', `${state.instrument.vcf.gain}`),
-				// input('[type="range"]', {
-				// 	attrs: {min: 0, max: 1, step: 0.005},
-				// 	props: {value: state.instrument.vcf.gain},
-				// 	on: {change: ev => actions.instrument.updateProp('vcf', 'gain', parseFloat(ev.target.value))}
-				// })
-			]),
-			fieldset([
-				legend([
-					span('.on', 'LFO'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('lfo', 'type', type)
-							},
-							class: {on: (state.instrument.lfo.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), []))
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('lfo', 'on', !state.instrument.lfo.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.lfo.on,
-						'on': state.instrument.lfo.on,
-						'fa-circle': state.instrument.lfo.on
-					}
-				}),
-				label(`Frequency`),
-				span('.right', `${state.instrument.lfo.frequency}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 100, step: 0.05},
-					props: {value: state.instrument.lfo.frequency},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'frequency', parseFloat(ev.target.value))}
-				}),
-				label(`Gain`),
-				span('.right', `${state.instrument.lfo.gain}`),
-				input('[type="range"]', {
-					attrs: {min: 0, max: 1000, step: 1},
-					props: {value: state.instrument.lfo.gain},
-					on: {change: ev => actions.instrument.updateProp('lfo', 'gain', parseFloat(ev.target.value))}
-				})
-			])
+			vcf({state, actions, name: 'vcf'})
+			// LFO
+			// lfo({state, actions, name: 'lfo'})
+			// DELAY
+			// delay({state, actions, name: 'delay'})
 		])
 	])
 ]);
 
-},{"./vca":35,"./vco":36,"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
+},{"./delay":34,"./lfo":36,"./vca":37,"./vcf":38,"./vco":39,"iblokz/adapters/vdom":1}],36:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz/adapters/vdom');
+
+const types = [
+	'sine',
+	'square',
+	'sawtooth',
+	'triangle'
+];
+
+module.exports = ({name, state, actions}) => fieldset([
+	legend([
+		span('.on', name.toUpperCase()),
+		div(types.reduce((list, type) => list.concat([
+			button(`.btn-opt`, {
+				on: {
+					click: ev => actions.instrument.updateProp(name, 'type', type)
+				},
+				class: {on: (state.instrument[name].type === type)}
+			}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+		]), []))
+	]),
+	div('.on-switch.fa', {
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		class: {
+			'fa-circle-thin': !state.instrument[name].on,
+			'on': state.instrument[name].on,
+			'fa-circle': state.instrument[name].on
+		}
+	}),
+	label(`Frequency`),
+	span('.right', `${state.instrument[name].frequency}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 100, step: 0.05},
+		props: {value: state.instrument[name].frequency},
+		on: {change: ev => actions.instrument.updateProp(name, 'frequency', parseFloat(ev.target.value))}
+	}),
+	label(`Gain`),
+	span('.right', `${state.instrument[name].gain}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1000, step: 1},
+		props: {value: state.instrument[name].gain},
+		on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+	})
+]);
+
+},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14801,7 +14847,48 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz/adapters/vdom":1}],36:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],38:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz/adapters/vdom');
+
+module.exports = ({name, state, actions}) => fieldset([
+	legend([span('.on', name.toUpperCase())]),
+	div('.on-switch.fa', {
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		class: {
+			'fa-circle-thin': !state.instrument[name].on,
+			'on': state.instrument[name].on,
+			'fa-circle': state.instrument[name].on
+		}
+	}),
+	label(`Cutoff`),
+	span('.right', `${state.instrument[name].cutoff}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].cutoff},
+		on: {change: ev => actions.instrument.updateProp(name, 'cutoff', parseFloat(ev.target.value))}
+	}),
+	label(`Resonance`),
+	span('.right', `${state.instrument[name].resonance}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].resonance},
+		on: {change: ev => actions.instrument.updateProp(name, 'resonance', parseFloat(ev.target.value))}
+	})
+	// label(`Gain`),
+	// span('.right', `${state.instrument[name].gain}`),
+	// input('[type="range"]', {
+	// 	attrs: {min: 0, max: 1, step: 0.005},
+	// 	props: {value: state.instrument[name].gain},
+	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+	// })
+]);
+
+},{"iblokz/adapters/vdom":1}],39:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14854,7 +14941,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],40:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14938,7 +15025,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],38:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],41:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14985,7 +15072,7 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],39:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],42:[function(require,module,exports){
 'use strict';
 
 const {
@@ -15010,7 +15097,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],40:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],43:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -15080,12 +15167,42 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],41:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],44:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
 const obj = require('iblokz/common/obj');
 const fn = require('iblokz/common/fn');
+
+let context = new (
+	window.AudioContext
+	|| window.webkitAudioContext
+	|| window.mozAudioContext
+	|| window.oAudioContext
+	|| window.msAudioContext
+)();
+
+/*
+	type
+	node1 (vco1)
+	node1 (vco2)
+	in
+	out
+	connections
+*/
+
+const createMap = {
+	default: (type, context) => ({
+		type,
+		node: {
+			vco: () => context.createOscillator(),
+			lfo: () => context.createOscillator(),
+			vca: () => context.createGain(),
+			vcf: () => context.createBiquadFilter()
+		}[type](),
+		out: []
+	})
+};
 
 const prefsMap = {
 	vco: {
@@ -15110,27 +15227,15 @@ const prefsMap = {
 	},
 	vca: {
 		gain: (node, value) => ((node.node.gain.value = value), node)
+	},
+	delay: {
+		time: (node, value) => ((node.delay.delayTime.value = value), node),
+		dry: (node, value) => ((node.dry.gain.value = value), node),
+		wet: (node, value) => ((node.wet.gain.value = value), node)
 	}
 };
 
-let context = new (
-	window.AudioContext
-	|| window.webkitAudioContext
-	|| window.mozAudioContext
-	|| window.oAudioContext
-	|| window.msAudioContext
-)();
-
-const create = (type, context) => ({
-	type,
-	node: {
-		vco: () => context.createOscillator(),
-		lfo: () => context.createOscillator(),
-		vca: () => context.createGain(),
-		vcf: () => context.createBiquadFilter()
-	}[type](),
-	out: []
-});
+const create = (type, context) => fn.switch(type, createMap)(type, context);
 
 const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 	? (((node1.node && node1.node.connect)
@@ -15225,7 +15330,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],42:[function(require,module,exports){
+},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],45:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -15236,7 +15341,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],43:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -15250,7 +15355,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],44:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');

@@ -38,6 +38,14 @@ const parseMidiMsg = event => {
 					note: numberToNote(event.data[1])
 				};
 			break;
+		// pitch wheel
+		case "1110":
+			msg = {
+				state: 'pitchBend',
+				pitchValue: (event.data[2] === 64) ? 0 : parseFloat((event.data[2] / 63.5 - 1).toFixed(2))
+			};
+			break;
+		// controller
 		case "1011":
 			msg = {
 				state: "controller",

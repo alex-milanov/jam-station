@@ -170,6 +170,13 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 	return nodes;
 });
 
+const pitchBend = (instr, pitchValue) => changes$.onNext(nodes =>
+	obj.patch(nodes, 'voices', mapObj(nodes.voices, voice => Object.assign({}, voice, {
+		vco1: a.apply(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
+		vco2: a.apply(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
+	})))
+);
+
 const engine$ = changes$
 	.startWith(() => initial)
 	.scan((state, change) => change(state), {})
@@ -200,6 +207,9 @@ const hook = ({state$, midi, actions}) => {
 					break;
 				case 'noteOff':
 					noteOff(state.instrument, data.msg.note);
+					break;
+				case 'pitchBend':
+					pitchBend(state.instrument, data.msg.pitchValue);
 					break;
 				default:
 					break;

@@ -9,20 +9,20 @@ const obj = require('iblokz/common/obj');
 const stream = new Subject();
 
 const initial = {
-	vcaOn: 0,
+	vcaOn: 1,
 	vca1: {
-		volume: 0.7,
-		attack: 0,
-		decay: 0.04,
+		volume: 0.41,
+		attack: 0.31,
+		decay: 0.16,
 		sustain: 0.8,
-		release: 0.08
+		release: 0.21
 	},
 	vca2: {
-		volume: 0.7,
+		volume: 0.43,
 		attack: 0,
-		decay: 0.04,
+		decay: 0.16,
 		sustain: 0.8,
-		release: 0.08
+		release: 0.19
 	},
 	vca3: {
 		volume: 0.7,
@@ -41,12 +41,12 @@ const initial = {
 	vco1: {
 		on: true,
 		type: 'square',
-		detune: 0
+		detune: -1
 	},
 	vco2: {
-		on: false,
-		type: 'square',
-		detune: 0
+		on: true,
+		type: 'sawtooth',
+		detune: 1
 	},
 	lfo: {
 		on: false,
@@ -55,8 +55,8 @@ const initial = {
 		gain: 0.15
 	},
 	vcf: {
-		on: false,
-		cutoff: 1,
+		on: true,
+		cutoff: 0.64,
 		resonance: 0,
 		gain: 0
 	}

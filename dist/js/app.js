@@ -13446,20 +13446,20 @@ const obj = require('iblokz/common/obj');
 const stream = new Subject();
 
 const initial = {
-	vcaOn: 0,
+	vcaOn: 1,
 	vca1: {
-		volume: 0.7,
-		attack: 0,
-		decay: 0.04,
+		volume: 0.41,
+		attack: 0.31,
+		decay: 0.16,
 		sustain: 0.8,
-		release: 0.08
+		release: 0.21
 	},
 	vca2: {
-		volume: 0.7,
+		volume: 0.43,
 		attack: 0,
-		decay: 0.04,
+		decay: 0.16,
 		sustain: 0.8,
-		release: 0.08
+		release: 0.19
 	},
 	vca3: {
 		volume: 0.7,
@@ -13478,12 +13478,12 @@ const initial = {
 	vco1: {
 		on: true,
 		type: 'square',
-		detune: 0
+		detune: -1
 	},
 	vco2: {
-		on: false,
-		type: 'square',
-		detune: 0
+		on: true,
+		type: 'sawtooth',
+		detune: 1
 	},
 	lfo: {
 		on: false,
@@ -13492,8 +13492,8 @@ const initial = {
 		gain: 0.15
 	},
 	vcf: {
-		on: false,
-		cutoff: 1,
+		on: true,
+		cutoff: 0.64,
 		resonance: 0,
 		gain: 0
 	}
@@ -14241,31 +14241,26 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
+	const freq = a.noteToFrequency(note.key + note.octave);
+
 	console.log(instr, note, velocity);
 
 	let voice = voices[note.number] || false;
 
-	let vco1 = a.start(a.vco(instr.vco1));
+	if (voice.vco1) a.stop(voice.vco1);
+	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})));
 	let vca1 = voice ? voice.vca1 : a.vca({});
 	vco1 = a.connect(vco1, vca1);
 	vca1 = !(instr.vco1.on) ? a.disconnect(vca1) : a.reroute(vca1, (instr.vcf.on) ? vcf : volume);
 
-	let vco2 = a.start(a.vco(instr.vco2));
+	if (voice.vco2) a.stop(voice.vco2);
+	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})));
 	let vca2 = voice ? voice.vca2 : a.vca({});
 	vco2 = a.connect(vco2, vca2);
 	vca2 = !(instr.vco2.on) ? a.disconnect(vca2) : a.reroute(vca2, (instr.vcf.on) ? vcf : volume);
 
 	// vcf
-	if (instr.vcf.on) {
-		vcf = a.connect(vcf, volume);
-	} else {
-		vcf = a.disconnect(vcf);
-	}
-
-	const freq = a.noteToFrequency(note.key + note.octave);
-
-	vco1.node.frequency.value = freq;
-	vco2.node.frequency.value = freq;
+	vcf = (instr.vcf.on) ? a.connect(vcf, volume) : a.disconnect(vcf);
 
 	vca1.node.gain.cancelScheduledValues(0);
 	vca2.node.gain.cancelScheduledValues(0);

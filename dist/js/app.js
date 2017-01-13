@@ -13405,10 +13405,10 @@ const ping = () => stream.onNext(state => state);
 
 const initial = {
 	ui: {
-		mediaLibrary: false,
+		mediaLibrary: true,
 		patches: true,
 		instrument: true,
-		sequencer: false,
+		sequencer: true,
 		midiMap: true
 	},
 	midi: {

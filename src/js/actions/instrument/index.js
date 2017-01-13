@@ -8,12 +8,30 @@ const obj = require('iblokz/common/obj');
 
 const stream = new Subject();
 
-const updateProp = (param, prop, value) => stream.onNext(
-	state => obj.patch(state, ['instrument', param, prop], value)
-);
-
 const initial = {
+	vcaOn: 0,
 	vca1: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca2: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca3: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca4: {
 		volume: 0.7,
 		attack: 0,
 		decay: 0.04,
@@ -44,8 +62,17 @@ const initial = {
 	}
 };
 
+const updateProp = (param, prop, value) => stream.onNext(
+	state => obj.patch(state, ['instrument', param, prop], value)
+);
+
+const setVca = index => stream.onNext(
+	state => obj.patch(state, ['instrument', 'vcaOn'], index)
+);
+
 module.exports = {
 	stream,
 	initial,
-	updateProp
+	updateProp,
+	setVca
 };

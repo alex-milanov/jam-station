@@ -2593,9 +2593,14 @@ input, label, body {
           margin-top: -2px;
           vertical-align: middle; }
         .media-library .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
           color: #999;
           height: 16px;
-          line-height: 16px; }
+          line-height: 16px;
+          cursor: pointer; }
           .media-library .body fieldset legend span.on {
             color: #333; }
   .media-library .body {
@@ -2782,9 +2787,14 @@ input, label, body {
           margin-top: -2px;
           vertical-align: middle; }
         .instrument .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
           color: #999;
           height: 16px;
-          line-height: 16px; }
+          line-height: 16px;
+          cursor: pointer; }
           .instrument .body fieldset legend span.on {
             color: #333; }
   .instrument .body form {
@@ -3038,9 +3048,14 @@ input, label, body {
           margin-top: -2px;
           vertical-align: middle; }
         .sequencer .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
           color: #999;
           height: 16px;
-          line-height: 16px; }
+          line-height: 16px;
+          cursor: pointer; }
           .sequencer .body fieldset legend span.on {
             color: #333; }
   .sequencer .body {
@@ -3285,9 +3300,14 @@ input, label, body {
           margin-top: -2px;
           vertical-align: middle; }
         .midi-map .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
           color: #999;
           height: 16px;
-          line-height: 16px; }
+          line-height: 16px;
+          cursor: pointer; }
           .midi-map .body fieldset legend span.on {
             color: #333; }
 
@@ -3416,9 +3436,14 @@ input, label, body {
           margin-top: -2px;
           vertical-align: middle; }
         .midi-keyboard .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
           color: #999;
           height: 16px;
-          line-height: 16px; }
+          line-height: 16px;
+          cursor: pointer; }
           .midi-keyboard .body fieldset legend span.on {
             color: #333; }
   .midi-keyboard .body .keys {

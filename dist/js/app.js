@@ -13434,7 +13434,7 @@ module.exports = {
 	})
 };
 
-},{"../util/math":41,"./instrument":19,"./media-library":20,"./midi-map":21,"./sequencer":22,"./studio":23,"iblokz/common/obj":4,"rx":17}],19:[function(require,module,exports){
+},{"../util/math":43,"./instrument":19,"./media-library":20,"./midi-map":21,"./sequencer":22,"./studio":23,"iblokz/common/obj":4,"rx":17}],19:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13445,12 +13445,30 @@ const obj = require('iblokz/common/obj');
 
 const stream = new Subject();
 
-const updateProp = (param, prop, value) => stream.onNext(
-	state => obj.patch(state, ['instrument', param, prop], value)
-);
-
 const initial = {
+	vcaOn: 0,
 	vca1: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca2: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca3: {
+		volume: 0.7,
+		attack: 0,
+		decay: 0.04,
+		sustain: 0.8,
+		release: 0.08
+	},
+	vca4: {
 		volume: 0.7,
 		attack: 0,
 		decay: 0.04,
@@ -13481,10 +13499,19 @@ const initial = {
 	}
 };
 
+const updateProp = (param, prop, value) => stream.onNext(
+	state => obj.patch(state, ['instrument', param, prop], value)
+);
+
+const setVca = index => stream.onNext(
+	state => obj.patch(state, ['instrument', 'vcaOn'], index)
+);
+
 module.exports = {
 	stream,
 	initial,
-	updateProp
+	updateProp,
+	setVca
 };
 
 },{"iblokz/common/obj":4,"rx":17}],20:[function(require,module,exports){
@@ -13555,7 +13582,7 @@ module.exports = {
 	initial
 };
 
-},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],21:[function(require,module,exports){
+},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],21:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -13576,7 +13603,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],22:[function(require,module,exports){
+},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],22:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13668,7 +13695,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],23:[function(require,module,exports){
+},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],23:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13743,7 +13770,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":41,"iblokz/common/obj":4,"rx":17}],24:[function(require,module,exports){
+},{"../../util/math":43,"iblokz/common/obj":4,"rx":17}],24:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -13874,7 +13901,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":18,"./instr/basic-synth":25,"./services":28,"./services/audio":27,"./services/studio":31,"./ui":33,"./util/audio":39,"./util/midi":42,"iblokz/adapters/vdom":1,"rx":17}],25:[function(require,module,exports){
+},{"./actions":18,"./instr/basic-synth":25,"./services":28,"./services/audio":27,"./services/studio":31,"./ui":33,"./util/audio":41,"./util/midi":44,"iblokz/adapters/vdom":1,"rx":17}],25:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -14150,9 +14177,16 @@ let changes$ = new Subject();
 
 const initial = {
 	// an dictionary midikey : vco
-	vco1: {}, // a.start(a.vco({type: 'square'})),
-	vco2: {}, // a.start(a.vco({type: 'square'})),
-	vca1: a.vca({gain: 0}),
+	/*
+	voice: {
+		vco1
+		vco2
+		vca1
+		vca2
+	}
+	*/
+	voices: {}, // a.start(a.vco({type: 'square'})),
+	// vca1: a.vca({gain: 0}),
 	vcf: a.vcf({}),
 	// lfo: a.lfo({}),
 	volume: a.vca({gain: 0.7}),
@@ -14162,10 +14196,10 @@ const initial = {
 const updatePrefs = instr => changes$.onNext(nodes =>
 	mapObj(nodes,
 		(node, key) => (instr[key])
-			? ['vco1', 'vco2'].indexOf(key) > -1
-				? mapObj(node, n => a.apply(n, instr[key]))
-				: a.apply(node, instr[key])
-			: node));
+			? a.apply(node, instr[key])
+			: (key === 'voices')
+				? mapObj(node, voice => mapObj(voice, (n, key) => a.apply(n, instr[key])))
+				: node));
 /*
 Object.keys(nodes).reduce((o, node) =>
 (instr[node])
@@ -14177,59 +14211,64 @@ nodes
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
-	let {vco1, vco2, vca1, vcf, volume, context} = nodes;
+	let {voices, vcf, volume, context} = nodes;
 
-	// oscillators
-	if (!instr.vco1.on) vco1 = mapObj(vco1, vco => a.disconnect(vco));
-	if (!instr.vco2.on) vco2 = mapObj(vco2, vco => a.disconnect(vco));
+	// vco to vca, vca to vcf / volume
+	voices = mapObj(voices, voice => ({
+		vco1: a.connect(voice.vco1, voice.vca1),
+		vco2: a.connect(voice.vco2, voice.vca2),
+		vca1: (!instr.vco1.on) ? a.disconnect(voice.vca1) : a.reroute(voice.vca1, (instr.vcf.on) ? vcf : volume),
+		vca2: (!instr.vco2.on) ? a.disconnect(voice.vca2) : a.reroute(voice.vca2, (instr.vcf.on) ? vcf : volume)
+	}));
+
+	console.log(nodes.voices, voices);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vcf));
-		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vcf));
-		vcf = a.connect(vcf, vca1);
+		vcf = a.connect(vcf, volume);
 	} else {
-		vcf = a.disconnect(vcf, vca1);
-		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vca1));
-		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vca1));
+		vcf = a.disconnect(vcf, volume);
 	}
 
-	vca1 = a.connect(vca1, volume);
 	volume = a.connect(volume, context.destination);
 
-	return Object.assign({}, nodes, {vco1, vco2, vca1, vcf, volume, context});
+	return Object.assign({}, nodes, {voices, vcf, volume, context});
 });
 
 const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
-	let {vca1, vcf, context} = nodes;
+	let {voices, vcf, volume, context} = nodes;
 
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
 	console.log(instr, note, velocity);
 
+	let voice = voices[note.number] || false;
+
 	let vco1 = a.start(a.vco(instr.vco1));
+	let vca1 = voice ? voice.vca1 : a.vca({});
+	vco1 = a.connect(vco1, vca1);
+	vca1 = !(instr.vco1.on) ? a.disconnect(vca1) : a.reroute(vca1, (instr.vcf.on) ? vcf : volume);
+
 	let vco2 = a.start(a.vco(instr.vco2));
+	let vca2 = voice ? voice.vca2 : a.vca({});
+	vco2 = a.connect(vco2, vca2);
+	vca2 = !(instr.vco2.on) ? a.disconnect(vca2) : a.reroute(vca2, (instr.vcf.on) ? vcf : volume);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) vco1 = a.connect(vco1, vcf);
-		if (instr.vco2.on) vco2 = a.connect(vco2, vcf);
-		vcf = a.connect(vcf, vca1);
+		vcf = a.connect(vcf, volume);
 	} else {
-		vcf = a.disconnect(vcf, vca1);
-		if (instr.vco1.on) vco1 = a.connect(vco1, vca1);
-		if (instr.vco2.on) vco2 = a.connect(vco2, vca1);
+		vcf = a.disconnect(vcf);
 	}
-
-	vco1.node.frequency.cancelScheduledValues(0);
-	vco2.node.frequency.cancelScheduledValues(0);
-	vca1.node.gain.cancelScheduledValues(0);
 
 	const freq = a.noteToFrequency(note.key + note.octave);
 
 	vco1.node.frequency.value = freq;
 	vco2.node.frequency.value = freq;
+
+	vca1.node.gain.cancelScheduledValues(0);
+	vca2.node.gain.cancelScheduledValues(0);
 
 	// attack
 	if (instr.vca1.attack > 0)
@@ -14237,36 +14276,57 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	else
 		vca1.node.gain.setValueAtTime(velocity, now);
 
+	if (instr.vca2.attack > 0)
+		vca2.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca2.volume]), time, instr.vca2.attack);
+	else
+		vca2.node.gain.setValueAtTime(velocity, now);
+
 	// decay
 	if (instr.vca1.decay > 0)
 		vca1.node.gain.setValueCurveAtTime(
 			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
 			time + instr.vca1.attack, instr.vca1.decay);
+	if (instr.vca2.decay > 0)
+		vca2.node.gain.setValueCurveAtTime(
+			new Float32Array([velocity * instr.vca2.volume, instr.vca2.sustain * velocity * instr.vca2.volume]),
+			time + instr.vca2.attack, instr.vca2.decay);
 
 	return Object.assign({}, nodes, {
-		vco1: obj.patch(nodes.vco1, note.number, vco1),
-		vco2: obj.patch(nodes.vco2, note.number, vco2),
+		voices: obj.patch(voices, note.number, {
+			vco1,
+			vco2,
+			vca1,
+			vca2
+		}),
 		vcf,
-		vca1, context});
+		context});
 });
 
 const noteOff = (instr, note) => changes$.onNext(nodes => {
-	const {vca1, context} = nodes;
+	const {voices, context} = nodes;
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
-	vca1.node.gain.cancelScheduledValues(0);
-	vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
-		time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+	let voice = voices[note.number] || false;
+	if (voice) {
+		let {vco1, vca1, vco2, vca2} = voice;
 
-	if (nodes.vco1[note.number])
-		a.stop(nodes.vco1[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
-	if (nodes.vco2[note.number])
-		a.stop(nodes.vco2[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+		vca1.node.gain.cancelScheduledValues(0);
+		vca2.node.gain.cancelScheduledValues(0);
+		vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
+			time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+		vca2.node.gain.setValueCurveAtTime(new Float32Array([vca2.node.gain.value, 0]),
+			time, instr.vca2.release > 0 && instr.vca2.release || 0.00001);
 
-	// todo maybe delete vco nodes as well
+		a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+		a.stop(vco2, time + (instr.vca2.release > 0 && instr.vca2.release || 0.00001));
 
-	return Object.assign({}, nodes, {vca1, context});
+		return Object.assign({}, nodes, {voices: obj.patch(voices, note.number, {
+			vco1, vco2, vca1, vca2
+		}), context});
+	}
+
+	return nodes;
 });
 
 const engine$ = changes$
@@ -14290,7 +14350,7 @@ const hook = ({state$, midi, actions}) => {
 	midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
-		.map(data => (console.log('midi: ', data.msg), data))
+		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
@@ -14310,7 +14370,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":39,"iblokz/common/obj":4,"rx":17}],28:[function(require,module,exports){
+},{"../util/audio":41,"iblokz/common/obj":4,"rx":17}],28:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -14511,7 +14571,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":26,"../util/context":40,"../util/math":41,"iblokz/common/obj":4,"rx":17}],32:[function(require,module,exports){
+},{"../instr/sampler":26,"../util/context":42,"../util/math":43,"iblokz/common/obj":4,"rx":17}],32:[function(require,module,exports){
 'use strict';
 
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
@@ -14565,13 +14625,16 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
 ]);
 
-},{"./header":32,"./instrument":34,"./media-library":35,"./midi-keyboard":36,"./midi-map":37,"./sequencer":38,"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
+},{"./header":32,"./instrument":34,"./media-library":37,"./midi-keyboard":38,"./midi-map":39,"./sequencer":40,"iblokz/adapters/vdom":1}],34:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, ul, li, hr, button, br,
 	form, label, input, fieldset, legend, i, img
 } = require('iblokz/adapters/vdom');
+
+const vco = require('./vco');
+const vca = require('./vca');
 
 const types = [
 	'sine',
@@ -14580,6 +14643,8 @@ const types = [
 	'triangle'
 ];
 
+const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
+
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
 		h2([i('.fa.fa-sliders'), ' Instrument'])
@@ -14587,131 +14652,16 @@ module.exports = ({state, actions}) => div('.instrument', [
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [
 			// VCO1
+			vco({state, actions, name: 'vco1'}),
+			vco({state, actions, name: 'vco2'}),
 			fieldset([
-				legend([
-					span('.on', 'VCO1'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('vco1', 'type', type)
-							},
-							class: {on: (state.instrument.vco1.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), [])),
-					img('[src="assets/tuning-fork.png"]'),
-					div('.knob', {
-						style: {
-							transform: `rotate(${state.instrument.vco1.detune / 100 * 135}deg)`
-						},
-						on: {
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vco1', 'detune', state.instrument.vco1.detune - ev.deltaY / 53)
-							)
-						}
-					}),
-					input('[size="3"][type="number"]', {
-						props: {value: state.instrument.vco1.detune},
-						on: {input: ev => actions.instrument.updateProp('vco1', 'detune', ev.target.value)}
-					})
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vco1', 'on', !state.instrument.vco1.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vco1.on,
-						'on': state.instrument.vco1.on,
-						'fa-circle': state.instrument.vco1.on
-					}
-				})
-			]),
-			// VCO2
-			fieldset([
-				legend([
-					span('.on', 'VCO2'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('vco2', 'type', type)
-							},
-							class: {on: (state.instrument.vco2.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), [])),
-					img('[src="assets/tuning-fork.png"]'),
-					div('.knob', {
-						style: {
-							transform: `rotate(${state.instrument.vco2.detune / 100 * 135}deg)`
-						},
-						on: {
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vco2', 'detune', state.instrument.vco2.detune - ev.deltaY / 53)
-							)
-						}
-					}),
-					input('[size="3"][type="number"]', {
-						props: {value: state.instrument.vco2.detune},
-						on: {input: ev => actions.instrument.updateProp('vco2', 'detune', ev.target.value)}
-					})
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vco2', 'on', !state.instrument.vco2.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vco2.on,
-						'on': state.instrument.vco2.on,
-						'fa-circle': state.instrument.vco2.on
-					}
-				})
-			]),
-			fieldset([
-				legend([
-					span('.on', 'VCA1'),
-					span('VCA2')
-				]),
-				div('.vertical', [
-					label(`Volume`),
-					span('.right', `${state.instrument.vca1.volume}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.volume},
-						on: {
-							change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value)),
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vca1', 'volume',
-									parseFloat((state.instrument.vca1.volume - ev.deltaY / 53 * 0.01).toFixed(2))
-								)
-							)
-						}
-					}),
-					label(`Attack`),
-					span('.right', `${state.instrument.vca1.attack}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.attack},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
-					}),
-					label(`Decay`),
-					span('.right', `${state.instrument.vca1.decay}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.decay},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
-					}),
-					label(`Sustain`),
-					span('.right', `${state.instrument.vca1.sustain}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.sustain},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
-					}),
-					label(`Release`),
-					span('.right', `${state.instrument.vca1.release}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.release},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
-					})
-				])
+				legend(vcas.map((name, i) =>
+					span({
+						class: {on: state.instrument.vcaOn === i},
+						on: {click: () => actions.instrument.setVca(i)}
+					}, name.toUpperCase())
+				)),
+				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
 			fieldset([
@@ -14785,7 +14735,121 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
+},{"./vca":35,"./vco":36,"iblokz/adapters/vdom":1}],35:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz/adapters/vdom');
+
+const types = [
+	'sine',
+	'square',
+	'sawtooth',
+	'triangle'
+];
+
+module.exports = ({name, state, actions}) => div('.vertical', [
+	label(`Volume`),
+	span('.right', `${state.instrument[name].volume}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].volume},
+		on: {
+			change: ev => actions.instrument.updateProp(name, 'volume', parseFloat(ev.target.value)),
+			wheel: ev => (
+				ev.preventDefault(),
+				actions.instrument.updateProp(name, 'volume',
+					parseFloat((state.instrument[name].volume - ev.deltaY / 53 * 0.01).toFixed(2))
+				)
+			)
+		}
+	}),
+	label(`Attack`),
+	span('.right', `${state.instrument[name].attack}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].attack},
+		on: {change: ev => actions.instrument.updateProp(name, 'attack', parseFloat(ev.target.value))}
+	}),
+	label(`Decay`),
+	span('.right', `${state.instrument[name].decay}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].decay},
+		on: {change: ev => actions.instrument.updateProp(name, 'decay', parseFloat(ev.target.value))}
+	}),
+	label(`Sustain`),
+	span('.right', `${state.instrument[name].sustain}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].sustain},
+		on: {change: ev => actions.instrument.updateProp(name, 'sustain', parseFloat(ev.target.value))}
+	}),
+	label(`Release`),
+	span('.right', `${state.instrument[name].release}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 0.01},
+		props: {value: state.instrument[name].release},
+		on: {change: ev => actions.instrument.updateProp(name, 'release', parseFloat(ev.target.value))}
+	})
+]);
+
+},{"iblokz/adapters/vdom":1}],36:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz/adapters/vdom');
+
+const types = [
+	'sine',
+	'square',
+	'sawtooth',
+	'triangle'
+];
+
+module.exports = ({name, state, actions}) => fieldset([
+	legend([
+		span('.on', name.toUpperCase()),
+		div(types.reduce((list, type) => list.concat([
+			button(`.btn-opt`, {
+				on: {
+					click: ev => actions.instrument.updateProp(name, 'type', type)
+				},
+				class: {on: (state.instrument[name].type === type)}
+			}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+		]), [])),
+		img('[src="assets/tuning-fork.png"]'),
+		div('.knob', {
+			style: {
+				transform: `rotate(${state.instrument[name].detune / 100 * 135}deg)`
+			},
+			on: {
+				wheel: ev => (
+					ev.preventDefault(),
+					actions.instrument.updateProp(name, 'detune', state.instrument[name].detune - ev.deltaY / 53)
+				)
+			}
+		}),
+		input('[size="3"][type="number"]', {
+			props: {value: state.instrument[name].detune},
+			on: {input: ev => actions.instrument.updateProp(name, 'detune', ev.target.value)}
+		})
+	]),
+	div('.on-switch.fa', {
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		class: {
+			'fa-circle-thin': !state.instrument[name].on,
+			'on': state.instrument[name].on,
+			'fa-circle': state.instrument[name].on
+		}
+	})
+]);
+
+},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14869,7 +14933,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],36:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],38:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14916,7 +14980,7 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],37:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],39:[function(require,module,exports){
 'use strict';
 
 const {
@@ -14941,7 +15005,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],38:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],40:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -15011,7 +15075,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],39:[function(require,module,exports){
+},{"iblokz/adapters/vdom":1}],41:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -15156,7 +15220,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],40:[function(require,module,exports){
+},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],42:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -15167,7 +15231,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -15181,7 +15245,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');

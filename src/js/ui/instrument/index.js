@@ -5,12 +5,17 @@ const {
 	form, label, input, fieldset, legend, i, img
 } = require('iblokz/adapters/vdom');
 
+const vco = require('./vco');
+const vca = require('./vca');
+
 const types = [
 	'sine',
 	'square',
 	'sawtooth',
 	'triangle'
 ];
+
+const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
@@ -19,131 +24,16 @@ module.exports = ({state, actions}) => div('.instrument', [
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [
 			// VCO1
+			vco({state, actions, name: 'vco1'}),
+			vco({state, actions, name: 'vco2'}),
 			fieldset([
-				legend([
-					span('.on', 'VCO1'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('vco1', 'type', type)
-							},
-							class: {on: (state.instrument.vco1.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), [])),
-					img('[src="assets/tuning-fork.png"]'),
-					div('.knob', {
-						style: {
-							transform: `rotate(${state.instrument.vco1.detune / 100 * 135}deg)`
-						},
-						on: {
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vco1', 'detune', state.instrument.vco1.detune - ev.deltaY / 53)
-							)
-						}
-					}),
-					input('[size="3"][type="number"]', {
-						props: {value: state.instrument.vco1.detune},
-						on: {input: ev => actions.instrument.updateProp('vco1', 'detune', ev.target.value)}
-					})
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vco1', 'on', !state.instrument.vco1.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vco1.on,
-						'on': state.instrument.vco1.on,
-						'fa-circle': state.instrument.vco1.on
-					}
-				})
-			]),
-			// VCO2
-			fieldset([
-				legend([
-					span('.on', 'VCO2'),
-					div(types.reduce((list, type) => list.concat([
-						button(`.btn-opt`, {
-							on: {
-								click: ev => actions.instrument.updateProp('vco2', 'type', type)
-							},
-							class: {on: (state.instrument.vco2.type === type)}
-						}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
-					]), [])),
-					img('[src="assets/tuning-fork.png"]'),
-					div('.knob', {
-						style: {
-							transform: `rotate(${state.instrument.vco2.detune / 100 * 135}deg)`
-						},
-						on: {
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vco2', 'detune', state.instrument.vco2.detune - ev.deltaY / 53)
-							)
-						}
-					}),
-					input('[size="3"][type="number"]', {
-						props: {value: state.instrument.vco2.detune},
-						on: {input: ev => actions.instrument.updateProp('vco2', 'detune', ev.target.value)}
-					})
-				]),
-				div('.on-switch.fa', {
-					on: {click: ev => actions.instrument.updateProp('vco2', 'on', !state.instrument.vco2.on)},
-					class: {
-						'fa-circle-thin': !state.instrument.vco2.on,
-						'on': state.instrument.vco2.on,
-						'fa-circle': state.instrument.vco2.on
-					}
-				})
-			]),
-			fieldset([
-				legend([
-					span('.on', 'VCA1'),
-					span('VCA2')
-				]),
-				div('.vertical', [
-					label(`Volume`),
-					span('.right', `${state.instrument.vca1.volume}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.volume},
-						on: {
-							change: ev => actions.instrument.updateProp('vca1', 'volume', parseFloat(ev.target.value)),
-							wheel: ev => (
-								ev.preventDefault(),
-								actions.instrument.updateProp('vca1', 'volume',
-									parseFloat((state.instrument.vca1.volume - ev.deltaY / 53 * 0.01).toFixed(2))
-								)
-							)
-						}
-					}),
-					label(`Attack`),
-					span('.right', `${state.instrument.vca1.attack}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.attack},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'attack', parseFloat(ev.target.value))}
-					}),
-					label(`Decay`),
-					span('.right', `${state.instrument.vca1.decay}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.decay},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'decay', parseFloat(ev.target.value))}
-					}),
-					label(`Sustain`),
-					span('.right', `${state.instrument.vca1.sustain}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.sustain},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'sustain', parseFloat(ev.target.value))}
-					}),
-					label(`Release`),
-					span('.right', `${state.instrument.vca1.release}`),
-					input('[type="range"]', {
-						attrs: {min: 0, max: 1, step: 0.01},
-						props: {value: state.instrument.vca1.release},
-						on: {change: ev => actions.instrument.updateProp('vca1', 'release', parseFloat(ev.target.value))}
-					})
-				])
+				legend(vcas.map((name, i) =>
+					span({
+						class: {on: state.instrument.vcaOn === i},
+						on: {click: () => actions.instrument.setVca(i)}
+					}, name.toUpperCase())
+				)),
+				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
 			fieldset([

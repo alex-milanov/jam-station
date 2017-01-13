@@ -18,9 +18,16 @@ let changes$ = new Subject();
 
 const initial = {
 	// an dictionary midikey : vco
-	vco1: {}, // a.start(a.vco({type: 'square'})),
-	vco2: {}, // a.start(a.vco({type: 'square'})),
-	vca1: a.vca({gain: 0}),
+	/*
+	voice: {
+		vco1
+		vco2
+		vca1
+		vca2
+	}
+	*/
+	voices: {}, // a.start(a.vco({type: 'square'})),
+	// vca1: a.vca({gain: 0}),
 	vcf: a.vcf({}),
 	// lfo: a.lfo({}),
 	volume: a.vca({gain: 0.7}),
@@ -30,10 +37,10 @@ const initial = {
 const updatePrefs = instr => changes$.onNext(nodes =>
 	mapObj(nodes,
 		(node, key) => (instr[key])
-			? ['vco1', 'vco2'].indexOf(key) > -1
-				? mapObj(node, n => a.apply(n, instr[key]))
-				: a.apply(node, instr[key])
-			: node));
+			? a.apply(node, instr[key])
+			: (key === 'voices')
+				? mapObj(node, voice => mapObj(voice, (n, key) => a.apply(n, instr[key])))
+				: node));
 /*
 Object.keys(nodes).reduce((o, node) =>
 (instr[node])
@@ -45,59 +52,64 @@ nodes
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
-	let {vco1, vco2, vca1, vcf, volume, context} = nodes;
+	let {voices, vcf, volume, context} = nodes;
 
-	// oscillators
-	if (!instr.vco1.on) vco1 = mapObj(vco1, vco => a.disconnect(vco));
-	if (!instr.vco2.on) vco2 = mapObj(vco2, vco => a.disconnect(vco));
+	// vco to vca, vca to vcf / volume
+	voices = mapObj(voices, voice => ({
+		vco1: a.connect(voice.vco1, voice.vca1),
+		vco2: a.connect(voice.vco2, voice.vca2),
+		vca1: (!instr.vco1.on) ? a.disconnect(voice.vca1) : a.reroute(voice.vca1, (instr.vcf.on) ? vcf : volume),
+		vca2: (!instr.vco2.on) ? a.disconnect(voice.vca2) : a.reroute(voice.vca2, (instr.vcf.on) ? vcf : volume)
+	}));
+
+	console.log(nodes.voices, voices);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vcf));
-		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vcf));
-		vcf = a.connect(vcf, vca1);
+		vcf = a.connect(vcf, volume);
 	} else {
-		vcf = a.disconnect(vcf, vca1);
-		if (instr.vco1.on) vco1 = mapObj(vco1, vco => a.reroute(vco, vca1));
-		if (instr.vco2.on) vco2 = mapObj(vco2, vco => a.reroute(vco, vca1));
+		vcf = a.disconnect(vcf, volume);
 	}
 
-	vca1 = a.connect(vca1, volume);
 	volume = a.connect(volume, context.destination);
 
-	return Object.assign({}, nodes, {vco1, vco2, vca1, vcf, volume, context});
+	return Object.assign({}, nodes, {voices, vcf, volume, context});
 });
 
 const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
-	let {vca1, vcf, context} = nodes;
+	let {voices, vcf, volume, context} = nodes;
 
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
 	console.log(instr, note, velocity);
 
+	let voice = voices[note.number] || false;
+
 	let vco1 = a.start(a.vco(instr.vco1));
+	let vca1 = voice ? voice.vca1 : a.vca({});
+	vco1 = a.connect(vco1, vca1);
+	vca1 = !(instr.vco1.on) ? a.disconnect(vca1) : a.reroute(vca1, (instr.vcf.on) ? vcf : volume);
+
 	let vco2 = a.start(a.vco(instr.vco2));
+	let vca2 = voice ? voice.vca2 : a.vca({});
+	vco2 = a.connect(vco2, vca2);
+	vca2 = !(instr.vco2.on) ? a.disconnect(vca2) : a.reroute(vca2, (instr.vcf.on) ? vcf : volume);
 
 	// vcf
 	if (instr.vcf.on) {
-		if (instr.vco1.on) vco1 = a.connect(vco1, vcf);
-		if (instr.vco2.on) vco2 = a.connect(vco2, vcf);
-		vcf = a.connect(vcf, vca1);
+		vcf = a.connect(vcf, volume);
 	} else {
-		vcf = a.disconnect(vcf, vca1);
-		if (instr.vco1.on) vco1 = a.connect(vco1, vca1);
-		if (instr.vco2.on) vco2 = a.connect(vco2, vca1);
+		vcf = a.disconnect(vcf);
 	}
-
-	vco1.node.frequency.cancelScheduledValues(0);
-	vco2.node.frequency.cancelScheduledValues(0);
-	vca1.node.gain.cancelScheduledValues(0);
 
 	const freq = a.noteToFrequency(note.key + note.octave);
 
 	vco1.node.frequency.value = freq;
 	vco2.node.frequency.value = freq;
+
+	vca1.node.gain.cancelScheduledValues(0);
+	vca2.node.gain.cancelScheduledValues(0);
 
 	// attack
 	if (instr.vca1.attack > 0)
@@ -105,36 +117,57 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	else
 		vca1.node.gain.setValueAtTime(velocity, now);
 
+	if (instr.vca2.attack > 0)
+		vca2.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca2.volume]), time, instr.vca2.attack);
+	else
+		vca2.node.gain.setValueAtTime(velocity, now);
+
 	// decay
 	if (instr.vca1.decay > 0)
 		vca1.node.gain.setValueCurveAtTime(
 			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
 			time + instr.vca1.attack, instr.vca1.decay);
+	if (instr.vca2.decay > 0)
+		vca2.node.gain.setValueCurveAtTime(
+			new Float32Array([velocity * instr.vca2.volume, instr.vca2.sustain * velocity * instr.vca2.volume]),
+			time + instr.vca2.attack, instr.vca2.decay);
 
 	return Object.assign({}, nodes, {
-		vco1: obj.patch(nodes.vco1, note.number, vco1),
-		vco2: obj.patch(nodes.vco2, note.number, vco2),
+		voices: obj.patch(voices, note.number, {
+			vco1,
+			vco2,
+			vca1,
+			vca2
+		}),
 		vcf,
-		vca1, context});
+		context});
 });
 
 const noteOff = (instr, note) => changes$.onNext(nodes => {
-	const {vca1, context} = nodes;
+	const {voices, context} = nodes;
 	const now = context.currentTime;
 	const time = now + 0.0001;
 
-	vca1.node.gain.cancelScheduledValues(0);
-	vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
-		time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+	let voice = voices[note.number] || false;
+	if (voice) {
+		let {vco1, vca1, vco2, vca2} = voice;
 
-	if (nodes.vco1[note.number])
-		a.stop(nodes.vco1[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
-	if (nodes.vco2[note.number])
-		a.stop(nodes.vco2[note.number], time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+		vca1.node.gain.cancelScheduledValues(0);
+		vca2.node.gain.cancelScheduledValues(0);
+		vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
+			time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
+		vca2.node.gain.setValueCurveAtTime(new Float32Array([vca2.node.gain.value, 0]),
+			time, instr.vca2.release > 0 && instr.vca2.release || 0.00001);
 
-	// todo maybe delete vco nodes as well
+		a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+		a.stop(vco2, time + (instr.vca2.release > 0 && instr.vca2.release || 0.00001));
 
-	return Object.assign({}, nodes, {vca1, context});
+		return Object.assign({}, nodes, {voices: obj.patch(voices, note.number, {
+			vco1, vco2, vca1, vca2
+		}), context});
+	}
+
+	return nodes;
 });
 
 const engine$ = changes$
@@ -158,7 +191,7 @@ const hook = ({state$, midi, actions}) => {
 	midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
-		.map(data => (console.log('midi: ', data.msg), data))
+		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {

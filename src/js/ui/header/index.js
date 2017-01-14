@@ -1,15 +1,43 @@
 'use strict';
 
+const moment = require('moment');
+
 const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
+
+const fileUtil = require('../../util/file');
+
+const openDialog = cb => {
+	let fileEl = document.createElement('input');
+	fileEl.setAttribute('type', 'file');
+	fileEl.addEventListener('change', ev => {
+		console.log(ev.target.files, this);
+		cb(
+			ev.target.files
+		);
+	});
+	fileEl.dispatchEvent(new MouseEvent('click', {
+		view: window,
+		bubbles: true,
+		cancelable: true
+	}));
+};
 
 module.exports = ({state, actions}) => header([
 	ul([
-		li([a({class: {on: state.ui.mediaLibrary}, on: {click: ev => actions.toggleUI('mediaLibrary')}}, [i('.fa.fa-book')])]),
+		li([a({
+			class: {on: state.ui.mediaLibrary},
+			on: {click: ev => actions.toggleUI('mediaLibrary')}
+		}, [i('.fa.fa-book')])]),
 		// li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
-		li([a({class: {on: state.ui.instrument}, on: {click: ev => actions.toggleUI('instrument')}}, [i('.fa.fa-sliders')])]),
+		li([a({
+			class: {on: state.ui.instrument},
+			on: {click: ev => actions.toggleUI('instrument')}
+		}, [i('.fa.fa-sliders')])]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
 		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
-		li([a({class: {on: state.ui.midiKeyboard}, on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
+		li([a({
+			class: {on: state.ui.midiKeyboard},
+			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
 	]),
 	h1([
 		img('[src="assets/logo.png"]'),
@@ -25,8 +53,20 @@ module.exports = ({state, actions}) => header([
 			}),
 			a([i('.fa.fa-volume-up')])
 		]),
-		li([a([i('.fa.fa-save')])]),
-		li([a([i('.fa.fa-upload')])]),
-		li([a([i('.fa.fa-trash')])])
+		li([a({
+			on: {
+				click: ev => fileUtil.save(moment().format('YYYY-MM-DD-hh-mm[-jam.json]'), state)
+			}
+		}, [i('.fa.fa-save')])]),
+		li([a({
+			on: {
+				click: ev => openDialog(files =>
+					fileUtil.load(files[0]).subscribe(content => actions.load(content))
+				)
+			}
+		}, [i('.fa.fa-upload')])]),
+		li([a({
+			on: {click: () => actions.clear()}
+		}, [i('.fa.fa-trash')])])
 	])
 ]);

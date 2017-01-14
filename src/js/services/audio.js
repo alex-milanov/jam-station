@@ -8,11 +8,6 @@ const obj = require('iblokz/common/obj');
 const a = require('../util/audio');
 
 // util
-const mapObj = (o, cb) => Object.keys(o)
-	.reduce(
-		(o2, k, i) =>
-			((o2[k] = cb(o[k], k, i)), o2),
-		{});
 
 let changes$ = new Subject();
 
@@ -35,27 +30,19 @@ const initial = {
 };
 
 const updatePrefs = instr => changes$.onNext(nodes =>
-	mapObj(nodes,
+	obj.map(nodes,
 		(node, key) => (instr[key])
 			? a.apply(node, instr[key])
 			: (key === 'voices')
-				? mapObj(node, voice => mapObj(voice, (n, key) => a.apply(n, instr[key])))
+				? obj.map(node, voice => obj.map(voice, (n, key) => a.apply(n, instr[key])))
 				: node));
-/*
-Object.keys(nodes).reduce((o, node) =>
-(instr[node])
-? obj.patch(o, node, a.apply(nodes[node], instr[node]))
-: o,
-nodes
-)
-*/
 
 const updateConnections = instr => changes$.onNext(nodes => {
 	//
 	let {voices, vcf, volume, context} = nodes;
 
 	// vco to vca, vca to vcf / volume
-	voices = mapObj(voices, voice => ({
+	voices = obj.map(voices, voice => ({
 		vco1: a.connect(voice.vco1, voice.vca1),
 		vco2: a.connect(voice.vco2, voice.vca2),
 		vca1: (!instr.vco1.on) ? a.disconnect(voice.vca1) : a.reroute(voice.vca1, (instr.vcf.on) ? vcf : volume),
@@ -166,7 +153,7 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 });
 
 const pitchBend = (instr, pitchValue) => changes$.onNext(nodes =>
-	obj.patch(nodes, 'voices', mapObj(nodes.voices, voice => Object.assign({}, voice, {
+	obj.patch(nodes, 'voices', obj.map(nodes.voices, voice => Object.assign({}, voice, {
 		vco1: a.apply(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
 		vco2: a.apply(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
 	})))

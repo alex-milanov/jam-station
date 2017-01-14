@@ -20,7 +20,7 @@ const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor
 
 const ping = () => stream.onNext(state => state);
 
-const initial = {
+const initial = Object.assign({
 	ui: {
 		mediaLibrary: true,
 		patches: true,
@@ -32,7 +32,16 @@ const initial = {
 		inputs: [],
 		outputs: []
 	}
-};
+}, {
+	studio: studio.initial,
+	sequencer: sequencer.initial,
+	instrument: instrument.initial,
+	mediaLibrary: mediaLibrary.initial
+});
+
+// todo merge loaded state
+const load = content => stream.onNext(state => content);
+const clear = () => stream.onNext(state => initial);
 
 module.exports = {
 	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
@@ -43,10 +52,7 @@ module.exports = {
 	mediaLibrary,
 	sequencer,
 	midiMap,
-	initial: Object.assign({}, initial, {
-		studio: studio.initial,
-		sequencer: sequencer.initial,
-		instrument: instrument.initial,
-		mediaLibrary: mediaLibrary.initial
-	})
+	load,
+	clear,
+	initial
 };

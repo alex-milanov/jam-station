@@ -76,21 +76,24 @@ const parseMidiMsg = event => {
 // 		haveAtLeastOneDevice = true;
 // 	}
 // };
-
+//
 // const onMIDIInit = midi => {
 // 	hookUpMIDIInput(midi);
 // 	midi.onstatechange = hookUpMIDIInput;
 // };
-
+//
 // const onMIDIReject = err =>
 // 	console.log(err, 'The MIDI system failed to start.');
-
+//
 // (navigator.requestMIDIAccess)
-//		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
+// 		&& navigator.requestMIDIAccess().then(onMIDIInit, onMIDIReject);
 
 const parseAccess = access => {
 	let inputs = [];
 	let outputs = [];
+
+	console.log(access);
+
 	access.inputs.forEach(input => inputs.push(input));
 	access.outputs.forEach(output => outputs.push(output));
 	return {access, inputs, outputs};
@@ -98,12 +101,12 @@ const parseAccess = access => {
 
 const init = () => {
 	const access$ = $.fromPromise(navigator.requestMIDIAccess())
-		.map(parseAccess);
-
-	const state$ = access$.flatMap(
-		({access}) => $.fromEvent(access, 'onstatechange')
-			.map(state => ({access, state}))
-	);
+		.flatMap(access => $.create(stream => {
+			access.onstatechange = connection => stream.onNext(connection.currentTarget);
+		}).startWith(access))
+		.map(parseAccess)
+		.map(data => (console.log('midi access', data), data))
+		.share();
 
 	const msg$ = access$.flatMap(
 		({access, inputs}) => inputs.reduce(
@@ -119,7 +122,6 @@ const init = () => {
 	return {
 		parseMidiMsg,
 		access$,
-		state$,
 		msg$
 	};
 };

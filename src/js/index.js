@@ -77,6 +77,7 @@ let midiMap = {
 	26: ['instrument', 'eg', 'sustain'],
 	27: ['instrument', 'eg', 'release']
 };
+
 /*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {

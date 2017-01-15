@@ -37,31 +37,20 @@ const updatePrefs = instr => changes$.onNext(nodes =>
 				? obj.map(node, voice => obj.map(voice, (n, key) => a.apply(n, instr[key])))
 				: node));
 
-const updateConnections = instr => changes$.onNext(nodes => {
-	//
-	let {voices, vcf, volume, context} = nodes;
-
-	// vco to vca, vca to vcf / volume
-	voices = obj.map(voices, voice => ({
+const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, nodes, {
+	voices: obj.map(nodes.voices, voice => ({
 		vco1: a.connect(voice.vco1, voice.vca1),
 		vco2: a.connect(voice.vco2, voice.vca2),
-		vca1: (!instr.vco1.on) ? a.disconnect(voice.vca1) : a.reroute(voice.vca1, (instr.vcf.on) ? vcf : volume),
-		vca2: (!instr.vco2.on) ? a.disconnect(voice.vca2) : a.reroute(voice.vca2, (instr.vcf.on) ? vcf : volume)
-	}));
-
-	console.log(nodes.voices, voices);
-
-	// vcf
-	if (instr.vcf.on) {
-		vcf = a.connect(vcf, volume);
-	} else {
-		vcf = a.disconnect(vcf, volume);
-	}
-
-	volume = a.connect(volume, context.destination);
-
-	return Object.assign({}, nodes, {voices, vcf, volume, context});
-});
+		vca1: (!instr.vco1.on)
+			? a.disconnect(voice.vca1)
+			: a.reroute(voice.vca1, (instr.vcf.on) ? nodes.vcf : nodes.volume),
+		vca2: (!instr.vco2.on)
+			? a.disconnect(voice.vca2)
+			: a.reroute(voice.vca2, (instr.vcf.on) ? nodes.vcf : nodes.volume)
+	})),
+	vcf: (instr.vcf.on) ? a.connect(nodes.vcf, nodes.volume) : a.disconnect(nodes.vcf, nodes.volume),
+	volume: a.connect(nodes.volume, nodes.context.destination)
+}));
 
 const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	let {voices, vcf, volume, context} = nodes;
@@ -176,7 +165,6 @@ const hook = ({state$, midi, actions}) => {
 
 	// hook midi signals
 	midi.access$.subscribe(data => actions.midiMap.connect(data));
-	midi.state$.subscribe(data => console.log('state', data));
 	midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now

@@ -1,6 +1,6 @@
 .media-library
 	+editor(20px, 60px)
-	min-width: 220px
+	min-width: 260px
 	.body
 		display: relative
 		fieldset > ul
@@ -15,18 +15,21 @@
 				ul
 					display: none
 					border-bottom: 0px
-				&.expanded ul
-					display: block
 				li
 					&:last-child
 						border-bottom: 0px
 					&:first-child
 						border-top: 0px
-					> span
+					> label
 						padding-left: 10px
-				> span
-					i
-						font-size: 10px
+				> input[type=checkbox]
+					display: none
+					&:checked
+						& + label > i:before
+							content: ''
+						& ~ ul
+							display: block
+				> label
 					padding: 0px 5px
 					line-height: 24px
 					font-size: 12px
@@ -37,6 +40,9 @@
 					&:hover
 						background: #dfe
 						box-shadow: inset 0px 0px 7px #ccc
+					i
+						width: 14px
+
 				&:not(:first-child)
 					border-top: 1px solid #ccc
 				button

@@ -61,7 +61,7 @@ module.exports = ({state, actions}) => header([
 		li([a({
 			on: {
 				click: ev => openDialog(files =>
-					fileUtil.load(files[0]).subscribe(content => actions.load(content))
+					fileUtil.load(files[0], 'json').subscribe(content => actions.load(content))
 				)
 			}
 		}, [i('.fa.fa-upload')])]),

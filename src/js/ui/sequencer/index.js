@@ -42,8 +42,13 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			div(`.row`, [].concat(
 				[div('.channel', {
 					class: {on: state.sequencer.channel === r},
-					on: {click: () => actions.sequencer.selectChannel(r)}
-				}, [span(state.mediaLibrary.samples[state.sequencer.channels[r]].replace('.ogg', ''))])],
+					on: {
+						click: () => actions.sequencer.selectChannel(r),
+						dragover: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'dashed')),
+						dragleave: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'solid')),
+						dragend: ev => ev.preventDefault()
+					}
+				}, [span(state.mediaLibrary.files[state.sequencer.channels[r]].replace('.ogg', ''))])],
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {

@@ -2457,13 +2457,15 @@ input, label, body {
         outline: none;
         border-radius: 10px;
         height: 2px;
+        width: 80px;
         cursor: pointer; }
       #ui > header ul li input[type=range]::-webkit-slider-thumb {
         -webkit-appearance: none;
         background-color: #bbb;
         border: 1px solid #777;
-        width: 7px;
-        height: 20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 10px;
         transition: .3s; }
         #ui > header ul li input[type=range]::-webkit-slider-thumb:hover {
           background: #dfe; }
@@ -2475,7 +2477,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 220px; }
+  min-width: 260px; }
   .media-library .header {
     cursor: pointer;
     margin: 0px;
@@ -2617,15 +2619,19 @@ input, label, body {
         .media-library .body ul li ul {
           display: none;
           border-bottom: 0px; }
-        .media-library .body ul li.expanded ul {
-          display: block; }
         .media-library .body ul li li:last-child {
           border-bottom: 0px; }
         .media-library .body ul li li:first-child {
           border-top: 0px; }
-        .media-library .body ul li li > span {
+        .media-library .body ul li li > label {
           padding-left: 10px; }
-        .media-library .body ul li > span {
+        .media-library .body ul li > input[type=checkbox] {
+          display: none; }
+          .media-library .body ul li > input[type=checkbox]:checked + label > i:before {
+            content: ''; }
+          .media-library .body ul li > input[type=checkbox]:checked ~ ul {
+            display: block; }
+        .media-library .body ul li > label {
           padding: 0px 5px;
           line-height: 24px;
           font-size: 12px;
@@ -2633,11 +2639,11 @@ input, label, body {
           background: #eaeaea;
           transition: background .7s, box-shadow .7s;
           cursor: pointer; }
-          .media-library .body ul li > span i {
-            font-size: 10px; }
-          .media-library .body ul li > span:hover {
+          .media-library .body ul li > label:hover {
             background: #dfe;
             box-shadow: inset 0px 0px 7px #ccc; }
+          .media-library .body ul li > label i {
+            width: 14px; }
         .media-library .body ul li:not(:first-child) {
           border-top: 1px solid #ccc; }
         .media-library .body ul li button {
@@ -2824,8 +2830,8 @@ input, label, body {
         width: 6px;
         height: 6px;
         border-radius: 100px;
-        background: #ddd;
-        box-shadow: 0px 0px 2px 1px #ccc inset;
+        background: #eee;
+        box-shadow: 0 0px 5px 1px #eee, 0px 0px 4px 1px #bbb inset;
         box-sizing: border-box;
         top: 2px;
         left: 50%;
@@ -3182,7 +3188,7 @@ input, label, body {
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 250px; }
+  min-width: 200px; }
   .midi-map .header {
     cursor: pointer;
     margin: 0px;

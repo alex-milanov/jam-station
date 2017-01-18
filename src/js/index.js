@@ -8,6 +8,8 @@ const {h, div, input, hr, p, button} = vdom;
 const midi = require('./util/midi')();
 const a = require('./util/audio');
 window.a = a;
+const f = require('./util/file');
+window.f = f;
 const BasicSynth = require('./instr/basic-synth');
 
 // app
@@ -61,6 +63,13 @@ vdom.patchStream(ui$, '#ui');
 // services
 services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
+
+// files
+// let opm = obj.traverse(
+// 	f.loadZip('/samples/openpathmusic.zip'),
+// 	(file => a.context.decodeAudioData(file))
+// );
+let files = [];
 
 // midi map
 const basicSynth = new BasicSynth(studio.context, 'C1');

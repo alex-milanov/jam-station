@@ -60,7 +60,7 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 
 	const freq = a.noteToFrequency(note.key + note.octave);
 
-	console.log(instr, note, velocity);
+	// console.log(instr, note, velocity);
 
 	let voice = voices[note.number] || false;
 

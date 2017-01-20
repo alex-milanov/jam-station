@@ -35195,7 +35195,7 @@ services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
 
 // files
-f.loadZip('/samples/openpathmusic.zip').subscribe(opm => {
+f.loadZip('samples/openpathmusic.zip').subscribe(opm => {
 	let opmSamples = Object.keys(opm);
 	console.log(opmSamples);
 	$.concat(opmSamples.map(key => $

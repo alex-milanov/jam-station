@@ -84,7 +84,36 @@ const initial = {
 	]
 };
 
+const indexAt = (list, prop, value) =>
+	list.reduce((at, item, index) => item[prop] === value ? index : at, -1);
+
+const treePatch = (nodes, path, item) => (
+	// console.log(nodes, path, item),
+	(path.length === 1 && path[0] === item)
+		? [].concat(nodes, [item])
+		: [indexAt(nodes, 'name', path[0])].map(index =>
+				[{
+					name: path[0],
+					items: (path.length > 2)
+						? treePatch((index > -1) ? nodes[index].items : [], path.slice(1), item)
+						: [].concat((index > -1) ? nodes[index].items : [], [item])
+				}].map(patch =>
+					(index > -1)
+						? [].concat(nodes.slice(0, index), [patch], nodes.slice(index + 1))
+						: [].concat(nodes, [patch])
+			).pop()
+		).pop());
+
+const loadSamples = list => stream.onNext(state => obj.patch(state, 'mediaLibrary', {
+	files: [].concat(state.mediaLibrary.files, list.map(item => item.split('/').pop())),
+	samples: [].concat(state.mediaLibrary.samples, list.reduce(
+		(tree, item) => treePatch(tree, item.split('/'), item.split('/').pop()),
+		[])
+	)
+}));
+
 module.exports = {
 	stream,
-	initial
+	initial,
+	loadSamples
 };

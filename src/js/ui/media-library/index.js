@@ -46,10 +46,10 @@ const groupList = list => list.reduce((groups, name) =>
 const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =>
 	(typeof item === 'object')
 		? li('[draggable="true"]', [
-			input(`[type="checkbox"][id="li-${item.name}"]`, {
+			input(`[type="checkbox"][id="li-${level}-${k}-${item.name}"]`, {
 				attrs: {checked: item.expanded}
 			}),
-			label(`[for="li-${item.name}"]`, {style: {paddingLeft: (5 + level * 5) + 'px'}}, [
+			label(`[for="li-${level}-${k}-${item.name}"]`, {style: {paddingLeft: (5 + level * 5) + 'px'}}, [
 				i('.fa.fa-folder-o'),
 				' ',
 				item.name

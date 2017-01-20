@@ -108,6 +108,11 @@ const apply = (node, prefs) => Object.keys(prefs)
 		node
 	);
 
+const scheduleChanges = (node, pref, values, times) => (values.length === 1)
+	? node.node[pref].setValueAtTime(values[0], times[0])
+	: (node.node[pref].setValueCurveAtTime(new Float32Array(values.slice(0, 2)), times[0], times[1]),
+		(values.length > 2) && scheduleChanges(node, pref, values.slice(1), [times[0] + times[1]].concat(times.slice(2))));
+
 const add = (type, prefs, context) => apply(create(type, context), prefs);
 
 const start = function(node) {
@@ -150,6 +155,7 @@ module.exports = {
 	reroute,
 	chain,
 	apply,
+	scheduleChanges,
 	add,
 	start,
 	stop,

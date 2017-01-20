@@ -82,26 +82,27 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	vca1.node.gain.cancelScheduledValues(0);
 	vca2.node.gain.cancelScheduledValues(0);
 
-	// attack
-	if (instr.vca1.attack > 0)
-		vca1.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca1.volume]), time, instr.vca1.attack);
-	else
-		vca1.node.gain.setValueAtTime(velocity, now);
+	const vca1Changes = [].concat(
+		// attack
+		(instr.vca1.attack > 0)
+			? [[0, time], [velocity * instr.vca1.volume, instr.vca1.attack]] : [[velocity * instr.vca1.volume, now]],
+		// decay
+		(instr.vca1.decay > 0)
+			? [[instr.vca1.sustain * velocity * instr.vca1.volume, instr.vca1.decay]] : []
+	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
 
-	if (instr.vca2.attack > 0)
-		vca2.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca2.volume]), time, instr.vca2.attack);
-	else
-		vca2.node.gain.setValueAtTime(velocity, now);
+	a.scheduleChanges(vca1, 'gain', vca1Changes[0], vca1Changes[1]);
 
-	// decay
-	if (instr.vca1.decay > 0)
-		vca1.node.gain.setValueCurveAtTime(
-			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
-			time + instr.vca1.attack, instr.vca1.decay);
-	if (instr.vca2.decay > 0)
-		vca2.node.gain.setValueCurveAtTime(
-			new Float32Array([velocity * instr.vca2.volume, instr.vca2.sustain * velocity * instr.vca2.volume]),
-			time + instr.vca2.attack, instr.vca2.decay);
+	const vca2Changes = [].concat(
+		// attack
+		(instr.vca2.attack > 0)
+			? [[0, time], [velocity * instr.vca2.volume, instr.vca2.attack]] : [[velocity * instr.vca2.volume, now]],
+		// decay
+		(instr.vca2.decay > 0)
+			? [[instr.vca2.sustain * velocity * instr.vca2.volume, instr.vca2.decay]] : []
+	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
+
+	a.scheduleChanges(vca2, 'gain', vca2Changes[0], vca2Changes[1]);
 
 	return Object.assign({}, nodes, {
 		voices: obj.patch(voices, note.number, {

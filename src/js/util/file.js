@@ -30,12 +30,12 @@ const load = (file, readAs = 'text') => $.create(stream => {
 
 const loadZip = file => load(file, 'arrayBuffer')
 	.flatMap(data => $.fromPromise(jsZip.loadAsync(data)))
-	.flatMap(zf => $.merge(
+	.flatMap(zf => $.concat(
 		Object.keys(zf.files)
 			.filter(k => !zf.files[k].dir)
 			.map(k => (console.log(k), k))
 			.map(k => $.fromPromise(zf.files[k].async('arraybuffer')).map(v => ({k, v})))
-		).reduce((o, {k, v}) => obj.patch(o, k.split('/'), v), {})
+		).reduce((o, {k, v}) => obj.patch(o, k, v), {})
 	);
 
 const save = (fileName, content) => fileSaver.saveAs(

@@ -34904,9 +34904,38 @@ const initial = {
 	]
 };
 
+const indexAt = (list, prop, value) =>
+	list.reduce((at, item, index) => item[prop] === value ? index : at, -1);
+
+const treePatch = (nodes, path, item) => (
+	// console.log(nodes, path, item),
+	(path.length === 1 && path[0] === item)
+		? [].concat(nodes, [item])
+		: [indexAt(nodes, 'name', path[0])].map(index =>
+				[{
+					name: path[0],
+					items: (path.length > 2)
+						? treePatch((index > -1) ? nodes[index].items : [], path.slice(1), item)
+						: [].concat((index > -1) ? nodes[index].items : [], [item])
+				}].map(patch =>
+					(index > -1)
+						? [].concat(nodes.slice(0, index), [patch], nodes.slice(index + 1))
+						: [].concat(nodes, [patch])
+			).pop()
+		).pop());
+
+const loadSamples = list => stream.onNext(state => obj.patch(state, 'mediaLibrary', {
+	files: [].concat(state.mediaLibrary.files, list.map(item => item.split('/').pop())),
+	samples: [].concat(state.mediaLibrary.samples, list.reduce(
+		(tree, item) => treePatch(tree, item.split('/'), item.split('/').pop()),
+		[])
+	)
+}));
+
 module.exports = {
 	stream,
-	initial
+	initial,
+	loadSamples
 };
 
 },{"../../util/math":149,"iblokz/common/arr":2,"iblokz/common/obj":4,"rx":114}],123:[function(require,module,exports){
@@ -35111,6 +35140,7 @@ window.a = a;
 const f = require('./util/file');
 window.f = f;
 const BasicSynth = require('./instr/basic-synth');
+const Sampler = require('./instr/sampler');
 
 // app
 let actions = require('./actions');
@@ -35165,10 +35195,19 @@ services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
 
 // files
-// let opm = obj.traverse(
-// 	f.loadZip('/samples/openpathmusic.zip'),
-// 	(file => a.context.decodeAudioData(file))
-// );
+f.loadZip('/samples/openpathmusic.zip').subscribe(opm => {
+	let opmSamples = Object.keys(opm);
+	console.log(opmSamples);
+	$.concat(opmSamples.map(key => $
+		.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
+		.map(buffer => ({key, buffer})))
+	)
+		.subscribe(({key, buffer}) =>
+			studio.kit.push(new Sampler(studio.context, key, buffer))
+		);
+	actions.mediaLibrary.loadSamples(opmSamples);
+});
+
 let files = [];
 
 // midi map
@@ -35238,7 +35277,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":120,"./instr/basic-synth":127,"./services":130,"./services/audio":129,"./services/studio":133,"./ui":135,"./util/audio":146,"./util/file":148,"./util/midi":150,"iblokz/adapters/vdom":1,"rx":114}],127:[function(require,module,exports){
+},{"./actions":120,"./instr/basic-synth":127,"./instr/sampler":128,"./services":130,"./services/audio":129,"./services/studio":133,"./ui":135,"./util/audio":146,"./util/file":148,"./util/midi":150,"iblokz/adapters/vdom":1,"rx":114}],127:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -35436,6 +35475,7 @@ module.exports = BasicSynth;
  * Sampler instrument.
  * @param {object} context: instance of the audio context.
  * @param {string} file: uri of the sample file.
+ * @param {object} buffer: audio buffer.
  */
 function Sampler(context, file, buffer) {
 	this.context = context;
@@ -35578,26 +35618,27 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	vca1.node.gain.cancelScheduledValues(0);
 	vca2.node.gain.cancelScheduledValues(0);
 
-	// attack
-	if (instr.vca1.attack > 0)
-		vca1.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca1.volume]), time, instr.vca1.attack);
-	else
-		vca1.node.gain.setValueAtTime(velocity, now);
+	const vca1Changes = [].concat(
+		// attack
+		(instr.vca1.attack > 0)
+			? [[0, time], [velocity * instr.vca1.volume, instr.vca1.attack]] : [[velocity * instr.vca1.volume, now]],
+		// decay
+		(instr.vca1.decay > 0)
+			? [[instr.vca1.sustain * velocity * instr.vca1.volume, instr.vca1.decay]] : []
+	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
 
-	if (instr.vca2.attack > 0)
-		vca2.node.gain.setValueCurveAtTime(new Float32Array([0, velocity * instr.vca2.volume]), time, instr.vca2.attack);
-	else
-		vca2.node.gain.setValueAtTime(velocity, now);
+	a.scheduleChanges(vca1, 'gain', vca1Changes[0], vca1Changes[1]);
 
-	// decay
-	if (instr.vca1.decay > 0)
-		vca1.node.gain.setValueCurveAtTime(
-			new Float32Array([velocity * instr.vca1.volume, instr.vca1.sustain * velocity * instr.vca1.volume]),
-			time + instr.vca1.attack, instr.vca1.decay);
-	if (instr.vca2.decay > 0)
-		vca2.node.gain.setValueCurveAtTime(
-			new Float32Array([velocity * instr.vca2.volume, instr.vca2.sustain * velocity * instr.vca2.volume]),
-			time + instr.vca2.attack, instr.vca2.decay);
+	const vca2Changes = [].concat(
+		// attack
+		(instr.vca2.attack > 0)
+			? [[0, time], [velocity * instr.vca2.volume, instr.vca2.attack]] : [[velocity * instr.vca2.volume, now]],
+		// decay
+		(instr.vca2.decay > 0)
+			? [[instr.vca2.sustain * velocity * instr.vca2.volume, instr.vca2.decay]] : []
+	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
+
+	a.scheduleChanges(vca2, 'gain', vca2Changes[0], vca2Changes[1]);
 
 	return Object.assign({}, nodes, {
 		voices: obj.patch(voices, note.number, {
@@ -36336,10 +36377,10 @@ const groupList = list => list.reduce((groups, name) =>
 const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =>
 	(typeof item === 'object')
 		? li('[draggable="true"]', [
-			input(`[type="checkbox"][id="li-${item.name}"]`, {
+			input(`[type="checkbox"][id="li-${level}-${k}-${item.name}"]`, {
 				attrs: {checked: item.expanded}
 			}),
-			label(`[for="li-${item.name}"]`, {style: {paddingLeft: (5 + level * 5) + 'px'}}, [
+			label(`[for="li-${level}-${k}-${item.name}"]`, {style: {paddingLeft: (5 + level * 5) + 'px'}}, [
 				i('.fa.fa-folder-o'),
 				' ',
 				item.name
@@ -36638,6 +36679,11 @@ const apply = (node, prefs) => Object.keys(prefs)
 		node
 	);
 
+const scheduleChanges = (node, pref, values, times) => (values.length === 1)
+	? node.node[pref].setValueAtTime(values[0], times[0])
+	: (node.node[pref].setValueCurveAtTime(new Float32Array(values.slice(0, 2)), times[0], times[1]),
+		(values.length > 2) && scheduleChanges(node, pref, values.slice(1), [times[0] + times[1]].concat(times.slice(2))));
+
 const add = (type, prefs, context) => apply(create(type, context), prefs);
 
 const start = function(node) {
@@ -36680,6 +36726,7 @@ module.exports = {
 	reroute,
 	chain,
 	apply,
+	scheduleChanges,
 	add,
 	start,
 	stop,
@@ -36734,12 +36781,12 @@ const load = (file, readAs = 'text') => $.create(stream => {
 
 const loadZip = file => load(file, 'arrayBuffer')
 	.flatMap(data => $.fromPromise(jsZip.loadAsync(data)))
-	.flatMap(zf => $.merge(
+	.flatMap(zf => $.concat(
 		Object.keys(zf.files)
 			.filter(k => !zf.files[k].dir)
 			.map(k => (console.log(k), k))
 			.map(k => $.fromPromise(zf.files[k].async('arraybuffer')).map(v => ({k, v})))
-		).reduce((o, {k, v}) => obj.patch(o, k.split('/'), v), {})
+		).reduce((o, {k, v}) => obj.patch(o, k, v), {})
 	);
 
 const save = (fileName, content) => fileSaver.saveAs(

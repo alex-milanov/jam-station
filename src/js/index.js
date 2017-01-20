@@ -11,6 +11,7 @@ window.a = a;
 const f = require('./util/file');
 window.f = f;
 const BasicSynth = require('./instr/basic-synth');
+const Sampler = require('./instr/sampler');
 
 // app
 let actions = require('./actions');
@@ -65,10 +66,19 @@ services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
 
 // files
-// let opm = obj.traverse(
-// 	f.loadZip('/samples/openpathmusic.zip'),
-// 	(file => a.context.decodeAudioData(file))
-// );
+f.loadZip('/samples/openpathmusic.zip').subscribe(opm => {
+	let opmSamples = Object.keys(opm);
+	console.log(opmSamples);
+	$.concat(opmSamples.map(key => $
+		.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
+		.map(buffer => ({key, buffer})))
+	)
+		.subscribe(({key, buffer}) =>
+			studio.kit.push(new Sampler(studio.context, key, buffer))
+		);
+	actions.mediaLibrary.loadSamples(opmSamples);
+});
+
 let files = [];
 
 // midi map

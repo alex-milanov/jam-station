@@ -4,6 +4,7 @@
  * Sampler instrument.
  * @param {object} context: instance of the audio context.
  * @param {string} file: uri of the sample file.
+ * @param {object} buffer: audio buffer.
  */
 function Sampler(context, file, buffer) {
 	this.context = context;

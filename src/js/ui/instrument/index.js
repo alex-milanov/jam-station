@@ -22,7 +22,7 @@ const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
-		h2([i('.fa.fa-sliders'), ' Instrument'])
+		h2([i('.fa.fa-tasks'), ' Instrument'])
 	]),
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [

@@ -2363,8 +2363,8 @@ input, label, body {
   margin: 0px;
   padding: 0px;
   display: inline-block;
-  height: 40px;
-  line-height: 40px;
+  height: 38px;
+  line-height: 38px;
   display: block;
   background: #ccc;
   margin-bottom: 20px;
@@ -2373,12 +2373,12 @@ input, label, body {
     margin: 0px;
     padding: 0px;
     display: inline-block;
-    height: 40px;
-    line-height: 40px; }
+    height: 38px;
+    line-height: 38px; }
   #ui > header h1 {
     display: inline-block;
-    height: 40px;
-    line-height: 40px;
+    height: 38px;
+    line-height: 38px;
     font-size: 18px;
     position: absolute;
     top: 0px;
@@ -2394,22 +2394,23 @@ input, label, body {
     #ui > header h1 img {
       margin: 0px;
       padding: 0px;
-      height: 40px;
+      height: 38px;
       margin-left: -10px;
       vertical-align: top; }
   #ui > header ul {
     margin: 0px;
     padding: 0px;
     display: inline-block;
-    height: 40px;
-    line-height: 40px;
+    height: 38px;
+    line-height: 38px;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
     display: inline-block;
     list-style: none;
-    padding: 0px 10px; }
+    box-sizing: border-box;
+    padding: 0px 5px; }
     #ui > header ul.right {
       float: none;
       position: absolute;
@@ -2419,31 +2420,35 @@ input, label, body {
       margin: 0px;
       padding: 0px;
       display: inline-block;
-      height: 26px;
-      line-height: 26px;
-      box-sizing: content-box;
-      padding: 7px 3px;
-      display: inline-block; }
+      height: 38px;
+      line-height: 38px;
+      box-sizing: border-box;
+      display: inline-block;
+      float: left; }
       #ui > header ul li a {
         margin: 0px;
         padding: 0px;
         display: inline-block;
-        height: 26px;
-        line-height: 26px;
+        height: 38px;
+        line-height: 38px;
+        width: 38px;
         box-sizing: content-box;
         display: inline-block;
-        padding: 0px 10px;
+        text-align: center;
+        float: left;
         color: #777;
         cursor: pointer;
-        font-size: 12px;
-        border-radius: 3px; }
-        #ui > header ul li a.fa {
-          padding: 0 5px; }
+        font-size: 12px; }
+        #ui > header ul li a i.fa {
+          display: inline-block;
+          height: 38px;
+          line-height: 38px;
+          font-size: 16px; }
         #ui > header ul li a:hover {
           color: #333;
           background: #c5c5c5; }
         #ui > header ul li a.on {
-          box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.3); }
+          box-shadow: inset 1px 1px 15px rgba(100, 100, 100, 0.3); }
       #ui > header ul li input[type=range] {
         margin: 0px;
         padding: 0px;
@@ -2473,36 +2478,54 @@ input, label, body {
 .media-library {
   position: absolute;
   left: 20px;
-  top: 60px;
+  top: 54px;
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
   min-width: 260px; }
   .media-library .header {
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    display: block;
     cursor: pointer;
     margin: 0px;
-    height: 38px;
-    line-height: 34px;
-    border-bottom: 1px solid #aaa;
+    box-sizing: content-box;
     background: #eaeaea; }
     .media-library .header > * {
-      margin: 7px 4px;
-      padding: 0px 4px;
-      height: 24px;
-      line-height: 24px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 38px;
+      line-height: 38px;
+      margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
+      box-sizing: border-box;
       float: left; }
+      .media-library .header > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 38px;
+        line-height: 38px; }
     .media-library .header input, .media-library .header button {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 4px 7px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
-      background: inherit; }
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
     .media-library .header input {
-      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #333;
-      border-radius: 4px;
-      background: #dfe; }
+      box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+      color: #333; }
+      .media-library .header input:focus {
+        background: #dfe;
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
       .media-library .header input[type=number] {
         -moz-appearance: textfield;
         -webkit-appearance: textfield;
@@ -2517,9 +2540,11 @@ input, label, body {
       .media-library .header .cipher input {
         float: left; }
       .media-library .header .cipher input, .media-library .header .cipher button {
-        height: 24px;
-        line-height: 24px;
-        box-sizing: border-box; }
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        margin: 4px 0px;
+        font-size: 14px; }
       .media-library .header .cipher button {
         position: absolute;
         opacity: 0.1;
@@ -2533,18 +2558,15 @@ input, label, body {
       .media-library .header .cipher button:hover {
         opacity: 0.7; }
     .media-library .header button {
-      width: 30px;
+      width: 28px;
       text-align: center;
-      padding: 0px;
       cursor: pointer;
-      transition: box-shadow .5s, text-shadow .5s;
-      outline: none;
-      border-radius: 4px; }
+      outline: none; }
       .media-library .header button.on {
-        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
         background: #dfe; }
       .media-library .header button:hover {
-        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
         outline: none; }
       .media-library .header button:active, .media-library .header button:focus, .media-library .header button::-moz-focus-inner {
         outline: none;
@@ -2552,8 +2574,8 @@ input, label, body {
         border: 0px; }
   .media-library .body {
     margin: 0px;
-    padding: 0px 0px 10px 0px;
-    border-top: 1px solid #eee;
+    padding: 0px;
+    padding: 2px;
     font-size: 14px; }
     .media-library .body fieldset {
       position: relative;
@@ -2671,36 +2693,54 @@ input, label, body {
 .instrument {
   position: absolute;
   left: 240px;
-  top: 60px;
+  top: 54px;
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
   min-width: 310px; }
   .instrument .header {
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    display: block;
     cursor: pointer;
     margin: 0px;
-    height: 38px;
-    line-height: 34px;
-    border-bottom: 1px solid #aaa;
+    box-sizing: content-box;
     background: #eaeaea; }
     .instrument .header > * {
-      margin: 7px 4px;
-      padding: 0px 4px;
-      height: 24px;
-      line-height: 24px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 38px;
+      line-height: 38px;
+      margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
+      box-sizing: border-box;
       float: left; }
+      .instrument .header > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 38px;
+        line-height: 38px; }
     .instrument .header input, .instrument .header button {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 4px 7px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
-      background: inherit; }
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
     .instrument .header input {
-      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #333;
-      border-radius: 4px;
-      background: #dfe; }
+      box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+      color: #333; }
+      .instrument .header input:focus {
+        background: #dfe;
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
       .instrument .header input[type=number] {
         -moz-appearance: textfield;
         -webkit-appearance: textfield;
@@ -2715,9 +2755,11 @@ input, label, body {
       .instrument .header .cipher input {
         float: left; }
       .instrument .header .cipher input, .instrument .header .cipher button {
-        height: 24px;
-        line-height: 24px;
-        box-sizing: border-box; }
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        margin: 4px 0px;
+        font-size: 14px; }
       .instrument .header .cipher button {
         position: absolute;
         opacity: 0.1;
@@ -2731,18 +2773,15 @@ input, label, body {
       .instrument .header .cipher button:hover {
         opacity: 0.7; }
     .instrument .header button {
-      width: 30px;
+      width: 28px;
       text-align: center;
-      padding: 0px;
       cursor: pointer;
-      transition: box-shadow .5s, text-shadow .5s;
-      outline: none;
-      border-radius: 4px; }
+      outline: none; }
       .instrument .header button.on {
-        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
         background: #dfe; }
       .instrument .header button:hover {
-        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
         outline: none; }
       .instrument .header button:active, .instrument .header button:focus, .instrument .header button::-moz-focus-inner {
         outline: none;
@@ -2750,8 +2789,8 @@ input, label, body {
         border: 0px; }
   .instrument .body {
     margin: 0px;
-    padding: 0px 0px 10px 0px;
-    border-top: 1px solid #eee;
+    padding: 0px;
+    padding: 2px;
     font-size: 14px; }
     .instrument .body fieldset {
       position: relative;
@@ -2933,35 +2972,53 @@ input, label, body {
 .sequencer {
   position: absolute;
   left: 560px;
-  top: 60px;
+  top: 54px;
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777; }
   .sequencer .header {
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    display: block;
     cursor: pointer;
     margin: 0px;
-    height: 38px;
-    line-height: 34px;
-    border-bottom: 1px solid #aaa;
+    box-sizing: content-box;
     background: #eaeaea; }
     .sequencer .header > * {
-      margin: 7px 4px;
-      padding: 0px 4px;
-      height: 24px;
-      line-height: 24px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 38px;
+      line-height: 38px;
+      margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
+      box-sizing: border-box;
       float: left; }
+      .sequencer .header > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 38px;
+        line-height: 38px; }
     .sequencer .header input, .sequencer .header button {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 4px 7px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
-      background: inherit; }
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
     .sequencer .header input {
-      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #333;
-      border-radius: 4px;
-      background: #dfe; }
+      box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+      color: #333; }
+      .sequencer .header input:focus {
+        background: #dfe;
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
       .sequencer .header input[type=number] {
         -moz-appearance: textfield;
         -webkit-appearance: textfield;
@@ -2976,9 +3033,11 @@ input, label, body {
       .sequencer .header .cipher input {
         float: left; }
       .sequencer .header .cipher input, .sequencer .header .cipher button {
-        height: 24px;
-        line-height: 24px;
-        box-sizing: border-box; }
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        margin: 4px 0px;
+        font-size: 14px; }
       .sequencer .header .cipher button {
         position: absolute;
         opacity: 0.1;
@@ -2992,18 +3051,15 @@ input, label, body {
       .sequencer .header .cipher button:hover {
         opacity: 0.7; }
     .sequencer .header button {
-      width: 30px;
+      width: 28px;
       text-align: center;
-      padding: 0px;
       cursor: pointer;
-      transition: box-shadow .5s, text-shadow .5s;
-      outline: none;
-      border-radius: 4px; }
+      outline: none; }
       .sequencer .header button.on {
-        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
         background: #dfe; }
       .sequencer .header button:hover {
-        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
         outline: none; }
       .sequencer .header button:active, .sequencer .header button:focus, .sequencer .header button::-moz-focus-inner {
         outline: none;
@@ -3011,8 +3067,8 @@ input, label, body {
         border: 0px; }
   .sequencer .body {
     margin: 0px;
-    padding: 0px 0px 10px 0px;
-    border-top: 1px solid #eee;
+    padding: 0px;
+    padding: 2px;
     font-size: 14px; }
     .sequencer .body fieldset {
       position: relative;
@@ -3064,156 +3120,172 @@ input, label, body {
           cursor: pointer; }
           .sequencer .body fieldset legend span.on {
             color: #333; }
-  .sequencer .body {
-    padding-right: 20px; }
-    .sequencer .body .head {
-      margin: 2px;
+  .sequencer .body .head {
+    margin: 2px;
+    padding: 0px;
+    padding-left: 114px;
+    height: 12px;
+    line-height: 12px; }
+  .sequencer .body .cell {
+    display: inline-block;
+    margin: 3px;
+    height: 6px;
+    line-height: 6px;
+    width: 16px;
+    padding: 0px;
+    border-radius: 4px;
+    border: 0px solid #333;
+    box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
+    .sequencer .body .cell.tick {
+      background: #dfe; }
+  .sequencer .body .row {
+    padding: 0px;
+    height: 32px;
+    line-height: 32px;
+    clear: both; }
+    .sequencer .body .row > .bar {
+      margin: 0px;
       padding: 0px;
-      padding-left: 114px;
-      height: 12px;
-      line-height: 12px; }
-      .sequencer .body .head .cell {
-        display: inline-block;
-        margin: 3px;
-        height: 6px;
-        line-height: 6px;
-        width: 16px;
-        padding: 0px;
-        border-radius: 4px;
-        border: 0px solid #333;
-        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3); }
-        .sequencer .body .head .cell.tick {
-          background: #dfe; }
-    .sequencer .body .row {
-      margin: 2px;
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 1px;
+      border: 1px solid #ccc;
+      box-shadow: inset 0px 0px 10px rgba(33, 33, 33, 0.1);
+      display: inline-block;
+      cursor: pointer;
+      background: #eee;
+      transition: box-shadow .3s, font-size .3s, background .3s;
+      box-sizing: border-box;
+      float: left; }
+    .sequencer .body .row .delete-channel {
+      height: 26px;
+      line-height: 26px;
+      margin: 3px;
+      margin-right: -23px;
       padding: 0px;
-      height: 32px;
-      line-height: 32px;
-      clear: both; }
-      .sequencer .body .row > .bar {
-        height: 26px;
-        line-height: 26px;
-        margin: 3px;
-        padding: 0px;
-        border-radius: 4px;
-        border: 0px solid #333;
-        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
+      display: inline-block;
+      cursor: pointer;
+      color: #aaa; }
+      .sequencer .body .row .delete-channel:hover {
+        color: #c77; }
+    .sequencer .body .row .channel {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 1px;
+      padding: 0px 7px;
+      display: inline-block;
+      font-size: 12px;
+      width: 140px;
+      float: left;
+      cursor: pointer;
+      background: #eee;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      box-shadow: inset 0px 0px 15px #ccc;
+      transition: background .3s, box-shadow .3s; }
+      .sequencer .body .row .channel:hover {
+        box-shadow: inset 0px 0px 15px #ccc;
+        background: #dfe; }
+      .sequencer .body .row .channel.on {
+        background: #d8ffeb;
+        box-shadow: inset 0px 0px 15px #ccc; }
+      .sequencer .body .row .channel:active {
+        background: #d8ffeb;
+        box-shadow: inset 0px 0px 10px #bbb;
+        padding-top: 2px;
+        line-height: 28px; }
+    .sequencer .body .row .add-channel {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 1px;
+      border: 1px solid #bbb;
+      padding: 0px 7px;
+      width: 140px;
+      text-align: center;
+      transition: background .3s, box-shadow .3s;
+      cursor: pointer;
+      background: #ddd;
+      display: inline-block; }
+      .sequencer .body .row .add-channel:hover {
+        background: #dfe;
+        box-shadow: inset 0px 0px 10px #ccc; }
+      .sequencer .body .row .add-channel:active {
+        box-shadow: inset 0px 0px 10px #ccc;
+        line-height: 24px;
+        padding-top: 2px; }
+    .sequencer .body .row .bar {
+      width: 20px; }
+      .sequencer .body .row .bar:hover, .sequencer .body .row .bar.tick {
         display: inline-block;
-        cursor: pointer;
-        background: #eee;
-        transition: box-shadow .3s, font-size .3s, background .3s;
-        box-sizing: border-box;
-        float: left; }
-        .sequencer .body .row > .bar:hover {
-          box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5);
-          margin: 2px;
-          height: 28px;
-          line-height: 28px; }
-      .sequencer .body .row .delete-channel {
-        height: 26px;
-        line-height: 26px;
-        margin: 3px;
-        margin-right: -23px;
-        padding: 0px;
-        display: inline-block;
-        cursor: pointer;
-        color: #aaa; }
-        .sequencer .body .row .delete-channel:hover {
-          color: #c77; }
-      .sequencer .body .row .channel {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        height: 26px;
-        line-height: 26px;
-        margin: 3px 7px;
-        padding: 0px;
-        display: inline-block;
-        font-size: 12px;
-        width: 100px;
-        text-align: center;
-        float: left;
-        cursor: pointer;
-        background: #eaeaea;
-        border: 1px solid #afafaf;
-        box-sizing: border-box;
-        box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3);
-        transition: background .3s, box-shadow .3s; }
-        .sequencer .body .row .channel:hover {
-          background: #dfe; }
-        .sequencer .body .row .channel.on {
-          background: #d8ffeb;
-          border: 1px solid #bbb;
-          box-shadow: inset 0px 0px 7px #bbb; }
-        .sequencer .body .row .channel:active {
-          background: #d8ffeb;
-          box-shadow: inset 0px 0px 10px #bbb;
-          line-height: 24px;
-          padding-top: 2px; }
-      .sequencer .body .row .add-channel {
-        margin: 3px 7px;
-        height: 16px;
-        line-height: 16px;
-        width: 100px;
-        text-align: center;
-        height: 26px;
-        line-height: 26px;
-        transition: background .3s, box-shadow .3s;
-        cursor: pointer;
-        border: 1px solid #ccc;
-        background: #ddd; }
-        .sequencer .body .row .add-channel:hover {
-          background: #dfe;
-          box-shadow: inset 0px 0px 10px #ccc; }
-        .sequencer .body .row .add-channel:active {
-          box-shadow: inset 0px 0px 10px #ccc;
-          line-height: 24px;
-          padding-top: 2px; }
-      .sequencer .body .row .bar {
-        width: 16px; }
-        .sequencer .body .row .bar:hover {
-          width: 18px; }
-        .sequencer .body .row .bar:nth-child(2n-1) {
-          background: #f5f5f5; }
-        .sequencer .body .row .bar.on {
-          background: #c0cacf; }
-        .sequencer .body .row .bar.tick {
-          background: #dfe; }
+        height: 32px;
+        line-height: 32px;
+        width: 22px;
+        margin: 0px; }
+      .sequencer .body .row .bar:nth-child(2n-1) {
+        background: #f5f5f5; }
+      .sequencer .body .row .bar.on {
+        background: #d0dadf; }
+      .sequencer .body .row .bar.tick {
+        background: #dfe; }
 
 .midi-map {
   position: absolute;
   left: 1080px;
-  top: 60px;
+  top: 54px;
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
   min-width: 200px; }
   .midi-map .header {
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    display: block;
     cursor: pointer;
     margin: 0px;
-    height: 38px;
-    line-height: 34px;
-    border-bottom: 1px solid #aaa;
+    box-sizing: content-box;
     background: #eaeaea; }
     .midi-map .header > * {
-      margin: 7px 4px;
-      padding: 0px 4px;
-      height: 24px;
-      line-height: 24px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 38px;
+      line-height: 38px;
+      margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
+      box-sizing: border-box;
       float: left; }
+      .midi-map .header > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 38px;
+        line-height: 38px; }
     .midi-map .header input, .midi-map .header button {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 4px 7px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
-      background: inherit; }
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
     .midi-map .header input {
-      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #333;
-      border-radius: 4px;
-      background: #dfe; }
+      box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+      color: #333; }
+      .midi-map .header input:focus {
+        background: #dfe;
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
       .midi-map .header input[type=number] {
         -moz-appearance: textfield;
         -webkit-appearance: textfield;
@@ -3228,9 +3300,11 @@ input, label, body {
       .midi-map .header .cipher input {
         float: left; }
       .midi-map .header .cipher input, .midi-map .header .cipher button {
-        height: 24px;
-        line-height: 24px;
-        box-sizing: border-box; }
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        margin: 4px 0px;
+        font-size: 14px; }
       .midi-map .header .cipher button {
         position: absolute;
         opacity: 0.1;
@@ -3244,18 +3318,15 @@ input, label, body {
       .midi-map .header .cipher button:hover {
         opacity: 0.7; }
     .midi-map .header button {
-      width: 30px;
+      width: 28px;
       text-align: center;
-      padding: 0px;
       cursor: pointer;
-      transition: box-shadow .5s, text-shadow .5s;
-      outline: none;
-      border-radius: 4px; }
+      outline: none; }
       .midi-map .header button.on {
-        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
         background: #dfe; }
       .midi-map .header button:hover {
-        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
         outline: none; }
       .midi-map .header button:active, .midi-map .header button:focus, .midi-map .header button::-moz-focus-inner {
         outline: none;
@@ -3263,8 +3334,8 @@ input, label, body {
         border: 0px; }
   .midi-map .body {
     margin: 0px;
-    padding: 0px 0px 10px 0px;
-    border-top: 1px solid #eee;
+    padding: 0px;
+    padding: 2px;
     font-size: 14px; }
     .midi-map .body fieldset {
       position: relative;
@@ -3320,36 +3391,54 @@ input, label, body {
 .midi-keyboard {
   position: absolute;
   left: 560px;
-  top: 340px;
+  top: 334px;
   display: inline-block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
   min-width: 550px; }
   .midi-keyboard .header {
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    display: block;
     cursor: pointer;
     margin: 0px;
-    height: 38px;
-    line-height: 34px;
-    border-bottom: 1px solid #aaa;
+    box-sizing: content-box;
     background: #eaeaea; }
     .midi-keyboard .header > * {
-      margin: 7px 4px;
-      padding: 0px 4px;
-      height: 24px;
-      line-height: 24px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      height: 38px;
+      line-height: 38px;
+      margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
+      box-sizing: border-box;
       float: left; }
+      .midi-keyboard .header > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        height: 38px;
+        line-height: 38px; }
     .midi-keyboard .header input, .midi-keyboard .header button {
+      display: inline-block;
+      height: 30px;
+      line-height: 30px;
+      margin: 4px 7px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
-      background: inherit; }
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
     .midi-keyboard .header input {
-      box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
-      color: #333;
-      border-radius: 4px;
-      background: #dfe; }
+      box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+      color: #333; }
+      .midi-keyboard .header input:focus {
+        background: #dfe;
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
       .midi-keyboard .header input[type=number] {
         -moz-appearance: textfield;
         -webkit-appearance: textfield;
@@ -3364,9 +3453,11 @@ input, label, body {
       .midi-keyboard .header .cipher input {
         float: left; }
       .midi-keyboard .header .cipher input, .midi-keyboard .header .cipher button {
-        height: 24px;
-        line-height: 24px;
-        box-sizing: border-box; }
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        margin: 4px 0px;
+        font-size: 14px; }
       .midi-keyboard .header .cipher button {
         position: absolute;
         opacity: 0.1;
@@ -3380,18 +3471,15 @@ input, label, body {
       .midi-keyboard .header .cipher button:hover {
         opacity: 0.7; }
     .midi-keyboard .header button {
-      width: 30px;
+      width: 28px;
       text-align: center;
-      padding: 0px;
       cursor: pointer;
-      transition: box-shadow .5s, text-shadow .5s;
-      outline: none;
-      border-radius: 4px; }
+      outline: none; }
       .midi-keyboard .header button.on {
-        box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+        box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
         background: #dfe; }
       .midi-keyboard .header button:hover {
-        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5);
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
         outline: none; }
       .midi-keyboard .header button:active, .midi-keyboard .header button:focus, .midi-keyboard .header button::-moz-focus-inner {
         outline: none;
@@ -3399,8 +3487,8 @@ input, label, body {
         border: 0px; }
   .midi-keyboard .body {
     margin: 0px;
-    padding: 0px 0px 10px 0px;
-    border-top: 1px solid #eee;
+    padding: 0px;
+    padding: 2px;
     font-size: 14px; }
     .midi-keyboard .body fieldset {
       position: relative;

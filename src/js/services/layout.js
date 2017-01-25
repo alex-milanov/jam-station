@@ -9,10 +9,12 @@ const refresh = ({state, actions}) => {
 	const ui = document.querySelector('#ui');
 	const list = arr.fromList(ui.children);
 
+	const distance = 14;
+
 	list.filter(el => el.className !== 'midi-keyboard').forEach((el, i) => {
 		if (i > 0)
 			el.style.left = list.filter((el, k) => k < i && k > 0)
-				.reduce((w, el) => w + el.offsetWidth + 20, 0) + 20 + 'px';
+				.reduce((w, el) => w + el.offsetWidth + distance, 0) + distance + 'px';
 	});
 
 	list.filter(el => el.className === 'midi-keyboard')
@@ -20,7 +22,7 @@ const refresh = ({state, actions}) => {
 			const sequencer = document.querySelector('.sequencer');
 			if (sequencer) {
 				el.style.left = sequencer.style.left;
-				el.style.top = 80 + sequencer.offsetHeight + 'px';
+				el.style.top = 4 * distance + sequencer.offsetHeight + 'px';
 			} else {
 				el.style.left = '50%';
 			}

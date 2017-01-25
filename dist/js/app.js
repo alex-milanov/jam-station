@@ -35761,10 +35761,12 @@ const refresh = ({state, actions}) => {
 	const ui = document.querySelector('#ui');
 	const list = arr.fromList(ui.children);
 
+	const distance = 14;
+
 	list.filter(el => el.className !== 'midi-keyboard').forEach((el, i) => {
 		if (i > 0)
 			el.style.left = list.filter((el, k) => k < i && k > 0)
-				.reduce((w, el) => w + el.offsetWidth + 20, 0) + 20 + 'px';
+				.reduce((w, el) => w + el.offsetWidth + distance, 0) + distance + 'px';
 	});
 
 	list.filter(el => el.className === 'midi-keyboard')
@@ -35772,7 +35774,7 @@ const refresh = ({state, actions}) => {
 			const sequencer = document.querySelector('.sequencer');
 			if (sequencer) {
 				el.style.left = sequencer.style.left;
-				el.style.top = 80 + sequencer.offsetHeight + 'px';
+				el.style.top = 4 * distance + sequencer.offsetHeight + 'px';
 			} else {
 				el.style.left = '50%';
 			}
@@ -35964,7 +35966,7 @@ module.exports = ({state, actions}) => header([
 		li([a({
 			class: {on: state.ui.instrument},
 			on: {click: ev => actions.toggleUI('instrument')}
-		}, [i('.fa.fa-sliders')])]),
+		}, [i('.fa.fa-tasks')])]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
 		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
 		li([a({
@@ -35972,34 +35974,31 @@ module.exports = ({state, actions}) => header([
 			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
 	]),
 	h1([
-		img('[src="assets/logo.png"]'),
-		'Jam Station'
+		img('[src="assets/logo2.png"]')
 	]),
 	ul('.right', [
 		li([
-			a([i('.fa.fa-volume-down')]),
 			input('[type="range"]', {
 				attrs: {min: 0, max: 1, step: 0.005},
 				props: {value: state.studio.volume},
 				on: {change: ev => actions.studio.change('volume', parseFloat(ev.target.value))}
-			}),
-			a([i('.fa.fa-volume-up')])
+			})
 		]),
-		li([a({
+		li([a('[title="New"]', {
+			on: {click: () => actions.clear()}
+		}, [i('.fa.fa-file-o')])]),
+		li([a('[title="Save"]', {
 			on: {
 				click: ev => fileUtil.save(moment().format('YYYY-MM-DD-hh-mm[-jam.json]'), state)
 			}
 		}, [i('.fa.fa-save')])]),
-		li([a({
+		li([a('[title="Load"]', {
 			on: {
 				click: ev => openDialog(files =>
 					fileUtil.load(files[0], 'json').subscribe(content => actions.load(content))
 				)
 			}
-		}, [i('.fa.fa-upload')])]),
-		li([a({
-			on: {click: () => actions.clear()}
-		}, [i('.fa.fa-trash')])])
+		}, [i('.fa.fa-upload')])])
 	])
 ]);
 
@@ -36096,7 +36095,7 @@ const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
-		h2([i('.fa.fa-sliders'), ' Instrument'])
+		h2([i('.fa.fa-tasks'), ' Instrument'])
 	]),
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [
@@ -36527,6 +36526,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		})
 	]),
 	div('.body', [].concat(
+		/*
 		[div('.head', loop(state.studio.beatLength, c =>
 			div('.cell', {
 				class: {
@@ -36534,6 +36534,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				}
 			})
 		))],
+		*/
 		loop(state.sequencer.channels.length, r =>
 			div(`.row`, [].concat(
 				[div('.channel', {
@@ -36555,16 +36556,20 @@ module.exports = ({state, actions}) => div('.sequencer', [
 							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)
 						}
 					})
-				),
+				)
+				/*
 				(state.sequencer.channel === r) ? [div('.delete-channel.fa.fa-minus-circle', {
 					on: {click: () => actions.sequencer.deleteChannel(r)}
 				})] : []
-			))),
+				*/
+			)))
+		/*
 		[div(`.row`, [
 			div('.add-channel', {
 				on: {click: () => actions.sequencer.addChannel()}
 			}, [span('.fa.fa-plus')])
 		])]
+		*/
 	))
 ]);
 

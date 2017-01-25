@@ -1,4 +1,6 @@
 
+$jam-st-edior-header-height: 38px
+
 @mixin editor($x, $y)
 	position: absolute
 	left: $x
@@ -8,32 +10,42 @@
 	background: #e0e0e0
 	box-shadow: 0px 0px 3px #777
 	.header
+		+header-height($jam-st-edior-header-height)
+		display: block
 		cursor: pointer
 		margin: 0px
-		height: 38px
-		line-height: 34px
-		border-bottom: 1px solid #aaa
+		box-sizing: content-box
+		// border-bottom: 1px solid #aaa
 		background: #eaeaea
 		> *
-			margin: 7px 4px
-			padding: 0px 4px
-			height: 24px
-			line-height: 24px
+			+no-margin-padding
+			+header-height($jam-st-edior-header-height)
+			margin: 0px 7px
 			font-size: 14px
 			display: inline-block
+			box-sizing: border-box
 			float: left
+			> i.fa
+				+no-margin-padding
+				+header-height($jam-st-edior-header-height)
 		input, button
+			+header-height($jam-st-edior-header-height - 8)
+			margin: 4px 7px
 			outline: none
 			text-align: center
 			border: 0px solid #333
 			background: inherit
+			border-radius: 2px
+			transition: box-shadow .5s, text-shadow .5s, background .5s
 		input
-			box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+			box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1)
 			color: #333
 			// text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5)
-			border-radius: 4px
 			// background: #cff5da
-			background: #dfe
+			// background: #dfe
+			&:focus
+				background: #dfe
+				box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3)
 			&[type=number]
 				-moz-appearance: textfield
 				-webkit-appearance: textfield
@@ -49,9 +61,9 @@
 			input
 				float: left
 			input, button
-				height: 24px
-				line-height: 24px
-				box-sizing: border-box
+				+header-height($jam-st-edior-header-height - 8)
+				margin: 4px 0px
+				font-size: 14px
 			button
 				position: absolute
 				opacity: 0.1
@@ -66,27 +78,24 @@
 				opacity: 0.7
 
 		button
-			width: 30px
+			width: $jam-st-edior-header-height - 10
 			text-align: center
-			padding: 0px
 			cursor: pointer
-			transition: box-shadow .5s, text-shadow .5s
 			outline: none
-			border-radius: 4px
 			&.on
-				box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+				box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3)
 				background: #dfe
 			&:hover
-				text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.5)
+				text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1)
 				outline: none
 			&:active, &:focus, &::-moz-focus-inner
 				outline: none
 				border-image: none
 				border: 0px
 	.body
-		margin: 0px
-		padding: 0px 0px 10px 0px
-		border-top: 1px solid #eee
+		+no-margin-padding
+		// border-top: 1px solid #eee
+		padding: 2px
 		font-size: 14px
 		fieldset
 			position: relative

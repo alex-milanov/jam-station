@@ -1,51 +1,42 @@
 
 .sequencer
-	+editor(560px, 60px)
+	+editor(560px, 54px)
 	.body
-		padding-right: 20px
 		.head
 			margin: 2px
 			padding: 0px
 			padding-left: 114px
 			height: 12px
 			line-height: 12px
-			.cell
-				display: inline-block
-				margin: 3px
-				height: 6px
-				line-height: 6px
-				width: 16px
-				padding: 0px
-				border-radius: 4px
-				border: 0px solid #333
-				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
-				&.tick
-					background: #dfe
+		.cell
+			display: inline-block
+			margin: 3px
+			height: 6px
+			line-height: 6px
+			width: 16px
+			padding: 0px
+			border-radius: 4px
+			border: 0px solid #333
+			box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
+			&.tick
+				background: #dfe
 		.row
-			margin: 2px
 			padding: 0px
 			height: 32px
 			line-height: 32px
 			clear: both
 			> .bar
-				height: 26px
-				line-height: 26px
-				margin: 3px
-				padding: 0px
-				border-radius: 4px
-				border: 0px solid #333
-				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5)
+				+no-margin-padding
+				+header-height(30px)
+				margin: 1px
+				border: 1px solid #ccc
+				box-shadow: inset 0px 0px 10px rgba(33, 33, 33, 0.1)
 				display: inline-block
 				cursor: pointer
 				background: #eee
 				transition: box-shadow .3s, font-size .3s, background .3s
 				box-sizing: border-box
 				float: left
-				&:hover
-					box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.5)
-					margin: 2px
-					height: 28px
-					line-height: 28px
 			.delete-channel
 				height: 26px
 				line-height: 26px
@@ -59,45 +50,42 @@
 					color: #c77
 			.channel
 				+user-select(none)
-				height: 26px
-				line-height: 26px
-				margin: 3px 7px
-				padding: 0px
+				+header-height(30px)
+				margin: 1px
+				padding: 0px 7px
 				display: inline-block
 				font-size: 12px
-				width: 100px
-				text-align: center
+				width: 140px
 				float: left
 				cursor: pointer
-				background: #eaeaea
-				border: 1px solid #afafaf
+				background: #eee
 				box-sizing: border-box
-				box-shadow: inset 0px 0px 5px rgba(33, 33, 33, 0.3)
+				border: 1px solid #ccc
+				box-shadow: inset 0px 0px 15px #ccc
 				transition: background .3s, box-shadow .3s
 				&:hover
 					// background: #eafaf5
+					box-shadow: inset 0px 0px 15px #ccc
 					background: $jam-station-color-light
 				&.on
 					background: darken($jam-station-color-light, 1%)
-					border: 1px solid #bbb
-					box-shadow: inset 0px 0px 7px #bbb
+					box-shadow: inset 0px 0px 15px #ccc
 				&:active
 					background: darken($jam-station-color-light, 1%)
 					box-shadow: inset 0px 0px 10px #bbb
-					line-height: 24px
 					padding-top: 2px
+					line-height: 28px
 			.add-channel
-				margin: 3px 7px
-				height: 16px
-				line-height: 16px
-				width: 100px
+				+header-height(30px)
+				margin: 1px
+				border: 1px solid #bbb
+				padding: 0px 7px
+				width: 140px
 				text-align: center
-				height: 26px
-				line-height: 26px
 				transition: background .3s, box-shadow .3s
 				cursor: pointer
-				border: 1px solid #ccc
 				background: #ddd
+				display: inline-block
 				&:hover
 					background: $jam-station-color-light
 					box-shadow: inset 0px 0px 10px #ccc
@@ -106,12 +94,14 @@
 					line-height: 24px
 					padding-top: 2px
 			.bar
-				width: 16px
-				&:hover
-					width: 18px
+				width: 20px
+				&:hover, &.tick
+					+header-height(32px)
+					width: 22px
+					margin: 0px
 				&:nth-child(2n-1)
 					background: #f5f5f5
 				&.on
-					background: #c0cacf
+					background: #d0dadf
 				&.tick
 					background: #dfe

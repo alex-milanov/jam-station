@@ -32,7 +32,7 @@ module.exports = ({state, actions}) => header([
 		li([a({
 			class: {on: state.ui.instrument},
 			on: {click: ev => actions.toggleUI('instrument')}
-		}, [i('.fa.fa-sliders')])]),
+		}, [i('.fa.fa-tasks')])]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
 		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
 		li([a({
@@ -40,33 +40,30 @@ module.exports = ({state, actions}) => header([
 			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
 	]),
 	h1([
-		img('[src="assets/logo.png"]'),
-		'Jam Station'
+		img('[src="assets/logo2.png"]')
 	]),
 	ul('.right', [
 		li([
-			a([i('.fa.fa-volume-down')]),
 			input('[type="range"]', {
 				attrs: {min: 0, max: 1, step: 0.005},
 				props: {value: state.studio.volume},
 				on: {change: ev => actions.studio.change('volume', parseFloat(ev.target.value))}
-			}),
-			a([i('.fa.fa-volume-up')])
+			})
 		]),
-		li([a({
+		li([a('[title="New"]', {
+			on: {click: () => actions.clear()}
+		}, [i('.fa.fa-file-o')])]),
+		li([a('[title="Save"]', {
 			on: {
 				click: ev => fileUtil.save(moment().format('YYYY-MM-DD-hh-mm[-jam.json]'), state)
 			}
 		}, [i('.fa.fa-save')])]),
-		li([a({
+		li([a('[title="Load"]', {
 			on: {
 				click: ev => openDialog(files =>
 					fileUtil.load(files[0], 'json').subscribe(content => actions.load(content))
 				)
 			}
-		}, [i('.fa.fa-upload')])]),
-		li([a({
-			on: {click: () => actions.clear()}
-		}, [i('.fa.fa-trash')])])
+		}, [i('.fa.fa-upload')])])
 	])
 ]);

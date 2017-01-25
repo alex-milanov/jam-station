@@ -31,6 +31,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		})
 	]),
 	div('.body', [].concat(
+		/*
 		[div('.head', loop(state.studio.beatLength, c =>
 			div('.cell', {
 				class: {
@@ -38,6 +39,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				}
 			})
 		))],
+		*/
 		loop(state.sequencer.channels.length, r =>
 			div(`.row`, [].concat(
 				[div('.channel', {
@@ -59,15 +61,19 @@ module.exports = ({state, actions}) => div('.sequencer', [
 							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)
 						}
 					})
-				),
+				)
+				/*
 				(state.sequencer.channel === r) ? [div('.delete-channel.fa.fa-minus-circle', {
 					on: {click: () => actions.sequencer.deleteChannel(r)}
 				})] : []
-			))),
+				*/
+			)))
+		/*
 		[div(`.row`, [
 			div('.add-channel', {
 				on: {click: () => actions.sequencer.addChannel()}
 			}, [span('.fa.fa-plus')])
 		])]
+		*/
 	))
 ]);

@@ -96,13 +96,12 @@ let midiMap = {
 	26: ['instrument', 'eg', 'sustain'],
 	27: ['instrument', 'eg', 'release']
 };
-
 /*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		// if (midiMsg.state !== false)
-		// console.log('msg', data, midiMsg);
+		console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':
@@ -112,15 +111,13 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 							studio: {volume: state.studio.volume * midiMsg.velocity}
 						});
 				} else {
-					voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
-					voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
+					// voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
+					// voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
 				}
 				break;
 			case 'noteOff':
 				if (midiMsg.channel === 10) {
 
-				} else if (voices[midiMsg.note.pitch]) {
-					voices[midiMsg.note.pitch].noteoff(state, midiMsg.note.pitch);
 				}
 				break;
 			case 'controller':
@@ -131,7 +128,12 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 							(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
 						).toFixed(mmap[5] || 3);
 						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
-						actions.instrument.updateProp(mmap[1], mmap[2], value);
+						if (mmap[1] === 'eq') {
+							let vcaNum = `vca${state.instrment.vcaOn + 1}`;
+							actions.instrument.updateProp(vcaNum, mmap[2], value);
+						} else {
+							actions.instrument.updateProp(mmap[1], mmap[2], value);
+						}
 					}
 					if (mmap && mmap[0] === 'studio') {
 						let value = parseFloat(

@@ -116,7 +116,7 @@ const init = () => {
 					})
 					.map(msg => ({access, input, msg}))
 				), $.empty()
-			)
+			).share()
 	);
 
 	return {

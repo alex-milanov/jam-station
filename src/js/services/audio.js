@@ -164,6 +164,17 @@ const hook = ({state$, midi, actions}) => {
 	instrUpdates$
 		.subscribe(updatePrefs);
 
+	let midiMap = {
+		20: ['instrument', 'vcf', 'cutoff'],
+		21: ['instrument', 'vcf', 'resonance'],
+		22: ['studio', 'bpm', 60, 200, 0],
+		23: ['studio', 'volume'],
+		24: ['instrument', 'eg', 'attack'],
+		25: ['instrument', 'eg', 'decay'],
+		26: ['instrument', 'eg', 'sustain'],
+		27: ['instrument', 'eg', 'release']
+	};
+
 	// hook midi signals
 	midi.access$.subscribe(data => actions.midiMap.connect(data));
 	midi.msg$
@@ -174,13 +185,36 @@ const hook = ({state$, midi, actions}) => {
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
-					noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					if (data.msg.note.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
 					break;
 				case 'noteOff':
-					noteOff(state.instrument, data.msg.note);
+					if (data.msg.note.channel !== 10) noteOff(state.instrument, data.msg.note);
 					break;
 				case 'pitchBend':
 					pitchBend(state.instrument, data.msg.pitchValue);
+					break;
+				case 'controller':
+					let mmap = midiMap[data.msg.controller];
+					if (mmap && mmap[0] === 'instrument') {
+						let value = parseFloat(
+							(mmap[4] || 0) + data.msg.value * (mmap[4] || 1) - data.msg.value * (mmap[3] || 0)
+						).toFixed(mmap[5] || 3);
+						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
+						if (mmap[1] === 'eg') {
+							let vcaNum = `vca${state.instrument.vcaOn + 1}`;
+							console.log(vcaNum, mmap[2], value);
+							actions.instrument.updateProp(vcaNum, mmap[2], value);
+						} else {
+							actions.instrument.updateProp(mmap[1], mmap[2], value);
+						}
+					}
+					if (mmap && mmap[0] === 'studio') {
+						let value = parseFloat(
+							(mmap[2] || 0) + data.msg.value * (mmap[3] || 1) - data.msg.value * (mmap[2] || 0)
+						).toFixed(mmap[4] || 3);
+						value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
+						actions.studio.change(mmap[1], value);
+					}
 					break;
 				default:
 					break;

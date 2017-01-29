@@ -1,865 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-'use strict';
-
-const snabbdom = require('snabbdom');
-const h = require('snabbdom/h');
-const obj = require('../common/obj');
-
-const patch = snabbdom.init([ // Init patch function with choosen modules
-	require('snabbdom/modules/class'), // makes it easy to toggle classes
-	require('snabbdom/modules/props'), // for setting properties on DOM elements
-	require('snabbdom/modules/attributes'), // for setting properties on DOM elements
-	require('snabbdom/modules/style'), // handles styling on elements with support for animations
-	require('snabbdom/modules/eventlisteners') // attaches event listeners
-]);
-
-const patchStream = (stream, dom) => {
-	dom = (typeof dom === 'string') ? document.querySelector(dom) : dom;
-	stream.scan(
-		(vnode, newVnode) => patch(vnode, newVnode),
-		dom
-	).subscribe();
-};
-
-const processAttrs = args => {
-	let newArgs = args.slice();
-
-	let selector = newArgs[0] && typeof newArgs[0] === 'string' && newArgs[0] || '';
-	if (selector !== '') newArgs = newArgs.slice(1);
-
-	const attrRegExp = /\[[a-z\-0-9]+="[^"]+"\]/ig;
-
-	let attrs = selector && selector.match(attrRegExp);
-	selector = selector.replace(attrRegExp, '');
-
-	attrs = attrs && attrs.map && attrs
-			.map(c => c.replace(/[\[\]"]/g, '').split('='))
-			.reduce((o, attr) => obj.patch(o, attr[0], attr[1]), {}) || {};
-
-	if (attrs && Object.keys(attrs).length > 0) {
-		if (!newArgs[0] || newArgs[0]
-			&& typeof newArgs[0] === 'object' && !(newArgs[0] instanceof Array)) {
-			attrs = Object.assign({}, newArgs[0] && newArgs[0].attrs || {}, attrs);
-			newArgs[0] = Object.assign({}, newArgs[0] || {}, {attrs});
-		} else {
-			newArgs = [{attrs}].concat(
-				newArgs
-			);
-		}
-	}
-
-	if (selector !== '')
-		newArgs = [selector].concat(newArgs);
-
-	// console.log(args, newArgs);
-	return newArgs;
-};
-
-const hyperHelpers = [
-	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
-	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
-	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
-	'form', 'fieldset', 'legend', 'input', 'textarea', 'label', 'button', 'select', 'option',
-	'canvas', 'video', 'img'
-].reduce(
-	(o, tag) => {
-		o[tag] = function() {
-			return [Array.prototype.slice.call(arguments)]
-				.map(processAttrs)
-				.map(
-					args => (
-						args[0] && typeof args[0] === 'string'
-						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
-						? [].concat(tag + args[0], args.slice(1))
-						: [tag].concat(args))
-				.map(args => h.apply(this, args))
-				.pop();
-		};
-		return o;
-	}, {}
-);
-
-module.exports = Object.assign(
-	{
-		h,
-		patch,
-		patchStream
-	},
-	hyperHelpers
-);
-
-},{"../common/obj":4,"snabbdom":14,"snabbdom/h":6,"snabbdom/modules/attributes":9,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],2:[function(require,module,exports){
-'use strict';
-
-const fromList = list => Array.prototype.slice.call(list);
-
-const add = (arr, item) => [].concat(arr, [item]);
-
-const remove = (arr, item) => arr.indexOf(item) > -1 ? [].concat(
-	arr.slice(0, arr.indexOf(item)),
-	arr.slice(arr.indexOf(item) + 1)
-) : arr;
-
-const toggle = (arr, item) => arr.indexOf(item) > -1
-	? remove(arr, item)
-	: add(arr, item);
-
-console.log(remove(add([], '2'), '2'));
-
-module.exports = {
-	fromList,
-	add,
-	remove,
-	toggle
-};
-
-},{}],3:[function(require,module,exports){
-'use strict';
-
-const compose = (...fList) => (...args) => fList.reduce(
-	(r, f) => (r instanceof Array) && f.apply(null, r) || f(r), args
-);
-
-const _switch = (value, cases) => (typeof cases[value] !== 'undefined')
-	&& cases[value] || cases['default'] || false;
-
-module.exports = {
-	compose,
-	switch: _switch
-};
-
-},{}],4:[function(require,module,exports){
-'use strict';
-
-const keyValue = (k, v) => {
-	let o = {};
-	o[k] = v;
-	return o;
-};
-
-const clone = o => Object.assign(Object.create(Object.getPrototypeOf(o) || {}), o);
-
-const sub = (o, p) => (p instanceof Array)
-	&& o[p[0]] && sub(o[p[0]], p.slice(1))
-	|| o[p] || false;
-
-const patch = (o, k, v) => Object.assign(clone(o),
-	(k instanceof Array)
-		? keyValue(k[0], (k.length > 1)
-			? patch(o[k[0]] || {}, k.slice(1), v)
-			: typeof o[k[0]] === 'object' && Object.assign(clone(o[k[0]]), v) || v)
-		: keyValue(k, typeof o[k] === 'object' && Object.assign(clone(o[k]), v) || v)
-);
-
-const map = (o, cb) => Object.keys(o)
-	.reduce(
-		(o2, k, i) =>
-			((o2[k] = cb(o[k], k, i)), o2),
-		{});
-
-
-const traverse = (tree, fn) => Object.keys(tree).reduce((o, k) =>
-	patch(o, k,
-		(typeof tree[k] === 'object' && tree[k].constructor === Object)
-			? traverse(tree[k], fn)
-			: fn(tree[k], k)
-	), {}
-);
-
-const chainCall = (o, chain) => chain.reduce(
-	(o, link) => (typeof link[1] === 'undefined')
-		? o[link[0]]()
-		: o[link[0]](link[1]),
-	o
-);
-
-module.exports = {
-	keyValue,
-	clone,
-	sub,
-	patch,
-	map,
-	traverse,
-	chainCall
-};
-
-},{}],5:[function(require,module,exports){
-'use strict';
-
-const toCamelCase = (str, glue) =>
-	str.split(glue || '_')
-		.map((chunk, i) => (i === 0)
-			? chunk
-			: chunk.charAt(0).toUpperCase() + chunk.slice(1))
-		.join('');
-
-const fromCamelCase = (str, glue) =>
-	str.replace(/([A-Z])/g, ' $1')
-		.split(' ')
-		.map(chunk => chunk.toLowerCase())
-		.join(glue || '_');
-
-const singularToPlural = str =>
-	str.replace(/y$/, 'ie').concat('s');
-
-const pluralToSingular = str =>
-	str.replace(/ies$/, 'y').replace(/s$/, '');
-
-const toDocumentId = str => ':'.concat(pluralToSingular(toCamelCase(str, '-')), 'Id');
-
-module.exports = {
-	toCamelCase,
-	fromCamelCase,
-	singularToPlural,
-	pluralToSingular,
-	toDocumentId
-};
-
-},{}],6:[function(require,module,exports){
-var VNode = require('./vnode');
-var is = require('./is');
-
-function addNS(data, children, sel) {
-  data.ns = 'http://www.w3.org/2000/svg';
-
-  if (sel !== 'foreignObject' && children !== undefined) {
-    for (var i = 0; i < children.length; ++i) {
-      addNS(children[i].data, children[i].children, children[i].sel);
-    }
-  }
-}
-
-module.exports = function h(sel, b, c) {
-  var data = {}, children, text, i;
-  if (c !== undefined) {
-    data = b;
-    if (is.array(c)) { children = c; }
-    else if (is.primitive(c)) { text = c; }
-  } else if (b !== undefined) {
-    if (is.array(b)) { children = b; }
-    else if (is.primitive(b)) { text = b; }
-    else { data = b; }
-  }
-  if (is.array(children)) {
-    for (i = 0; i < children.length; ++i) {
-      if (is.primitive(children[i])) children[i] = VNode(undefined, undefined, undefined, children[i]);
-    }
-  }
-  if (sel[0] === 's' && sel[1] === 'v' && sel[2] === 'g') {
-    addNS(data, children, sel);
-  }
-  return VNode(sel, data, children, text, undefined);
-};
-
-},{"./is":8,"./vnode":15}],7:[function(require,module,exports){
-function createElement(tagName){
-  return document.createElement(tagName);
-}
-
-function createElementNS(namespaceURI, qualifiedName){
-  return document.createElementNS(namespaceURI, qualifiedName);
-}
-
-function createTextNode(text){
-  return document.createTextNode(text);
-}
-
-
-function insertBefore(parentNode, newNode, referenceNode){
-  parentNode.insertBefore(newNode, referenceNode);
-}
-
-
-function removeChild(node, child){
-  node.removeChild(child);
-}
-
-function appendChild(node, child){
-  node.appendChild(child);
-}
-
-function parentNode(node){
-  return node.parentElement;
-}
-
-function nextSibling(node){
-  return node.nextSibling;
-}
-
-function tagName(node){
-  return node.tagName;
-}
-
-function setTextContent(node, text){
-  node.textContent = text;
-}
-
-module.exports = {
-  createElement: createElement,
-  createElementNS: createElementNS,
-  createTextNode: createTextNode,
-  appendChild: appendChild,
-  removeChild: removeChild,
-  insertBefore: insertBefore,
-  parentNode: parentNode,
-  nextSibling: nextSibling,
-  tagName: tagName,
-  setTextContent: setTextContent
-};
-
-},{}],8:[function(require,module,exports){
-module.exports = {
-  array: Array.isArray,
-  primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
-};
-
-},{}],9:[function(require,module,exports){
-var NamespaceURIs = {
-  "xlink": "http://www.w3.org/1999/xlink"
-};
-
-var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
-                "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
-                "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
-                "muted", "nohref", "noresize", "noshade", "novalidate", "nowrap", "open", "pauseonexit", "readonly",
-                "required", "reversed", "scoped", "seamless", "selected", "sortable", "spellcheck", "translate",
-                "truespeed", "typemustmatch", "visible"];
-
-var booleanAttrsDict = Object.create(null);
-for(var i=0, len = booleanAttrs.length; i < len; i++) {
-  booleanAttrsDict[booleanAttrs[i]] = true;
-}
-
-function updateAttrs(oldVnode, vnode) {
-  var key, cur, old, elm = vnode.elm,
-      oldAttrs = oldVnode.data.attrs, attrs = vnode.data.attrs, namespaceSplit;
-
-  if (!oldAttrs && !attrs) return;
-  oldAttrs = oldAttrs || {};
-  attrs = attrs || {};
-
-  // update modified attributes, add new attributes
-  for (key in attrs) {
-    cur = attrs[key];
-    old = oldAttrs[key];
-    if (old !== cur) {
-      if(!cur && booleanAttrsDict[key])
-        elm.removeAttribute(key);
-      else {
-        namespaceSplit = key.split(":");
-        if(namespaceSplit.length > 1 && NamespaceURIs.hasOwnProperty(namespaceSplit[0]))
-          elm.setAttributeNS(NamespaceURIs[namespaceSplit[0]], key, cur);
-        else
-          elm.setAttribute(key, cur);
-      }
-    }
-  }
-  //remove removed attributes
-  // use `in` operator since the previous `for` iteration uses it (.i.e. add even attributes with undefined value)
-  // the other option is to remove all attributes with value == undefined
-  for (key in oldAttrs) {
-    if (!(key in attrs)) {
-      elm.removeAttribute(key);
-    }
-  }
-}
-
-module.exports = {create: updateAttrs, update: updateAttrs};
-
-},{}],10:[function(require,module,exports){
-function updateClass(oldVnode, vnode) {
-  var cur, name, elm = vnode.elm,
-      oldClass = oldVnode.data.class,
-      klass = vnode.data.class;
-
-  if (!oldClass && !klass) return;
-  oldClass = oldClass || {};
-  klass = klass || {};
-
-  for (name in oldClass) {
-    if (!klass[name]) {
-      elm.classList.remove(name);
-    }
-  }
-  for (name in klass) {
-    cur = klass[name];
-    if (cur !== oldClass[name]) {
-      elm.classList[cur ? 'add' : 'remove'](name);
-    }
-  }
-}
-
-module.exports = {create: updateClass, update: updateClass};
-
-},{}],11:[function(require,module,exports){
-function invokeHandler(handler, vnode, event) {
-  if (typeof handler === "function") {
-    // call function handler
-    handler.call(vnode, event, vnode);
-  } else if (typeof handler === "object") {
-    // call handler with arguments
-    if (typeof handler[0] === "function") {
-      // special case for single argument for performance
-      if (handler.length === 2) {
-        handler[0].call(vnode, handler[1], event, vnode);
-      } else {
-        var args = handler.slice(1);
-        args.push(event);
-        args.push(vnode);
-        handler[0].apply(vnode, args);
-      }
-    } else {
-      // call multiple handlers
-      for (var i = 0; i < handler.length; i++) {
-        invokeHandler(handler[i]);
-      }
-    }
-  }
-}
-
-function handleEvent(event, vnode) {
-  var name = event.type,
-      on = vnode.data.on;
-
-  // call event handler(s) if exists
-  if (on && on[name]) {
-    invokeHandler(on[name], vnode, event);
-  }
-}
-
-function createListener() {
-  return function handler(event) {
-    handleEvent(event, handler.vnode);
-  }
-}
-
-function updateEventListeners(oldVnode, vnode) {
-  var oldOn = oldVnode.data.on,
-      oldListener = oldVnode.listener,
-      oldElm = oldVnode.elm,
-      on = vnode && vnode.data.on,
-      elm = vnode && vnode.elm,
-      name;
-
-  // optimization for reused immutable handlers
-  if (oldOn === on) {
-    return;
-  }
-
-  // remove existing listeners which no longer used
-  if (oldOn && oldListener) {
-    // if element changed or deleted we remove all existing listeners unconditionally
-    if (!on) {
-      for (name in oldOn) {
-        // remove listener if element was changed or existing listeners removed
-        oldElm.removeEventListener(name, oldListener, false);
-      }
-    } else {
-      for (name in oldOn) {
-        // remove listener if existing listener removed
-        if (!on[name]) {
-          oldElm.removeEventListener(name, oldListener, false);
-        }
-      }
-    }
-  }
-
-  // add new listeners which has not already attached
-  if (on) {
-    // reuse existing listener or create new
-    var listener = vnode.listener = oldVnode.listener || createListener();
-    // update vnode for listener
-    listener.vnode = vnode;
-
-    // if element changed or added we add all needed listeners unconditionally
-    if (!oldOn) {
-      for (name in on) {
-        // add listener if element was changed or new listeners added
-        elm.addEventListener(name, listener, false);
-      }
-    } else {
-      for (name in on) {
-        // add listener if new listener added
-        if (!oldOn[name]) {
-          elm.addEventListener(name, listener, false);
-        }
-      }
-    }
-  }
-}
-
-module.exports = {
-  create: updateEventListeners,
-  update: updateEventListeners,
-  destroy: updateEventListeners
-};
-
-},{}],12:[function(require,module,exports){
-function updateProps(oldVnode, vnode) {
-  var key, cur, old, elm = vnode.elm,
-      oldProps = oldVnode.data.props, props = vnode.data.props;
-
-  if (!oldProps && !props) return;
-  oldProps = oldProps || {};
-  props = props || {};
-
-  for (key in oldProps) {
-    if (!props[key]) {
-      delete elm[key];
-    }
-  }
-  for (key in props) {
-    cur = props[key];
-    old = oldProps[key];
-    if (old !== cur && (key !== 'value' || elm[key] !== cur)) {
-      elm[key] = cur;
-    }
-  }
-}
-
-module.exports = {create: updateProps, update: updateProps};
-
-},{}],13:[function(require,module,exports){
-var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
-var nextFrame = function(fn) { raf(function() { raf(fn); }); };
-
-function setNextFrame(obj, prop, val) {
-  nextFrame(function() { obj[prop] = val; });
-}
-
-function updateStyle(oldVnode, vnode) {
-  var cur, name, elm = vnode.elm,
-      oldStyle = oldVnode.data.style,
-      style = vnode.data.style;
-
-  if (!oldStyle && !style) return;
-  oldStyle = oldStyle || {};
-  style = style || {};
-  var oldHasDel = 'delayed' in oldStyle;
-
-  for (name in oldStyle) {
-    if (!style[name]) {
-      elm.style[name] = '';
-    }
-  }
-  for (name in style) {
-    cur = style[name];
-    if (name === 'delayed') {
-      for (name in style.delayed) {
-        cur = style.delayed[name];
-        if (!oldHasDel || cur !== oldStyle.delayed[name]) {
-          setNextFrame(elm.style, name, cur);
-        }
-      }
-    } else if (name !== 'remove' && cur !== oldStyle[name]) {
-      elm.style[name] = cur;
-    }
-  }
-}
-
-function applyDestroyStyle(vnode) {
-  var style, name, elm = vnode.elm, s = vnode.data.style;
-  if (!s || !(style = s.destroy)) return;
-  for (name in style) {
-    elm.style[name] = style[name];
-  }
-}
-
-function applyRemoveStyle(vnode, rm) {
-  var s = vnode.data.style;
-  if (!s || !s.remove) {
-    rm();
-    return;
-  }
-  var name, elm = vnode.elm, idx, i = 0, maxDur = 0,
-      compStyle, style = s.remove, amount = 0, applied = [];
-  for (name in style) {
-    applied.push(name);
-    elm.style[name] = style[name];
-  }
-  compStyle = getComputedStyle(elm);
-  var props = compStyle['transition-property'].split(', ');
-  for (; i < props.length; ++i) {
-    if(applied.indexOf(props[i]) !== -1) amount++;
-  }
-  elm.addEventListener('transitionend', function(ev) {
-    if (ev.target === elm) --amount;
-    if (amount === 0) rm();
-  });
-}
-
-module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
-
-},{}],14:[function(require,module,exports){
-// jshint newcap: false
-/* global require, module, document, Node */
-'use strict';
-
-var VNode = require('./vnode');
-var is = require('./is');
-var domApi = require('./htmldomapi');
-
-function isUndef(s) { return s === undefined; }
-function isDef(s) { return s !== undefined; }
-
-var emptyNode = VNode('', {}, [], undefined, undefined);
-
-function sameVnode(vnode1, vnode2) {
-  return vnode1.key === vnode2.key && vnode1.sel === vnode2.sel;
-}
-
-function createKeyToOldIdx(children, beginIdx, endIdx) {
-  var i, map = {}, key;
-  for (i = beginIdx; i <= endIdx; ++i) {
-    key = children[i].key;
-    if (isDef(key)) map[key] = i;
-  }
-  return map;
-}
-
-var hooks = ['create', 'update', 'remove', 'destroy', 'pre', 'post'];
-
-function init(modules, api) {
-  var i, j, cbs = {};
-
-  if (isUndef(api)) api = domApi;
-
-  for (i = 0; i < hooks.length; ++i) {
-    cbs[hooks[i]] = [];
-    for (j = 0; j < modules.length; ++j) {
-      if (modules[j][hooks[i]] !== undefined) cbs[hooks[i]].push(modules[j][hooks[i]]);
-    }
-  }
-
-  function emptyNodeAt(elm) {
-    var id = elm.id ? '#' + elm.id : '';
-    var c = elm.className ? '.' + elm.className.split(' ').join('.') : '';
-    return VNode(api.tagName(elm).toLowerCase() + id + c, {}, [], undefined, elm);
-  }
-
-  function createRmCb(childElm, listeners) {
-    return function() {
-      if (--listeners === 0) {
-        var parent = api.parentNode(childElm);
-        api.removeChild(parent, childElm);
-      }
-    };
-  }
-
-  function createElm(vnode, insertedVnodeQueue) {
-    var i, data = vnode.data;
-    if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.init)) {
-        i(vnode);
-        data = vnode.data;
-      }
-    }
-    var elm, children = vnode.children, sel = vnode.sel;
-    if (isDef(sel)) {
-      // Parse selector
-      var hashIdx = sel.indexOf('#');
-      var dotIdx = sel.indexOf('.', hashIdx);
-      var hash = hashIdx > 0 ? hashIdx : sel.length;
-      var dot = dotIdx > 0 ? dotIdx : sel.length;
-      var tag = hashIdx !== -1 || dotIdx !== -1 ? sel.slice(0, Math.min(hash, dot)) : sel;
-      elm = vnode.elm = isDef(data) && isDef(i = data.ns) ? api.createElementNS(i, tag)
-                                                          : api.createElement(tag);
-      if (hash < dot) elm.id = sel.slice(hash + 1, dot);
-      if (dotIdx > 0) elm.className = sel.slice(dot + 1).replace(/\./g, ' ');
-      if (is.array(children)) {
-        for (i = 0; i < children.length; ++i) {
-          api.appendChild(elm, createElm(children[i], insertedVnodeQueue));
-        }
-      } else if (is.primitive(vnode.text)) {
-        api.appendChild(elm, api.createTextNode(vnode.text));
-      }
-      for (i = 0; i < cbs.create.length; ++i) cbs.create[i](emptyNode, vnode);
-      i = vnode.data.hook; // Reuse variable
-      if (isDef(i)) {
-        if (i.create) i.create(emptyNode, vnode);
-        if (i.insert) insertedVnodeQueue.push(vnode);
-      }
-    } else {
-      elm = vnode.elm = api.createTextNode(vnode.text);
-    }
-    return vnode.elm;
-  }
-
-  function addVnodes(parentElm, before, vnodes, startIdx, endIdx, insertedVnodeQueue) {
-    for (; startIdx <= endIdx; ++startIdx) {
-      api.insertBefore(parentElm, createElm(vnodes[startIdx], insertedVnodeQueue), before);
-    }
-  }
-
-  function invokeDestroyHook(vnode) {
-    var i, j, data = vnode.data;
-    if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.destroy)) i(vnode);
-      for (i = 0; i < cbs.destroy.length; ++i) cbs.destroy[i](vnode);
-      if (isDef(i = vnode.children)) {
-        for (j = 0; j < vnode.children.length; ++j) {
-          invokeDestroyHook(vnode.children[j]);
-        }
-      }
-    }
-  }
-
-  function removeVnodes(parentElm, vnodes, startIdx, endIdx) {
-    for (; startIdx <= endIdx; ++startIdx) {
-      var i, listeners, rm, ch = vnodes[startIdx];
-      if (isDef(ch)) {
-        if (isDef(ch.sel)) {
-          invokeDestroyHook(ch);
-          listeners = cbs.remove.length + 1;
-          rm = createRmCb(ch.elm, listeners);
-          for (i = 0; i < cbs.remove.length; ++i) cbs.remove[i](ch, rm);
-          if (isDef(i = ch.data) && isDef(i = i.hook) && isDef(i = i.remove)) {
-            i(ch, rm);
-          } else {
-            rm();
-          }
-        } else { // Text node
-          api.removeChild(parentElm, ch.elm);
-        }
-      }
-    }
-  }
-
-  function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue) {
-    var oldStartIdx = 0, newStartIdx = 0;
-    var oldEndIdx = oldCh.length - 1;
-    var oldStartVnode = oldCh[0];
-    var oldEndVnode = oldCh[oldEndIdx];
-    var newEndIdx = newCh.length - 1;
-    var newStartVnode = newCh[0];
-    var newEndVnode = newCh[newEndIdx];
-    var oldKeyToIdx, idxInOld, elmToMove, before;
-
-    while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
-      if (isUndef(oldStartVnode)) {
-        oldStartVnode = oldCh[++oldStartIdx]; // Vnode has been moved left
-      } else if (isUndef(oldEndVnode)) {
-        oldEndVnode = oldCh[--oldEndIdx];
-      } else if (sameVnode(oldStartVnode, newStartVnode)) {
-        patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
-        oldStartVnode = oldCh[++oldStartIdx];
-        newStartVnode = newCh[++newStartIdx];
-      } else if (sameVnode(oldEndVnode, newEndVnode)) {
-        patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);
-        oldEndVnode = oldCh[--oldEndIdx];
-        newEndVnode = newCh[--newEndIdx];
-      } else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
-        patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
-        api.insertBefore(parentElm, oldStartVnode.elm, api.nextSibling(oldEndVnode.elm));
-        oldStartVnode = oldCh[++oldStartIdx];
-        newEndVnode = newCh[--newEndIdx];
-      } else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
-        patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
-        api.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
-        oldEndVnode = oldCh[--oldEndIdx];
-        newStartVnode = newCh[++newStartIdx];
-      } else {
-        if (isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
-        idxInOld = oldKeyToIdx[newStartVnode.key];
-        if (isUndef(idxInOld)) { // New element
-          api.insertBefore(parentElm, createElm(newStartVnode, insertedVnodeQueue), oldStartVnode.elm);
-          newStartVnode = newCh[++newStartIdx];
-        } else {
-          elmToMove = oldCh[idxInOld];
-          patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
-          oldCh[idxInOld] = undefined;
-          api.insertBefore(parentElm, elmToMove.elm, oldStartVnode.elm);
-          newStartVnode = newCh[++newStartIdx];
-        }
-      }
-    }
-    if (oldStartIdx > oldEndIdx) {
-      before = isUndef(newCh[newEndIdx+1]) ? null : newCh[newEndIdx+1].elm;
-      addVnodes(parentElm, before, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
-    } else if (newStartIdx > newEndIdx) {
-      removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
-    }
-  }
-
-  function patchVnode(oldVnode, vnode, insertedVnodeQueue) {
-    var i, hook;
-    if (isDef(i = vnode.data) && isDef(hook = i.hook) && isDef(i = hook.prepatch)) {
-      i(oldVnode, vnode);
-    }
-    var elm = vnode.elm = oldVnode.elm, oldCh = oldVnode.children, ch = vnode.children;
-    if (oldVnode === vnode) return;
-    if (!sameVnode(oldVnode, vnode)) {
-      var parentElm = api.parentNode(oldVnode.elm);
-      elm = createElm(vnode, insertedVnodeQueue);
-      api.insertBefore(parentElm, elm, oldVnode.elm);
-      removeVnodes(parentElm, [oldVnode], 0, 0);
-      return;
-    }
-    if (isDef(vnode.data)) {
-      for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode);
-      i = vnode.data.hook;
-      if (isDef(i) && isDef(i = i.update)) i(oldVnode, vnode);
-    }
-    if (isUndef(vnode.text)) {
-      if (isDef(oldCh) && isDef(ch)) {
-        if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
-      } else if (isDef(ch)) {
-        if (isDef(oldVnode.text)) api.setTextContent(elm, '');
-        addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
-      } else if (isDef(oldCh)) {
-        removeVnodes(elm, oldCh, 0, oldCh.length - 1);
-      } else if (isDef(oldVnode.text)) {
-        api.setTextContent(elm, '');
-      }
-    } else if (oldVnode.text !== vnode.text) {
-      api.setTextContent(elm, vnode.text);
-    }
-    if (isDef(hook) && isDef(i = hook.postpatch)) {
-      i(oldVnode, vnode);
-    }
-  }
-
-  return function(oldVnode, vnode) {
-    var i, elm, parent;
-    var insertedVnodeQueue = [];
-    for (i = 0; i < cbs.pre.length; ++i) cbs.pre[i]();
-
-    if (isUndef(oldVnode.sel)) {
-      oldVnode = emptyNodeAt(oldVnode);
-    }
-
-    if (sameVnode(oldVnode, vnode)) {
-      patchVnode(oldVnode, vnode, insertedVnodeQueue);
-    } else {
-      elm = oldVnode.elm;
-      parent = api.parentNode(elm);
-
-      createElm(vnode, insertedVnodeQueue);
-
-      if (parent !== null) {
-        api.insertBefore(parent, vnode.elm, api.nextSibling(elm));
-        removeVnodes(parent, [oldVnode], 0, 0);
-      }
-    }
-
-    for (i = 0; i < insertedVnodeQueue.length; ++i) {
-      insertedVnodeQueue[i].data.hook.insert(insertedVnodeQueue[i]);
-    }
-    for (i = 0; i < cbs.post.length; ++i) cbs.post[i]();
-    return vnode;
-  };
-}
-
-module.exports = {init: init};
-
-},{"./htmldomapi":7,"./is":8,"./vnode":15}],15:[function(require,module,exports){
-module.exports = function(sel, data, children, text, elm) {
-  var key = data === undefined ? undefined : data.key;
-  return {sel: sel, data: data, children: children,
-          text: text, elm: elm, key: key};
-};
-
-},{}],16:[function(require,module,exports){
 'use strict'
 
 exports.toByteArray = toByteArray
@@ -970,9 +109,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],17:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 
-},{}],18:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1084,7 +223,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":19}],19:[function(require,module,exports){
+},{"buffer":4}],4:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2875,7 +2014,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":16,"ieee754":23,"isarray":27}],20:[function(require,module,exports){
+},{"base64-js":1,"ieee754":13,"isarray":17}],5:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2986,7 +2125,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":26}],21:[function(require,module,exports){
+},{"../../is-buffer/index.js":16}],6:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3290,7 +2429,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],22:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /* FileSaver.js
  * A saveAs() FileSaver implementation.
  * 1.3.2
@@ -3480,7 +2619,198 @@ if (typeof module !== "undefined" && module.exports) {
   });
 }
 
-},{}],23:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+'use strict';
+
+const snabbdom = require('snabbdom');
+const h = require('snabbdom/h');
+const obj = require('../common/obj');
+
+const patch = snabbdom.init([ // Init patch function with choosen modules
+	require('snabbdom/modules/class'), // makes it easy to toggle classes
+	require('snabbdom/modules/props'), // for setting properties on DOM elements
+	require('snabbdom/modules/attributes'), // for setting properties on DOM elements
+	require('snabbdom/modules/style'), // handles styling on elements with support for animations
+	require('snabbdom/modules/eventlisteners') // attaches event listeners
+]);
+
+const patchStream = (stream, dom) => {
+	dom = (typeof dom === 'string') ? document.querySelector(dom) : dom;
+	stream.scan(
+		(vnode, newVnode) => patch(vnode, newVnode),
+		dom
+	).subscribe();
+};
+
+const processAttrs = args => {
+	let newArgs = args.slice();
+
+	let selector = newArgs[0] && typeof newArgs[0] === 'string' && newArgs[0] || '';
+	if (selector !== '') newArgs = newArgs.slice(1);
+
+	const attrRegExp = /\[[a-z\-0-9]+="[^"]+"\]/ig;
+
+	let attrs = selector && selector.match(attrRegExp);
+	selector = selector.replace(attrRegExp, '');
+
+	attrs = attrs && attrs.map && attrs
+			.map(c => c.replace(/[\[\]"]/g, '').split('='))
+			.reduce((o, attr) => obj.patch(o, attr[0], attr[1]), {}) || {};
+
+	if (attrs && Object.keys(attrs).length > 0) {
+		if (!newArgs[0] || newArgs[0]
+			&& typeof newArgs[0] === 'object' && !(newArgs[0] instanceof Array)) {
+			attrs = Object.assign({}, newArgs[0] && newArgs[0].attrs || {}, attrs);
+			newArgs[0] = Object.assign({}, newArgs[0] || {}, {attrs});
+		} else {
+			newArgs = [{attrs}].concat(
+				newArgs
+			);
+		}
+	}
+
+	if (selector !== '')
+		newArgs = [selector].concat(newArgs);
+
+	// console.log(args, newArgs);
+	return newArgs;
+};
+
+const hyperHelpers = [
+	'h1', 'h2', 'h3', 'h4', 'section', 'header', 'article',
+	'div', 'p', 'span', 'pre', 'code', 'a', 'dd', 'dt', 'hr', 'br', 'b', 'i',
+	'table', 'thead', 'tbody', 'th', 'tr', 'td', 'ul', 'ol', 'li',
+	'form', 'fieldset', 'legend', 'input', 'textarea', 'label', 'button', 'select', 'option',
+	'canvas', 'video', 'img'
+].reduce(
+	(o, tag) => {
+		o[tag] = function() {
+			return [Array.prototype.slice.call(arguments)]
+				.map(processAttrs)
+				.map(
+					args => (
+						args[0] && typeof args[0] === 'string'
+						&& args[0].match(/^(\.|#)[a-zA-Z\-_0-9]+/ig))
+						? [].concat(tag + args[0], args.slice(1))
+						: [tag].concat(args))
+				.map(args => h.apply(this, args))
+				.pop();
+		};
+		return o;
+	}, {}
+);
+
+module.exports = Object.assign(
+	{
+		h,
+		patch,
+		patchStream
+	},
+	hyperHelpers
+);
+
+},{"../common/obj":11,"snabbdom":113,"snabbdom/h":105,"snabbdom/modules/attributes":108,"snabbdom/modules/class":109,"snabbdom/modules/eventlisteners":110,"snabbdom/modules/props":111,"snabbdom/modules/style":112}],9:[function(require,module,exports){
+'use strict';
+
+const fromList = list => Array.prototype.slice.call(list);
+
+module.exports = {
+	fromList
+};
+
+},{}],10:[function(require,module,exports){
+'use strict';
+
+const compose = (...fList) => (...args) => fList.reduce(
+	(r, f) => (r instanceof Array) && f.apply(null, r) || f(r), args
+);
+
+const _switch = (value, cases) => (typeof cases[value] !== 'undefined')
+	&& cases[value] || cases['default'] || false;
+
+module.exports = {
+	compose,
+	switch: _switch
+};
+
+},{}],11:[function(require,module,exports){
+'use strict';
+
+const keyValue = (k, v) => {
+	let o = {};
+	o[k] = v;
+	return o;
+};
+
+const clone = o => Object.assign(Object.create(Object.getPrototypeOf(o) || {}), o);
+
+const sub = (o, p) => (p instanceof Array)
+	&& o[p[0]] && sub(o[p[0]], p.slice(1))
+	|| o[p] || false;
+
+const patch = (o, k, v) => Object.assign(clone(o),
+	(k instanceof Array)
+		? keyValue(k[0], (k.length > 1)
+			? patch(o[k[0]] || {}, k.slice(1), v)
+			: typeof o[k[0]] === 'object' && Object.assign(clone(o[k[0]]), v) || v)
+		: keyValue(k, typeof o[k] === 'object' && Object.assign(clone(o[k]), v) || v)
+);
+
+const map = (o, cb) => Object.keys(o)
+	.reduce(
+		(o2, k, i) =>
+			((o2[k] = cb(o[k], k, i)), o2),
+		{});
+
+const chainCall = (o, chain) => chain.reduce(
+	(o, link) => (typeof link[1] === 'undefined')
+		? o[link[0]]()
+		: o[link[0]](link[1]),
+	o
+);
+
+module.exports = {
+	keyValue,
+	clone,
+	sub,
+	patch,
+	map,
+	chainCall
+};
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+const toCamelCase = (str, glue) =>
+	str.split(glue || '_')
+		.map((chunk, i) => (i === 0)
+			? chunk
+			: chunk.charAt(0).toUpperCase() + chunk.slice(1))
+		.join('');
+
+const fromCamelCase = (str, glue) =>
+	str.replace(/([A-Z])/g, ' $1')
+		.split(' ')
+		.map(chunk => chunk.toLowerCase())
+		.join(glue || '_');
+
+const singularToPlural = str =>
+	str.replace(/y$/, 'ie').concat('s');
+
+const pluralToSingular = str =>
+	str.replace(/ies$/, 'y').replace(/s$/, '');
+
+const toDocumentId = str => ':'.concat(pluralToSingular(toCamelCase(str, '-')), 'Id');
+
+module.exports = {
+	toCamelCase,
+	fromCamelCase,
+	singularToPlural,
+	pluralToSingular,
+	toDocumentId
+};
+
+},{}],13:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -3566,7 +2896,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],24:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (global){
 'use strict';
 var Mutation = global.MutationObserver || global.WebKitMutationObserver;
@@ -3639,7 +2969,7 @@ function immediate(task) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],25:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -3664,7 +2994,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],26:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -3687,14 +3017,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],27:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],28:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var support = require('./support');
@@ -3802,7 +3132,7 @@ exports.decode = function(input) {
     return output;
 };
 
-},{"./support":57,"./utils":59}],29:[function(require,module,exports){
+},{"./support":47,"./utils":49}],19:[function(require,module,exports){
 'use strict';
 
 var external = require("./external");
@@ -3879,7 +3209,7 @@ CompressedObject.createWorkerFrom = function (uncompressedWorker, compression, c
 
 module.exports = CompressedObject;
 
-},{"./external":33,"./stream/Crc32Probe":52,"./stream/DataLengthProbe":53,"./stream/DataWorker":54}],30:[function(require,module,exports){
+},{"./external":23,"./stream/Crc32Probe":42,"./stream/DataLengthProbe":43,"./stream/DataWorker":44}],20:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require("./stream/GenericWorker");
@@ -3895,7 +3225,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":34,"./stream/GenericWorker":55}],31:[function(require,module,exports){
+},{"./flate":24,"./stream/GenericWorker":45}],21:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -3975,7 +3305,7 @@ module.exports = function crc32wrapper(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":59}],32:[function(require,module,exports){
+},{"./utils":49}],22:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -3988,7 +3318,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],33:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /* global Promise */
 'use strict';
 
@@ -4009,7 +3339,7 @@ module.exports = {
     Promise: ES6Promise
 };
 
-},{"lie":100}],34:[function(require,module,exports){
+},{"lie":90}],24:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -4079,7 +3409,7 @@ exports.uncompressWorker = function () {
     return new FlateWorker("Inflate", {});
 };
 
-},{"./stream/GenericWorker":55,"./utils":59,"pako":84}],35:[function(require,module,exports){
+},{"./stream/GenericWorker":45,"./utils":49,"pako":74}],25:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -4621,7 +3951,7 @@ ZipFileWorker.prototype.lock = function () {
 
 module.exports = ZipFileWorker;
 
-},{"../crc32":31,"../signature":50,"../stream/GenericWorker":55,"../utf8":58,"../utils":59}],36:[function(require,module,exports){
+},{"../crc32":21,"../signature":40,"../stream/GenericWorker":45,"../utf8":48,"../utils":49}],26:[function(require,module,exports){
 'use strict';
 
 var compressions = require('../compressions');
@@ -4680,7 +4010,7 @@ exports.generateWorker = function (zip, options, comment) {
     return zipFileWorker;
 };
 
-},{"../compressions":30,"./ZipFileWorker":35}],37:[function(require,module,exports){
+},{"../compressions":20,"./ZipFileWorker":25}],27:[function(require,module,exports){
 'use strict';
 
 /**
@@ -4734,7 +4064,7 @@ JSZip.loadAsync = function (content, options) {
 JSZip.external = require("./external");
 module.exports = JSZip;
 
-},{"./defaults":32,"./external":33,"./load":38,"./object":42,"./support":57}],38:[function(require,module,exports){
+},{"./defaults":22,"./external":23,"./load":28,"./object":32,"./support":47}],28:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var external = require("./external");
@@ -4818,7 +4148,7 @@ module.exports = function(data, options) {
     });
 };
 
-},{"./external":33,"./nodejsUtils":41,"./stream/Crc32Probe":52,"./utf8":58,"./utils":59,"./zipEntries":60}],39:[function(require,module,exports){
+},{"./external":23,"./nodejsUtils":31,"./stream/Crc32Probe":42,"./utf8":48,"./utils":49,"./zipEntries":50}],29:[function(require,module,exports){
 "use strict";
 
 var utils = require('../utils');
@@ -4894,7 +4224,7 @@ NodejsStreamInputAdapter.prototype.resume = function () {
 
 module.exports = NodejsStreamInputAdapter;
 
-},{"../stream/GenericWorker":55,"../utils":59}],40:[function(require,module,exports){
+},{"../stream/GenericWorker":45,"../utils":49}],30:[function(require,module,exports){
 'use strict';
 
 var Readable = require('readable-stream').Readable;
@@ -4938,7 +4268,7 @@ NodejsStreamOutputAdapter.prototype._read = function() {
 
 module.exports = NodejsStreamOutputAdapter;
 
-},{"readable-stream":43,"util":119}],41:[function(require,module,exports){
+},{"readable-stream":33,"util":119}],31:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -4976,7 +4306,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":19}],42:[function(require,module,exports){
+},{"buffer":4}],32:[function(require,module,exports){
 'use strict';
 var utf8 = require('./utf8');
 var utils = require('./utils');
@@ -5367,7 +4697,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./compressedObject":29,"./defaults":32,"./generate":36,"./nodejs/NodejsStreamInputAdapter":39,"./nodejsUtils":41,"./stream/GenericWorker":55,"./stream/StreamHelper":56,"./utf8":58,"./utils":59,"./zipObject":62}],43:[function(require,module,exports){
+},{"./compressedObject":19,"./defaults":22,"./generate":26,"./nodejs/NodejsStreamInputAdapter":29,"./nodejsUtils":31,"./stream/GenericWorker":45,"./stream/StreamHelper":46,"./utf8":48,"./utils":49,"./zipObject":52}],33:[function(require,module,exports){
 /*
  * This file is used by module bundlers (browserify/webpack/etc) when
  * including a stream implementation. We use "readable-stream" to get a
@@ -5378,7 +4708,7 @@ module.exports = out;
  */
 module.exports = require("stream");
 
-},{"stream":115}],44:[function(require,module,exports){
+},{"stream":115}],34:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -5437,7 +4767,7 @@ ArrayReader.prototype.readData = function(size) {
 };
 module.exports = ArrayReader;
 
-},{"../utils":59,"./DataReader":45}],45:[function(require,module,exports){
+},{"../utils":49,"./DataReader":35}],35:[function(require,module,exports){
 'use strict';
 var utils = require('../utils');
 
@@ -5555,7 +4885,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"../utils":59}],46:[function(require,module,exports){
+},{"../utils":49}],36:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./Uint8ArrayReader');
 var utils = require('../utils');
@@ -5576,7 +4906,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"../utils":59,"./Uint8ArrayReader":48}],47:[function(require,module,exports){
+},{"../utils":49,"./Uint8ArrayReader":38}],37:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -5616,7 +4946,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"../utils":59,"./DataReader":45}],48:[function(require,module,exports){
+},{"../utils":49,"./DataReader":35}],38:[function(require,module,exports){
 'use strict';
 var ArrayReader = require('./ArrayReader');
 var utils = require('../utils');
@@ -5640,7 +4970,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"../utils":59,"./ArrayReader":44}],49:[function(require,module,exports){
+},{"../utils":49,"./ArrayReader":34}],39:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -5672,7 +5002,7 @@ module.exports = function (data) {
 
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"../support":57,"../utils":59,"./ArrayReader":44,"./NodeBufferReader":46,"./StringReader":47,"./Uint8ArrayReader":48}],50:[function(require,module,exports){
+},{"../support":47,"../utils":49,"./ArrayReader":34,"./NodeBufferReader":36,"./StringReader":37,"./Uint8ArrayReader":38}],40:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -5681,7 +5011,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],51:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -5709,7 +5039,7 @@ ConvertWorker.prototype.processChunk = function (chunk) {
 };
 module.exports = ConvertWorker;
 
-},{"../utils":59,"./GenericWorker":55}],52:[function(require,module,exports){
+},{"../utils":49,"./GenericWorker":45}],42:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -5735,7 +5065,7 @@ Crc32Probe.prototype.processChunk = function (chunk) {
 };
 module.exports = Crc32Probe;
 
-},{"../crc32":31,"../utils":59,"./GenericWorker":55}],53:[function(require,module,exports){
+},{"../crc32":21,"../utils":49,"./GenericWorker":45}],43:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -5766,7 +5096,7 @@ DataLengthProbe.prototype.processChunk = function (chunk) {
 module.exports = DataLengthProbe;
 
 
-},{"../utils":59,"./GenericWorker":55}],54:[function(require,module,exports){
+},{"../utils":49,"./GenericWorker":45}],44:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -5884,7 +5214,7 @@ DataWorker.prototype._tick = function() {
 
 module.exports = DataWorker;
 
-},{"../utils":59,"./GenericWorker":55}],55:[function(require,module,exports){
+},{"../utils":49,"./GenericWorker":45}],45:[function(require,module,exports){
 'use strict';
 
 /**
@@ -6149,7 +5479,7 @@ GenericWorker.prototype = {
 
 module.exports = GenericWorker;
 
-},{}],56:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -6372,7 +5702,7 @@ StreamHelper.prototype = {
 module.exports = StreamHelper;
 
 }).call(this,require("buffer").Buffer)
-},{"../base64":28,"../external":33,"../nodejs/NodejsStreamOutputAdapter":40,"../support":57,"../utils":59,"./ConvertWorker":51,"./GenericWorker":55,"buffer":19}],57:[function(require,module,exports){
+},{"../base64":18,"../external":23,"../nodejs/NodejsStreamOutputAdapter":30,"../support":47,"../utils":49,"./ConvertWorker":41,"./GenericWorker":45,"buffer":4}],47:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -6414,7 +5744,7 @@ try {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":19,"readable-stream":43}],58:[function(require,module,exports){
+},{"buffer":4,"readable-stream":33}],48:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -6691,7 +6021,7 @@ Utf8EncodeWorker.prototype.processChunk = function (chunk) {
 };
 exports.Utf8EncodeWorker = Utf8EncodeWorker;
 
-},{"./nodejsUtils":41,"./stream/GenericWorker":55,"./support":57,"./utils":59}],59:[function(require,module,exports){
+},{"./nodejsUtils":31,"./stream/GenericWorker":45,"./support":47,"./utils":49}],49:[function(require,module,exports){
 'use strict';
 
 var support = require('./support');
@@ -7171,7 +6501,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
     });
 };
 
-},{"./base64":28,"./external":33,"./nodejsUtils":41,"./support":57,"core-js/library/fn/set-immediate":63}],60:[function(require,module,exports){
+},{"./base64":18,"./external":23,"./nodejsUtils":31,"./support":47,"core-js/library/fn/set-immediate":53}],50:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -7435,7 +6765,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./reader/readerFor":49,"./signature":50,"./support":57,"./utf8":58,"./utils":59,"./zipEntry":61}],61:[function(require,module,exports){
+},{"./reader/readerFor":39,"./signature":40,"./support":47,"./utf8":48,"./utils":49,"./zipEntry":51}],51:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -7729,7 +7059,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":29,"./compressions":30,"./crc32":31,"./reader/readerFor":49,"./support":57,"./utf8":58,"./utils":59}],62:[function(require,module,exports){
+},{"./compressedObject":19,"./compressions":20,"./crc32":21,"./reader/readerFor":39,"./support":47,"./utf8":48,"./utils":49}],52:[function(require,module,exports){
 'use strict';
 
 var StreamHelper = require('./stream/StreamHelper');
@@ -7855,30 +7185,30 @@ for(var i = 0; i < removedMethods.length; i++) {
 }
 module.exports = ZipObject;
 
-},{"./compressedObject":29,"./stream/DataWorker":54,"./stream/GenericWorker":55,"./stream/StreamHelper":56,"./utf8":58}],63:[function(require,module,exports){
+},{"./compressedObject":19,"./stream/DataWorker":44,"./stream/GenericWorker":45,"./stream/StreamHelper":46,"./utf8":48}],53:[function(require,module,exports){
 require('../modules/web.immediate');
 module.exports = require('../modules/_core').setImmediate;
-},{"../modules/_core":67,"../modules/web.immediate":83}],64:[function(require,module,exports){
+},{"../modules/_core":57,"../modules/web.immediate":73}],54:[function(require,module,exports){
 module.exports = function(it){
   if(typeof it != 'function')throw TypeError(it + ' is not a function!');
   return it;
 };
-},{}],65:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var isObject = require('./_is-object');
 module.exports = function(it){
   if(!isObject(it))throw TypeError(it + ' is not an object!');
   return it;
 };
-},{"./_is-object":78}],66:[function(require,module,exports){
+},{"./_is-object":68}],56:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = function(it){
   return toString.call(it).slice(8, -1);
 };
-},{}],67:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var core = module.exports = {version: '2.3.0'};
 if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
-},{}],68:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 // optional / simple context binding
 var aFunction = require('./_a-function');
 module.exports = function(fn, that, length){
@@ -7899,12 +7229,12 @@ module.exports = function(fn, that, length){
     return fn.apply(that, arguments);
   };
 };
-},{"./_a-function":64}],69:[function(require,module,exports){
+},{"./_a-function":54}],59:[function(require,module,exports){
 // Thank's IE8 for his funny defineProperty
 module.exports = !require('./_fails')(function(){
   return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
-},{"./_fails":72}],70:[function(require,module,exports){
+},{"./_fails":62}],60:[function(require,module,exports){
 var isObject = require('./_is-object')
   , document = require('./_global').document
   // in old IE typeof document.createElement is 'object'
@@ -7912,7 +7242,7 @@ var isObject = require('./_is-object')
 module.exports = function(it){
   return is ? document.createElement(it) : {};
 };
-},{"./_global":73,"./_is-object":78}],71:[function(require,module,exports){
+},{"./_global":63,"./_is-object":68}],61:[function(require,module,exports){
 var global    = require('./_global')
   , core      = require('./_core')
   , ctx       = require('./_ctx')
@@ -7974,7 +7304,7 @@ $export.W = 32;  // wrap
 $export.U = 64;  // safe
 $export.R = 128; // real proto method for `library` 
 module.exports = $export;
-},{"./_core":67,"./_ctx":68,"./_global":73,"./_hide":74}],72:[function(require,module,exports){
+},{"./_core":57,"./_ctx":58,"./_global":63,"./_hide":64}],62:[function(require,module,exports){
 module.exports = function(exec){
   try {
     return !!exec();
@@ -7982,12 +7312,12 @@ module.exports = function(exec){
     return true;
   }
 };
-},{}],73:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
 var global = module.exports = typeof window != 'undefined' && window.Math == Math
   ? window : typeof self != 'undefined' && self.Math == Math ? self : Function('return this')();
 if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
-},{}],74:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 var dP         = require('./_object-dp')
   , createDesc = require('./_property-desc');
 module.exports = require('./_descriptors') ? function(object, key, value){
@@ -7996,13 +7326,13 @@ module.exports = require('./_descriptors') ? function(object, key, value){
   object[key] = value;
   return object;
 };
-},{"./_descriptors":69,"./_object-dp":79,"./_property-desc":80}],75:[function(require,module,exports){
+},{"./_descriptors":59,"./_object-dp":69,"./_property-desc":70}],65:[function(require,module,exports){
 module.exports = require('./_global').document && document.documentElement;
-},{"./_global":73}],76:[function(require,module,exports){
+},{"./_global":63}],66:[function(require,module,exports){
 module.exports = !require('./_descriptors') && !require('./_fails')(function(){
   return Object.defineProperty(require('./_dom-create')('div'), 'a', {get: function(){ return 7; }}).a != 7;
 });
-},{"./_descriptors":69,"./_dom-create":70,"./_fails":72}],77:[function(require,module,exports){
+},{"./_descriptors":59,"./_dom-create":60,"./_fails":62}],67:[function(require,module,exports){
 // fast apply, http://jsperf.lnkit.com/fast-apply/5
 module.exports = function(fn, args, that){
   var un = that === undefined;
@@ -8019,11 +7349,11 @@ module.exports = function(fn, args, that){
                       : fn.call(that, args[0], args[1], args[2], args[3]);
   } return              fn.apply(that, args);
 };
-},{}],78:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = function(it){
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
-},{}],79:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var anObject       = require('./_an-object')
   , IE8_DOM_DEFINE = require('./_ie8-dom-define')
   , toPrimitive    = require('./_to-primitive')
@@ -8040,7 +7370,7 @@ exports.f = require('./_descriptors') ? Object.defineProperty : function defineP
   if('value' in Attributes)O[P] = Attributes.value;
   return O;
 };
-},{"./_an-object":65,"./_descriptors":69,"./_ie8-dom-define":76,"./_to-primitive":82}],80:[function(require,module,exports){
+},{"./_an-object":55,"./_descriptors":59,"./_ie8-dom-define":66,"./_to-primitive":72}],70:[function(require,module,exports){
 module.exports = function(bitmap, value){
   return {
     enumerable  : !(bitmap & 1),
@@ -8049,7 +7379,7 @@ module.exports = function(bitmap, value){
     value       : value
   };
 };
-},{}],81:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var ctx                = require('./_ctx')
   , invoke             = require('./_invoke')
   , html               = require('./_html')
@@ -8125,7 +7455,7 @@ module.exports = {
   set:   setTask,
   clear: clearTask
 };
-},{"./_cof":66,"./_ctx":68,"./_dom-create":70,"./_global":73,"./_html":75,"./_invoke":77}],82:[function(require,module,exports){
+},{"./_cof":56,"./_ctx":58,"./_dom-create":60,"./_global":63,"./_html":65,"./_invoke":67}],72:[function(require,module,exports){
 // 7.1.1 ToPrimitive(input [, PreferredType])
 var isObject = require('./_is-object');
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
@@ -8138,14 +7468,14 @@ module.exports = function(it, S){
   if(!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it)))return val;
   throw TypeError("Can't convert object to primitive value");
 };
-},{"./_is-object":78}],83:[function(require,module,exports){
+},{"./_is-object":68}],73:[function(require,module,exports){
 var $export = require('./_export')
   , $task   = require('./_task');
 $export($export.G + $export.B, {
   setImmediate:   $task.set,
   clearImmediate: $task.clear
 });
-},{"./_export":71,"./_task":81}],84:[function(require,module,exports){
+},{"./_export":61,"./_task":71}],74:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -8161,7 +7491,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":85,"./lib/inflate":86,"./lib/utils/common":87,"./lib/zlib/constants":90}],85:[function(require,module,exports){
+},{"./lib/deflate":75,"./lib/inflate":76,"./lib/utils/common":77,"./lib/zlib/constants":80}],75:[function(require,module,exports){
 'use strict';
 
 
@@ -8563,7 +7893,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":87,"./utils/strings":88,"./zlib/deflate":92,"./zlib/messages":97,"./zlib/zstream":99}],86:[function(require,module,exports){
+},{"./utils/common":77,"./utils/strings":78,"./zlib/deflate":82,"./zlib/messages":87,"./zlib/zstream":89}],76:[function(require,module,exports){
 'use strict';
 
 
@@ -8983,7 +8313,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":87,"./utils/strings":88,"./zlib/constants":90,"./zlib/gzheader":93,"./zlib/inflate":95,"./zlib/messages":97,"./zlib/zstream":99}],87:[function(require,module,exports){
+},{"./utils/common":77,"./utils/strings":78,"./zlib/constants":80,"./zlib/gzheader":83,"./zlib/inflate":85,"./zlib/messages":87,"./zlib/zstream":89}],77:[function(require,module,exports){
 'use strict';
 
 
@@ -9087,7 +8417,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],88:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -9274,7 +8604,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":87}],89:[function(require,module,exports){
+},{"./common":77}],79:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -9308,7 +8638,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],90:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict';
 
 
@@ -9360,7 +8690,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],91:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -9403,7 +8733,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],92:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -11260,7 +10590,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":87,"./adler32":89,"./crc32":91,"./messages":97,"./trees":98}],93:[function(require,module,exports){
+},{"../utils/common":77,"./adler32":79,"./crc32":81,"./messages":87,"./trees":88}],83:[function(require,module,exports){
 'use strict';
 
 
@@ -11302,7 +10632,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],94:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -11630,7 +10960,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],95:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 
@@ -13170,7 +12500,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":87,"./adler32":89,"./crc32":91,"./inffast":94,"./inftrees":96}],96:[function(require,module,exports){
+},{"../utils/common":77,"./adler32":79,"./crc32":81,"./inffast":84,"./inftrees":86}],86:[function(require,module,exports){
 'use strict';
 
 
@@ -13497,7 +12827,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":87}],97:[function(require,module,exports){
+},{"../utils/common":77}],87:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -13512,7 +12842,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],98:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 'use strict';
 
 
@@ -14716,7 +14046,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":87}],99:[function(require,module,exports){
+},{"../utils/common":77}],89:[function(require,module,exports){
 'use strict';
 
 
@@ -14747,7 +14077,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],100:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 'use strict';
 var immediate = require('immediate');
 
@@ -15002,7 +14332,7 @@ function race(iterable) {
   }
 }
 
-},{"immediate":24}],101:[function(require,module,exports){
+},{"immediate":14}],91:[function(require,module,exports){
 //! moment.js
 //! version : 2.17.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -19305,7 +18635,7 @@ return hooks;
 
 })));
 
-},{}],102:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -19352,7 +18682,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":103}],103:[function(require,module,exports){
+},{"_process":93}],93:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -19514,10 +18844,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],104:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":105}],105:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":95}],95:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -19593,7 +18923,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":107,"./_stream_writable":109,"core-util-is":20,"inherits":25,"process-nextick-args":102}],106:[function(require,module,exports){
+},{"./_stream_readable":97,"./_stream_writable":99,"core-util-is":5,"inherits":15,"process-nextick-args":92}],96:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -19620,7 +18950,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":108,"core-util-is":20,"inherits":25}],107:[function(require,module,exports){
+},{"./_stream_transform":98,"core-util-is":5,"inherits":15}],97:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -20516,7 +19846,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":105,"_process":103,"buffer":19,"buffer-shims":18,"core-util-is":20,"events":21,"inherits":25,"isarray":27,"process-nextick-args":102,"string_decoder/":116,"util":17}],108:[function(require,module,exports){
+},{"./_stream_duplex":95,"_process":93,"buffer":4,"buffer-shims":3,"core-util-is":5,"events":6,"inherits":15,"isarray":17,"process-nextick-args":92,"string_decoder/":116,"util":2}],98:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -20697,7 +20027,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":105,"core-util-is":20,"inherits":25}],109:[function(require,module,exports){
+},{"./_stream_duplex":95,"core-util-is":5,"inherits":15}],99:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -21226,10 +20556,10 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":105,"_process":103,"buffer":19,"buffer-shims":18,"core-util-is":20,"events":21,"inherits":25,"process-nextick-args":102,"util-deprecate":117}],110:[function(require,module,exports){
+},{"./_stream_duplex":95,"_process":93,"buffer":4,"buffer-shims":3,"core-util-is":5,"events":6,"inherits":15,"process-nextick-args":92,"util-deprecate":117}],100:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":106}],111:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":96}],101:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -21249,13 +20579,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":105,"./lib/_stream_passthrough.js":106,"./lib/_stream_readable.js":107,"./lib/_stream_transform.js":108,"./lib/_stream_writable.js":109,"_process":103}],112:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":95,"./lib/_stream_passthrough.js":96,"./lib/_stream_readable.js":97,"./lib/_stream_transform.js":98,"./lib/_stream_writable.js":99,"_process":93}],102:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":108}],113:[function(require,module,exports){
+},{"./lib/_stream_transform.js":98}],103:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":109}],114:[function(require,module,exports){
+},{"./lib/_stream_writable.js":99}],104:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -33647,7 +32977,651 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":103}],115:[function(require,module,exports){
+},{"_process":93}],105:[function(require,module,exports){
+var VNode = require('./vnode');
+var is = require('./is');
+
+function addNS(data, children, sel) {
+  data.ns = 'http://www.w3.org/2000/svg';
+
+  if (sel !== 'foreignObject' && children !== undefined) {
+    for (var i = 0; i < children.length; ++i) {
+      addNS(children[i].data, children[i].children, children[i].sel);
+    }
+  }
+}
+
+module.exports = function h(sel, b, c) {
+  var data = {}, children, text, i;
+  if (c !== undefined) {
+    data = b;
+    if (is.array(c)) { children = c; }
+    else if (is.primitive(c)) { text = c; }
+  } else if (b !== undefined) {
+    if (is.array(b)) { children = b; }
+    else if (is.primitive(b)) { text = b; }
+    else { data = b; }
+  }
+  if (is.array(children)) {
+    for (i = 0; i < children.length; ++i) {
+      if (is.primitive(children[i])) children[i] = VNode(undefined, undefined, undefined, children[i]);
+    }
+  }
+  if (sel[0] === 's' && sel[1] === 'v' && sel[2] === 'g') {
+    addNS(data, children, sel);
+  }
+  return VNode(sel, data, children, text, undefined);
+};
+
+},{"./is":107,"./vnode":114}],106:[function(require,module,exports){
+function createElement(tagName){
+  return document.createElement(tagName);
+}
+
+function createElementNS(namespaceURI, qualifiedName){
+  return document.createElementNS(namespaceURI, qualifiedName);
+}
+
+function createTextNode(text){
+  return document.createTextNode(text);
+}
+
+
+function insertBefore(parentNode, newNode, referenceNode){
+  parentNode.insertBefore(newNode, referenceNode);
+}
+
+
+function removeChild(node, child){
+  node.removeChild(child);
+}
+
+function appendChild(node, child){
+  node.appendChild(child);
+}
+
+function parentNode(node){
+  return node.parentElement;
+}
+
+function nextSibling(node){
+  return node.nextSibling;
+}
+
+function tagName(node){
+  return node.tagName;
+}
+
+function setTextContent(node, text){
+  node.textContent = text;
+}
+
+module.exports = {
+  createElement: createElement,
+  createElementNS: createElementNS,
+  createTextNode: createTextNode,
+  appendChild: appendChild,
+  removeChild: removeChild,
+  insertBefore: insertBefore,
+  parentNode: parentNode,
+  nextSibling: nextSibling,
+  tagName: tagName,
+  setTextContent: setTextContent
+};
+
+},{}],107:[function(require,module,exports){
+module.exports = {
+  array: Array.isArray,
+  primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
+};
+
+},{}],108:[function(require,module,exports){
+var NamespaceURIs = {
+  "xlink": "http://www.w3.org/1999/xlink"
+};
+
+var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
+                "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
+                "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
+                "muted", "nohref", "noresize", "noshade", "novalidate", "nowrap", "open", "pauseonexit", "readonly",
+                "required", "reversed", "scoped", "seamless", "selected", "sortable", "spellcheck", "translate",
+                "truespeed", "typemustmatch", "visible"];
+
+var booleanAttrsDict = Object.create(null);
+for(var i=0, len = booleanAttrs.length; i < len; i++) {
+  booleanAttrsDict[booleanAttrs[i]] = true;
+}
+
+function updateAttrs(oldVnode, vnode) {
+  var key, cur, old, elm = vnode.elm,
+      oldAttrs = oldVnode.data.attrs, attrs = vnode.data.attrs, namespaceSplit;
+
+  if (!oldAttrs && !attrs) return;
+  oldAttrs = oldAttrs || {};
+  attrs = attrs || {};
+
+  // update modified attributes, add new attributes
+  for (key in attrs) {
+    cur = attrs[key];
+    old = oldAttrs[key];
+    if (old !== cur) {
+      if(!cur && booleanAttrsDict[key])
+        elm.removeAttribute(key);
+      else {
+        namespaceSplit = key.split(":");
+        if(namespaceSplit.length > 1 && NamespaceURIs.hasOwnProperty(namespaceSplit[0]))
+          elm.setAttributeNS(NamespaceURIs[namespaceSplit[0]], key, cur);
+        else
+          elm.setAttribute(key, cur);
+      }
+    }
+  }
+  //remove removed attributes
+  // use `in` operator since the previous `for` iteration uses it (.i.e. add even attributes with undefined value)
+  // the other option is to remove all attributes with value == undefined
+  for (key in oldAttrs) {
+    if (!(key in attrs)) {
+      elm.removeAttribute(key);
+    }
+  }
+}
+
+module.exports = {create: updateAttrs, update: updateAttrs};
+
+},{}],109:[function(require,module,exports){
+function updateClass(oldVnode, vnode) {
+  var cur, name, elm = vnode.elm,
+      oldClass = oldVnode.data.class,
+      klass = vnode.data.class;
+
+  if (!oldClass && !klass) return;
+  oldClass = oldClass || {};
+  klass = klass || {};
+
+  for (name in oldClass) {
+    if (!klass[name]) {
+      elm.classList.remove(name);
+    }
+  }
+  for (name in klass) {
+    cur = klass[name];
+    if (cur !== oldClass[name]) {
+      elm.classList[cur ? 'add' : 'remove'](name);
+    }
+  }
+}
+
+module.exports = {create: updateClass, update: updateClass};
+
+},{}],110:[function(require,module,exports){
+function invokeHandler(handler, vnode, event) {
+  if (typeof handler === "function") {
+    // call function handler
+    handler.call(vnode, event, vnode);
+  } else if (typeof handler === "object") {
+    // call handler with arguments
+    if (typeof handler[0] === "function") {
+      // special case for single argument for performance
+      if (handler.length === 2) {
+        handler[0].call(vnode, handler[1], event, vnode);
+      } else {
+        var args = handler.slice(1);
+        args.push(event);
+        args.push(vnode);
+        handler[0].apply(vnode, args);
+      }
+    } else {
+      // call multiple handlers
+      for (var i = 0; i < handler.length; i++) {
+        invokeHandler(handler[i]);
+      }
+    }
+  }
+}
+
+function handleEvent(event, vnode) {
+  var name = event.type,
+      on = vnode.data.on;
+
+  // call event handler(s) if exists
+  if (on && on[name]) {
+    invokeHandler(on[name], vnode, event);
+  }
+}
+
+function createListener() {
+  return function handler(event) {
+    handleEvent(event, handler.vnode);
+  }
+}
+
+function updateEventListeners(oldVnode, vnode) {
+  var oldOn = oldVnode.data.on,
+      oldListener = oldVnode.listener,
+      oldElm = oldVnode.elm,
+      on = vnode && vnode.data.on,
+      elm = vnode && vnode.elm,
+      name;
+
+  // optimization for reused immutable handlers
+  if (oldOn === on) {
+    return;
+  }
+
+  // remove existing listeners which no longer used
+  if (oldOn && oldListener) {
+    // if element changed or deleted we remove all existing listeners unconditionally
+    if (!on) {
+      for (name in oldOn) {
+        // remove listener if element was changed or existing listeners removed
+        oldElm.removeEventListener(name, oldListener, false);
+      }
+    } else {
+      for (name in oldOn) {
+        // remove listener if existing listener removed
+        if (!on[name]) {
+          oldElm.removeEventListener(name, oldListener, false);
+        }
+      }
+    }
+  }
+
+  // add new listeners which has not already attached
+  if (on) {
+    // reuse existing listener or create new
+    var listener = vnode.listener = oldVnode.listener || createListener();
+    // update vnode for listener
+    listener.vnode = vnode;
+
+    // if element changed or added we add all needed listeners unconditionally
+    if (!oldOn) {
+      for (name in on) {
+        // add listener if element was changed or new listeners added
+        elm.addEventListener(name, listener, false);
+      }
+    } else {
+      for (name in on) {
+        // add listener if new listener added
+        if (!oldOn[name]) {
+          elm.addEventListener(name, listener, false);
+        }
+      }
+    }
+  }
+}
+
+module.exports = {
+  create: updateEventListeners,
+  update: updateEventListeners,
+  destroy: updateEventListeners
+};
+
+},{}],111:[function(require,module,exports){
+function updateProps(oldVnode, vnode) {
+  var key, cur, old, elm = vnode.elm,
+      oldProps = oldVnode.data.props, props = vnode.data.props;
+
+  if (!oldProps && !props) return;
+  oldProps = oldProps || {};
+  props = props || {};
+
+  for (key in oldProps) {
+    if (!props[key]) {
+      delete elm[key];
+    }
+  }
+  for (key in props) {
+    cur = props[key];
+    old = oldProps[key];
+    if (old !== cur && (key !== 'value' || elm[key] !== cur)) {
+      elm[key] = cur;
+    }
+  }
+}
+
+module.exports = {create: updateProps, update: updateProps};
+
+},{}],112:[function(require,module,exports){
+var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
+var nextFrame = function(fn) { raf(function() { raf(fn); }); };
+
+function setNextFrame(obj, prop, val) {
+  nextFrame(function() { obj[prop] = val; });
+}
+
+function updateStyle(oldVnode, vnode) {
+  var cur, name, elm = vnode.elm,
+      oldStyle = oldVnode.data.style,
+      style = vnode.data.style;
+
+  if (!oldStyle && !style) return;
+  oldStyle = oldStyle || {};
+  style = style || {};
+  var oldHasDel = 'delayed' in oldStyle;
+
+  for (name in oldStyle) {
+    if (!style[name]) {
+      elm.style[name] = '';
+    }
+  }
+  for (name in style) {
+    cur = style[name];
+    if (name === 'delayed') {
+      for (name in style.delayed) {
+        cur = style.delayed[name];
+        if (!oldHasDel || cur !== oldStyle.delayed[name]) {
+          setNextFrame(elm.style, name, cur);
+        }
+      }
+    } else if (name !== 'remove' && cur !== oldStyle[name]) {
+      elm.style[name] = cur;
+    }
+  }
+}
+
+function applyDestroyStyle(vnode) {
+  var style, name, elm = vnode.elm, s = vnode.data.style;
+  if (!s || !(style = s.destroy)) return;
+  for (name in style) {
+    elm.style[name] = style[name];
+  }
+}
+
+function applyRemoveStyle(vnode, rm) {
+  var s = vnode.data.style;
+  if (!s || !s.remove) {
+    rm();
+    return;
+  }
+  var name, elm = vnode.elm, idx, i = 0, maxDur = 0,
+      compStyle, style = s.remove, amount = 0, applied = [];
+  for (name in style) {
+    applied.push(name);
+    elm.style[name] = style[name];
+  }
+  compStyle = getComputedStyle(elm);
+  var props = compStyle['transition-property'].split(', ');
+  for (; i < props.length; ++i) {
+    if(applied.indexOf(props[i]) !== -1) amount++;
+  }
+  elm.addEventListener('transitionend', function(ev) {
+    if (ev.target === elm) --amount;
+    if (amount === 0) rm();
+  });
+}
+
+module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
+
+},{}],113:[function(require,module,exports){
+// jshint newcap: false
+/* global require, module, document, Node */
+'use strict';
+
+var VNode = require('./vnode');
+var is = require('./is');
+var domApi = require('./htmldomapi');
+
+function isUndef(s) { return s === undefined; }
+function isDef(s) { return s !== undefined; }
+
+var emptyNode = VNode('', {}, [], undefined, undefined);
+
+function sameVnode(vnode1, vnode2) {
+  return vnode1.key === vnode2.key && vnode1.sel === vnode2.sel;
+}
+
+function createKeyToOldIdx(children, beginIdx, endIdx) {
+  var i, map = {}, key;
+  for (i = beginIdx; i <= endIdx; ++i) {
+    key = children[i].key;
+    if (isDef(key)) map[key] = i;
+  }
+  return map;
+}
+
+var hooks = ['create', 'update', 'remove', 'destroy', 'pre', 'post'];
+
+function init(modules, api) {
+  var i, j, cbs = {};
+
+  if (isUndef(api)) api = domApi;
+
+  for (i = 0; i < hooks.length; ++i) {
+    cbs[hooks[i]] = [];
+    for (j = 0; j < modules.length; ++j) {
+      if (modules[j][hooks[i]] !== undefined) cbs[hooks[i]].push(modules[j][hooks[i]]);
+    }
+  }
+
+  function emptyNodeAt(elm) {
+    var id = elm.id ? '#' + elm.id : '';
+    var c = elm.className ? '.' + elm.className.split(' ').join('.') : '';
+    return VNode(api.tagName(elm).toLowerCase() + id + c, {}, [], undefined, elm);
+  }
+
+  function createRmCb(childElm, listeners) {
+    return function() {
+      if (--listeners === 0) {
+        var parent = api.parentNode(childElm);
+        api.removeChild(parent, childElm);
+      }
+    };
+  }
+
+  function createElm(vnode, insertedVnodeQueue) {
+    var i, data = vnode.data;
+    if (isDef(data)) {
+      if (isDef(i = data.hook) && isDef(i = i.init)) {
+        i(vnode);
+        data = vnode.data;
+      }
+    }
+    var elm, children = vnode.children, sel = vnode.sel;
+    if (isDef(sel)) {
+      // Parse selector
+      var hashIdx = sel.indexOf('#');
+      var dotIdx = sel.indexOf('.', hashIdx);
+      var hash = hashIdx > 0 ? hashIdx : sel.length;
+      var dot = dotIdx > 0 ? dotIdx : sel.length;
+      var tag = hashIdx !== -1 || dotIdx !== -1 ? sel.slice(0, Math.min(hash, dot)) : sel;
+      elm = vnode.elm = isDef(data) && isDef(i = data.ns) ? api.createElementNS(i, tag)
+                                                          : api.createElement(tag);
+      if (hash < dot) elm.id = sel.slice(hash + 1, dot);
+      if (dotIdx > 0) elm.className = sel.slice(dot + 1).replace(/\./g, ' ');
+      if (is.array(children)) {
+        for (i = 0; i < children.length; ++i) {
+          api.appendChild(elm, createElm(children[i], insertedVnodeQueue));
+        }
+      } else if (is.primitive(vnode.text)) {
+        api.appendChild(elm, api.createTextNode(vnode.text));
+      }
+      for (i = 0; i < cbs.create.length; ++i) cbs.create[i](emptyNode, vnode);
+      i = vnode.data.hook; // Reuse variable
+      if (isDef(i)) {
+        if (i.create) i.create(emptyNode, vnode);
+        if (i.insert) insertedVnodeQueue.push(vnode);
+      }
+    } else {
+      elm = vnode.elm = api.createTextNode(vnode.text);
+    }
+    return vnode.elm;
+  }
+
+  function addVnodes(parentElm, before, vnodes, startIdx, endIdx, insertedVnodeQueue) {
+    for (; startIdx <= endIdx; ++startIdx) {
+      api.insertBefore(parentElm, createElm(vnodes[startIdx], insertedVnodeQueue), before);
+    }
+  }
+
+  function invokeDestroyHook(vnode) {
+    var i, j, data = vnode.data;
+    if (isDef(data)) {
+      if (isDef(i = data.hook) && isDef(i = i.destroy)) i(vnode);
+      for (i = 0; i < cbs.destroy.length; ++i) cbs.destroy[i](vnode);
+      if (isDef(i = vnode.children)) {
+        for (j = 0; j < vnode.children.length; ++j) {
+          invokeDestroyHook(vnode.children[j]);
+        }
+      }
+    }
+  }
+
+  function removeVnodes(parentElm, vnodes, startIdx, endIdx) {
+    for (; startIdx <= endIdx; ++startIdx) {
+      var i, listeners, rm, ch = vnodes[startIdx];
+      if (isDef(ch)) {
+        if (isDef(ch.sel)) {
+          invokeDestroyHook(ch);
+          listeners = cbs.remove.length + 1;
+          rm = createRmCb(ch.elm, listeners);
+          for (i = 0; i < cbs.remove.length; ++i) cbs.remove[i](ch, rm);
+          if (isDef(i = ch.data) && isDef(i = i.hook) && isDef(i = i.remove)) {
+            i(ch, rm);
+          } else {
+            rm();
+          }
+        } else { // Text node
+          api.removeChild(parentElm, ch.elm);
+        }
+      }
+    }
+  }
+
+  function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue) {
+    var oldStartIdx = 0, newStartIdx = 0;
+    var oldEndIdx = oldCh.length - 1;
+    var oldStartVnode = oldCh[0];
+    var oldEndVnode = oldCh[oldEndIdx];
+    var newEndIdx = newCh.length - 1;
+    var newStartVnode = newCh[0];
+    var newEndVnode = newCh[newEndIdx];
+    var oldKeyToIdx, idxInOld, elmToMove, before;
+
+    while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      if (isUndef(oldStartVnode)) {
+        oldStartVnode = oldCh[++oldStartIdx]; // Vnode has been moved left
+      } else if (isUndef(oldEndVnode)) {
+        oldEndVnode = oldCh[--oldEndIdx];
+      } else if (sameVnode(oldStartVnode, newStartVnode)) {
+        patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
+        oldStartVnode = oldCh[++oldStartIdx];
+        newStartVnode = newCh[++newStartIdx];
+      } else if (sameVnode(oldEndVnode, newEndVnode)) {
+        patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);
+        oldEndVnode = oldCh[--oldEndIdx];
+        newEndVnode = newCh[--newEndIdx];
+      } else if (sameVnode(oldStartVnode, newEndVnode)) { // Vnode moved right
+        patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
+        api.insertBefore(parentElm, oldStartVnode.elm, api.nextSibling(oldEndVnode.elm));
+        oldStartVnode = oldCh[++oldStartIdx];
+        newEndVnode = newCh[--newEndIdx];
+      } else if (sameVnode(oldEndVnode, newStartVnode)) { // Vnode moved left
+        patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
+        api.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
+        oldEndVnode = oldCh[--oldEndIdx];
+        newStartVnode = newCh[++newStartIdx];
+      } else {
+        if (isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
+        idxInOld = oldKeyToIdx[newStartVnode.key];
+        if (isUndef(idxInOld)) { // New element
+          api.insertBefore(parentElm, createElm(newStartVnode, insertedVnodeQueue), oldStartVnode.elm);
+          newStartVnode = newCh[++newStartIdx];
+        } else {
+          elmToMove = oldCh[idxInOld];
+          patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
+          oldCh[idxInOld] = undefined;
+          api.insertBefore(parentElm, elmToMove.elm, oldStartVnode.elm);
+          newStartVnode = newCh[++newStartIdx];
+        }
+      }
+    }
+    if (oldStartIdx > oldEndIdx) {
+      before = isUndef(newCh[newEndIdx+1]) ? null : newCh[newEndIdx+1].elm;
+      addVnodes(parentElm, before, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
+    } else if (newStartIdx > newEndIdx) {
+      removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
+    }
+  }
+
+  function patchVnode(oldVnode, vnode, insertedVnodeQueue) {
+    var i, hook;
+    if (isDef(i = vnode.data) && isDef(hook = i.hook) && isDef(i = hook.prepatch)) {
+      i(oldVnode, vnode);
+    }
+    var elm = vnode.elm = oldVnode.elm, oldCh = oldVnode.children, ch = vnode.children;
+    if (oldVnode === vnode) return;
+    if (!sameVnode(oldVnode, vnode)) {
+      var parentElm = api.parentNode(oldVnode.elm);
+      elm = createElm(vnode, insertedVnodeQueue);
+      api.insertBefore(parentElm, elm, oldVnode.elm);
+      removeVnodes(parentElm, [oldVnode], 0, 0);
+      return;
+    }
+    if (isDef(vnode.data)) {
+      for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode);
+      i = vnode.data.hook;
+      if (isDef(i) && isDef(i = i.update)) i(oldVnode, vnode);
+    }
+    if (isUndef(vnode.text)) {
+      if (isDef(oldCh) && isDef(ch)) {
+        if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
+      } else if (isDef(ch)) {
+        if (isDef(oldVnode.text)) api.setTextContent(elm, '');
+        addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
+      } else if (isDef(oldCh)) {
+        removeVnodes(elm, oldCh, 0, oldCh.length - 1);
+      } else if (isDef(oldVnode.text)) {
+        api.setTextContent(elm, '');
+      }
+    } else if (oldVnode.text !== vnode.text) {
+      api.setTextContent(elm, vnode.text);
+    }
+    if (isDef(hook) && isDef(i = hook.postpatch)) {
+      i(oldVnode, vnode);
+    }
+  }
+
+  return function(oldVnode, vnode) {
+    var i, elm, parent;
+    var insertedVnodeQueue = [];
+    for (i = 0; i < cbs.pre.length; ++i) cbs.pre[i]();
+
+    if (isUndef(oldVnode.sel)) {
+      oldVnode = emptyNodeAt(oldVnode);
+    }
+
+    if (sameVnode(oldVnode, vnode)) {
+      patchVnode(oldVnode, vnode, insertedVnodeQueue);
+    } else {
+      elm = oldVnode.elm;
+      parent = api.parentNode(elm);
+
+      createElm(vnode, insertedVnodeQueue);
+
+      if (parent !== null) {
+        api.insertBefore(parent, vnode.elm, api.nextSibling(elm));
+        removeVnodes(parent, [oldVnode], 0, 0);
+      }
+    }
+
+    for (i = 0; i < insertedVnodeQueue.length; ++i) {
+      insertedVnodeQueue[i].data.hook.insert(insertedVnodeQueue[i]);
+    }
+    for (i = 0; i < cbs.post.length; ++i) cbs.post[i]();
+    return vnode;
+  };
+}
+
+module.exports = {init: init};
+
+},{"./htmldomapi":106,"./is":107,"./vnode":114}],114:[function(require,module,exports){
+module.exports = function(sel, data, children, text, elm) {
+  var key = data === undefined ? undefined : data.key;
+  return {sel: sel, data: data, children: children,
+          text: text, elm: elm, key: key};
+};
+
+},{}],115:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -33776,7 +33750,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":21,"inherits":25,"readable-stream/duplex.js":104,"readable-stream/passthrough.js":110,"readable-stream/readable.js":111,"readable-stream/transform.js":112,"readable-stream/writable.js":113}],116:[function(require,module,exports){
+},{"events":6,"inherits":15,"readable-stream/duplex.js":94,"readable-stream/passthrough.js":100,"readable-stream/readable.js":101,"readable-stream/transform.js":102,"readable-stream/writable.js":103}],116:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -33999,7 +33973,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":19}],117:[function(require,module,exports){
+},{"buffer":4}],117:[function(require,module,exports){
 (function (global){
 
 /**
@@ -34667,7 +34641,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":118,"_process":103,"inherits":25}],120:[function(require,module,exports){
+},{"./support/isBuffer":118,"_process":93,"inherits":15}],120:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -34731,7 +34705,7 @@ module.exports = {
 	initial
 };
 
-},{"../util/math":149,"./instrument":121,"./media-library":122,"./midi-map":123,"./sequencer":124,"./studio":125,"iblokz/common/obj":4,"rx":114}],121:[function(require,module,exports){
+},{"../util/math":149,"./instrument":121,"./media-library":122,"./midi-map":123,"./sequencer":124,"./studio":125,"iblokz/common/obj":11,"rx":104}],121:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -34817,7 +34791,7 @@ module.exports = {
 	setVca
 };
 
-},{"iblokz/common/obj":4,"rx":114}],122:[function(require,module,exports){
+},{"iblokz/common/obj":11,"rx":104}],122:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -34938,7 +34912,7 @@ module.exports = {
 	loadSamples
 };
 
-},{"../../util/math":149,"iblokz/common/arr":2,"iblokz/common/obj":4,"rx":114}],123:[function(require,module,exports){
+},{"../../util/math":149,"iblokz/common/arr":9,"iblokz/common/obj":11,"rx":104}],123:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -34959,7 +34933,7 @@ module.exports = {
 	connect
 };
 
-},{"../../util/math":149,"iblokz/common/obj":4,"rx":114}],124:[function(require,module,exports){
+},{"../../util/math":149,"iblokz/common/obj":11,"rx":104}],124:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35051,7 +35025,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":149,"iblokz/common/obj":4,"rx":114}],125:[function(require,module,exports){
+},{"../../util/math":149,"iblokz/common/obj":11,"rx":104}],125:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35126,7 +35100,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":149,"iblokz/common/obj":4,"rx":114}],126:[function(require,module,exports){
+},{"../../util/math":149,"iblokz/common/obj":11,"rx":104}],126:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35225,13 +35199,12 @@ let midiMap = {
 	26: ['instrument', 'eg', 'sustain'],
 	27: ['instrument', 'eg', 'release']
 };
-
 /*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
 		const midiMsg = midi.parseMidiMsg(data.msg);
 		// if (midiMsg.state !== false)
-		// console.log('msg', data, midiMsg);
+		console.log('msg', data, midiMsg);
 
 		switch (midiMsg.state) {
 			case 'noteOn':
@@ -35241,15 +35214,13 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 							studio: {volume: state.studio.volume * midiMsg.velocity}
 						});
 				} else {
-					voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
-					voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
+					// voices[midiMsg.note.pitch] = basicSynth.clone(midiMsg.note.pitch);
+					// voices[midiMsg.note.pitch].noteon(state, midiMsg.note.pitch, midiMsg.velocity);
 				}
 				break;
 			case 'noteOff':
 				if (midiMsg.channel === 10) {
 
-				} else if (voices[midiMsg.note.pitch]) {
-					voices[midiMsg.note.pitch].noteoff(state, midiMsg.note.pitch);
 				}
 				break;
 			case 'controller':
@@ -35260,7 +35231,12 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 							(mmap[4] || 0) + midiMsg.value * (mmap[4] || 1) - midiMsg.value * (mmap[3] || 0)
 						).toFixed(mmap[5] || 3);
 						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
-						actions.instrument.updateProp(mmap[1], mmap[2], value);
+						if (mmap[1] === 'eq') {
+							let vcaNum = `vca${state.instrment.vcaOn + 1}`;
+							actions.instrument.updateProp(vcaNum, mmap[2], value);
+						} else {
+							actions.instrument.updateProp(mmap[1], mmap[2], value);
+						}
 					}
 					if (mmap && mmap[0] === 'studio') {
 						let value = parseFloat(
@@ -35277,7 +35253,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":120,"./instr/basic-synth":127,"./instr/sampler":128,"./services":130,"./services/audio":129,"./services/studio":133,"./ui":135,"./util/audio":146,"./util/file":148,"./util/midi":150,"iblokz/adapters/vdom":1,"rx":114}],127:[function(require,module,exports){
+},{"./actions":120,"./instr/basic-synth":127,"./instr/sampler":128,"./services":130,"./services/audio":129,"./services/studio":133,"./ui":135,"./util/audio":146,"./util/file":148,"./util/midi":150,"iblokz/adapters/vdom":8,"rx":104}],127:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -35700,6 +35676,17 @@ const hook = ({state$, midi, actions}) => {
 	instrUpdates$
 		.subscribe(updatePrefs);
 
+	let midiMap = {
+		20: ['instrument', 'vcf', 'cutoff'],
+		21: ['instrument', 'vcf', 'resonance'],
+		22: ['studio', 'bpm', 60, 200, 0],
+		23: ['studio', 'volume'],
+		24: ['instrument', 'eg', 'attack'],
+		25: ['instrument', 'eg', 'decay'],
+		26: ['instrument', 'eg', 'sustain'],
+		27: ['instrument', 'eg', 'release']
+	};
+
 	// hook midi signals
 	midi.access$.subscribe(data => actions.midiMap.connect(data));
 	midi.msg$
@@ -35710,13 +35697,36 @@ const hook = ({state$, midi, actions}) => {
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
-					noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					if (data.msg.note.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
 					break;
 				case 'noteOff':
-					noteOff(state.instrument, data.msg.note);
+					if (data.msg.note.channel !== 10) noteOff(state.instrument, data.msg.note);
 					break;
 				case 'pitchBend':
 					pitchBend(state.instrument, data.msg.pitchValue);
+					break;
+				case 'controller':
+					let mmap = midiMap[data.msg.controller];
+					if (mmap && mmap[0] === 'instrument') {
+						let value = parseFloat(
+							(mmap[4] || 0) + data.msg.value * (mmap[4] || 1) - data.msg.value * (mmap[3] || 0)
+						).toFixed(mmap[5] || 3);
+						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
+						if (mmap[1] === 'eg') {
+							let vcaNum = `vca${state.instrument.vcaOn + 1}`;
+							console.log(vcaNum, mmap[2], value);
+							actions.instrument.updateProp(vcaNum, mmap[2], value);
+						} else {
+							actions.instrument.updateProp(mmap[1], mmap[2], value);
+						}
+					}
+					if (mmap && mmap[0] === 'studio') {
+						let value = parseFloat(
+							(mmap[2] || 0) + data.msg.value * (mmap[3] || 1) - data.msg.value * (mmap[2] || 0)
+						).toFixed(mmap[4] || 3);
+						value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
+						actions.studio.change(mmap[1], value);
+					}
 					break;
 				default:
 					break;
@@ -35728,7 +35738,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":146,"iblokz/common/obj":4,"rx":114}],130:[function(require,module,exports){
+},{"../util/audio":146,"iblokz/common/obj":11,"rx":104}],130:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -35804,7 +35814,7 @@ module.exports = {
 	refresh
 };
 
-},{"iblokz/common/arr":2}],132:[function(require,module,exports){
+},{"iblokz/common/arr":9}],132:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -35931,7 +35941,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":128,"../util/context":147,"../util/math":149,"iblokz/common/obj":4,"rx":114}],134:[function(require,module,exports){
+},{"../instr/sampler":128,"../util/context":147,"../util/math":149,"iblokz/common/obj":11,"rx":104}],134:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
@@ -36002,7 +36012,7 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"../../util/file":148,"iblokz/adapters/vdom":1,"moment":101}],135:[function(require,module,exports){
+},{"../../util/file":148,"iblokz/adapters/vdom":8,"moment":91}],135:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz/adapters/vdom');
@@ -36022,7 +36032,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
 ]);
 
-},{"./header":134,"./instrument":137,"./media-library":142,"./midi-keyboard":143,"./midi-map":144,"./sequencer":145,"iblokz/adapters/vdom":1}],136:[function(require,module,exports){
+},{"./header":134,"./instrument":137,"./media-library":142,"./midi-keyboard":143,"./midi-map":144,"./sequencer":145,"iblokz/adapters/vdom":8}],136:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36070,7 +36080,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz/adapters/vdom":1}],137:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],137:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36121,7 +36131,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"./delay":136,"./lfo":138,"./vca":139,"./vcf":140,"./vco":141,"iblokz/adapters/vdom":1}],138:[function(require,module,exports){
+},{"./delay":136,"./lfo":138,"./vca":139,"./vcf":140,"./vco":141,"iblokz/adapters/vdom":8}],138:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36172,7 +36182,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz/adapters/vdom":1}],139:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],139:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36233,7 +36243,7 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz/adapters/vdom":1}],140:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],140:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36274,7 +36284,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz/adapters/vdom":1}],141:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],141:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36327,7 +36337,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz/adapters/vdom":1}],142:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],142:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36420,7 +36430,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1,"iblokz/common/obj":4,"iblokz/common/str":5}],143:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8,"iblokz/common/obj":11,"iblokz/common/str":12}],143:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36467,7 +36477,7 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],144:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],144:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36492,7 +36502,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz/adapters/vdom":1}],145:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],145:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
@@ -36573,7 +36583,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz/adapters/vdom":1}],146:[function(require,module,exports){
+},{"iblokz/adapters/vdom":8}],146:[function(require,module,exports){
 'use strict';
 
 const arr = require('iblokz/common/arr');
@@ -36742,7 +36752,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz/common/arr":2,"iblokz/common/fn":3,"iblokz/common/obj":4}],147:[function(require,module,exports){
+},{"iblokz/common/arr":9,"iblokz/common/fn":10,"iblokz/common/obj":11}],147:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -36805,7 +36815,7 @@ module.exports = {
 	save
 };
 
-},{"file-saver":22,"iblokz/common/fn":3,"iblokz/common/obj":4,"jszip":37,"rx":114}],149:[function(require,module,exports){
+},{"file-saver":7,"iblokz/common/fn":10,"iblokz/common/obj":11,"jszip":27,"rx":104}],149:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -36938,7 +36948,7 @@ const init = () => {
 					})
 					.map(msg => ({access, input, msg}))
 				), $.empty()
-			)
+			).share()
 	);
 
 	return {
@@ -36950,4 +36960,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":114}]},{},[126]);
+},{"rx":104}]},{},[126]);

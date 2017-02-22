@@ -9,7 +9,7 @@
     "build:js": "browserify src/js/index.js -o dist/js/app.js",
     "build:sass": "node-sass --include-path=$(node bin/sass-paths.js) src/sass/style.sass dist/css/style.css",
     "watch": "npm run watch:js & npm run watch:sass & npm run livereload",
-    "watch:js": "watchify -p browserify-hmr src/js/index.js -o dist/js/app.js",
+    "watch:js": "watchify -p browserify-hmr src/js/index.js -o dist/js/app.js --debug",
     "watch:sass": "npm run build:sass -- --watch src/sass/**/*",
     "livereload": "livereload dist/**/*.css -d",
     "start": "npm run build && serve --path dist & npm run watch"

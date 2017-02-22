@@ -28,7 +28,12 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		input('.measure', {
 			props: {value: state.studio.measure || '4/4', size: 6},
 			on: {input: ev => actions.studio.change('measure', ev.target.value)}
-		})
+		}),
+		(state.sequencer.channel === -1)
+			? button('.fa.fa-plus', {on: {click: () => actions.sequencer.addChannel()}})
+			: button('.fa.fa-minus', {on: {
+				click: () => actions.sequencer.deleteChannel(state.sequencer.channel)
+			}})
 	]),
 	div('.body', [].concat(
 		/*

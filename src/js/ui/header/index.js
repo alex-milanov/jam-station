@@ -2,7 +2,7 @@
 
 const moment = require('moment');
 
-const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz/adapters/vdom');
+const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz-snabbdom-helpers');
 
 const fileUtil = require('../../util/file');
 

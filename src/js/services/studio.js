@@ -6,7 +6,6 @@ const Subject = Rx.Subject;
 
 const {AudioContext} = require('../util/context');
 const Sampler = require('../instr/sampler');
-const obj = require('iblokz/common/obj');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 const stream = new Subject();

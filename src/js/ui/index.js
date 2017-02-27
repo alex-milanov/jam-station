@@ -1,6 +1,6 @@
 'use strict';
 
-const {div} = require('iblokz/adapters/vdom');
+const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');

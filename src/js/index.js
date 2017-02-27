@@ -2,7 +2,7 @@
 
 const Rx = require('rx');
 const $ = Rx.Observable;
-const vdom = require('iblokz/adapters/vdom');
+const vdom = require('iblokz-snabbdom-helpers');
 const {h, div, input, hr, p, button} = vdom;
 
 const midi = require('./util/midi')();

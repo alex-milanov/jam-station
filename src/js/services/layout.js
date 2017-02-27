@@ -1,13 +1,11 @@
 'use strict';
 
-const arr = require('iblokz/common/arr');
-
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 const init = () => {};
 const refresh = ({state, actions}) => {
 	const ui = document.querySelector('#ui');
-	const list = arr.fromList(ui.children);
+	const list = Array.from(ui.children);
 
 	const distance = 14;
 
@@ -27,7 +25,7 @@ const refresh = ({state, actions}) => {
 				el.style.left = '50%';
 			}
 
-			const keys = arr.fromList(el.querySelector('.keys').children);
+			const keys = Array.from(el.querySelector('.keys').children);
 			console.log(keys);
 
 			const whiteKeysLength = keys.filter(key => key.className === 'white').length;

@@ -1,8 +1,6 @@
 'use strict';
 
-const arr = require('iblokz/common/arr');
-const obj = require('iblokz/common/obj');
-const fn = require('iblokz/common/fn');
+const {obj, fn} = require('iblokz-data');
 
 let context = new (
 	window.AudioContext

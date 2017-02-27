@@ -2,7 +2,7 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i
-} = require('iblokz/adapters/vdom');
+} = require('iblokz-snabbdom-helpers');
 
 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 

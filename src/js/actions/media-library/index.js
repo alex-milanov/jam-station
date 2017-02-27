@@ -4,8 +4,7 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const obj = require('iblokz/common/obj');
-const arr = require('iblokz/common/arr');
+const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();

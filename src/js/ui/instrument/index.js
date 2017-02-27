@@ -3,7 +3,7 @@
 const {
 	div, h2, span, p, ul, li, hr, button, br,
 	form, label, input, fieldset, legend, i, img
-} = require('iblokz/adapters/vdom');
+} = require('iblokz-snabbdom-helpers');
 
 const vco = require('./vco');
 const vca = require('./vca');

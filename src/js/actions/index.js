@@ -11,7 +11,7 @@ const midiMap = require('./midi-map');
 const mediaLibrary = require('./media-library');
 
 // util
-const obj = require('iblokz/common/obj');
+const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../util/math');
 
 const stream = new Subject();

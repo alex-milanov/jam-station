@@ -1,6 +1,6 @@
 'use strict';
 
-const {div, h2, i, span, p, input, label, hr, button} = require('iblokz/adapters/vdom');
+const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 

@@ -3,10 +3,9 @@
 const {
 	div, h2, span, p, ul, li, hr, button,
 	fieldset, legend, i, input, label
-} = require('iblokz/adapters/vdom');
+} = require('iblokz-snabbdom-helpers');
 
-const obj = require('iblokz/common/obj');
-const str = require('iblokz/common/str');
+const {obj, str} = require('iblokz-data');
 
 const indexAt = (collection, prop, value) =>
 	collection.reduce((index, doc, i) => doc[prop] === value ? i : index, -1);

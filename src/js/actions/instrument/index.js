@@ -4,7 +4,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
-const obj = require('iblokz/common/obj');
+const {obj} = require('iblokz-data');
 
 const stream = new Subject();
 

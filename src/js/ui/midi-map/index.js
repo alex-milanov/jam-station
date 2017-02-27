@@ -2,7 +2,7 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i
-} = require('iblokz/adapters/vdom');
+} = require('iblokz-snabbdom-helpers');
 
 module.exports = ({state, actions}) => div('.midi-map', [
 	div('.header', [

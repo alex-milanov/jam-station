@@ -35834,10 +35834,10 @@ const hook = ({state$, midi, actions}) => {
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
-					if (data.msg.note.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					if (data.msg.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
 					break;
 				case 'noteOff':
-					if (data.msg.note.channel !== 10) noteOff(state.instrument, data.msg.note);
+					if (data.msg.channel !== 10) noteOff(state.instrument, data.msg.note);
 					break;
 				case 'pitchBend':
 					pitchBend(state.instrument, data.msg.pitchValue);
@@ -35854,7 +35854,8 @@ const hook = ({state$, midi, actions}) => {
 							console.log(vcaNum, mmap[2], value);
 							actions.instrument.updateProp(vcaNum, mmap[2], value);
 						} else {
-							actions.instrument.updateProp(mmap[1], mmap[2], value);
+							// actions.instrument.updateProp(mmap[1], mmap[2], value);
+							updatePrefs(obj.patch(state.instrument, [mmap[1], mmap[2]], value));
 						}
 					}
 					if (mmap && mmap[0] === 'studio') {

@@ -74,17 +74,31 @@ const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =
 ));
 
 module.exports = ({state, actions}) => div('.media-library', [
+	/*
 	div('.header', [
 		h2([i('.fa.fa-book'), ' Media Library'])
 	]),
+	*/
 	div('.body', [
 		fieldset([
 			legend('Samples'),
 			parseTree(state.mediaLibrary.samples, state, actions)
 		]),
 		fieldset([
-			legend('Instruments'),
-			ul([li([label('BasicSynth')])])
+			legend('Patches'),
+			ul(state.mediaLibrary.patches.map(patch =>
+				li('[draggable="true"]', {
+					on: {dblclick: () => actions.instrument.applyPatch(
+						patch.patch
+					)}
+				}, [
+					label([
+						i('.fa.fa-file-code-o'),
+						' ',
+						patch.name
+					])
+				]))
+			)
 		])
 	])
 ]);

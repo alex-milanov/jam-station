@@ -5,7 +5,7 @@ $jam-st-edior-header-height: 38px
 	position: absolute
 	left: $x
 	top: $y
-	display: inline-block
+	display: block
 	//background: linear-gradient(-30deg, rgba(255,255,255,0.9) 0%,rgba(243,243,243,0.9) 50%,rgba(237,237,237,0.9) 51%,rgba(255,255,255,0.9) 100%)
 	background: #e0e0e0
 	box-shadow: 0px 0px 3px #777
@@ -17,7 +17,7 @@ $jam-st-edior-header-height: 38px
 		box-sizing: content-box
 		// border-bottom: 1px solid #aaa
 		background: #eaeaea
-		> *
+		> *, > div > *
 			+no-margin-padding
 			+header-height($jam-st-edior-header-height)
 			margin: 0px 7px
@@ -28,6 +28,8 @@ $jam-st-edior-header-height: 38px
 			> i.fa
 				+no-margin-padding
 				+header-height($jam-st-edior-header-height)
+		> div
+			margin: 0px
 		input, button
 			+header-height($jam-st-edior-header-height - 8)
 			margin: 4px 7px

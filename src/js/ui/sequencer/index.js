@@ -19,21 +19,20 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			input('.bar[type="number"]', {props: {value: 0, size: 6}}),
 			button('.right.fa.fa-caret-right')
 		]),
-		label('BPM'),
-		input('.bpm', {
-			props: {value: state.studio.bpm || 120, size: 6},
-			on: {input: ev => actions.studio.change('bpm', ev.target.value)}
-		}),
 		label('MSR'),
 		input('.measure', {
 			props: {value: state.studio.measure || '4/4', size: 6},
 			on: {input: ev => actions.studio.change('measure', ev.target.value)}
 		}),
-		(state.sequencer.channel === -1)
-			? button('.fa.fa-plus', {on: {click: () => actions.sequencer.addChannel()}})
-			: button('.fa.fa-minus', {on: {
-				click: () => actions.sequencer.deleteChannel(state.sequencer.channel)
-			}})
+		div('.right', [
+			(state.sequencer.channel !== -1) ? button('.fa.fa-minus', {on: {
+				click: () => actions.sequencer.remove(state.sequencer.channel)
+			}}) : '',
+			(state.sequencer.channel !== -1) ? button('.fa.fa-eraser', {on: {
+				click: () => actions.sequencer.clear(state.sequencer.channel)
+			}}) : '',
+			button('.fa.fa-plus', {on: {click: () => actions.sequencer.add()}})
+		])
 	]),
 	div('.body', [].concat(
 		/*
@@ -46,11 +45,15 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		))],
 		*/
 		loop(state.sequencer.channels.length, r =>
-			div(`.row`, [].concat(
+			div(`.row`, {
+				style: {
+					minWidth: 142 + 22 * state.studio.beatLength + 'px'
+				}
+			}, [].concat(
 				[div('.channel', {
 					class: {on: state.sequencer.channel === r},
 					on: {
-						click: () => actions.sequencer.selectChannel(r),
+						click: () => actions.sequencer.select(r),
 						dragover: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'dashed')),
 						dragleave: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'solid')),
 						dragend: ev => ev.preventDefault()

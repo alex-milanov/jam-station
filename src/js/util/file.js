@@ -17,14 +17,14 @@ const load = (file, readAs = 'text') => $.create(stream => {
 		);
 		stream.onCompleted();
 	};
-	console.log(file, readAs);
+	// console.log(file, readAs);
 	((typeof file === 'string')
 		? $.fromPromise(fetch(file)).flatMap(res => res.blob())
 		: $.just(file))
-		.subscribe(f => (console.log(f), fn.switch(readAs, {
+		.subscribe(f => fn.switch(readAs, {
 			arrayBuffer: f => fr.readAsArrayBuffer(f),
 			default: f => fr.readAsText(f)
-		})(f)));
+		})(f));
 });
 
 const loadZip = file => load(file, 'arrayBuffer')
@@ -32,7 +32,7 @@ const loadZip = file => load(file, 'arrayBuffer')
 	.flatMap(zf => $.concat(
 		Object.keys(zf.files)
 			.filter(k => !zf.files[k].dir)
-			.map(k => (console.log(k), k))
+			// .map(k => (console.log(k), k))
 			.map(k => $.fromPromise(zf.files[k].async('arraybuffer')).map(v => ({k, v})))
 		).reduce((o, {k, v}) => obj.patch(o, k, v), {})
 	);

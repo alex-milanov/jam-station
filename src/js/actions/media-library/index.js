@@ -4,7 +4,7 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {obj} = require('iblokz-data');
+const {obj, arr} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
@@ -79,8 +79,131 @@ const initial = {
 			},
 			'ride02.ogg',
 			'rim01.ogg'
-		]}
-	]
+		]},
+		{
+			name: 'custom',
+			items: [
+			]
+		}
+	],
+	patches: [{
+		name: 'default',
+		patch: {
+			vcaOn: 0,
+			vca1: {
+				volume: 0.41,
+				attack: 0.31,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.21
+			},
+			vca2: {
+				volume: 0.43,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.19
+			},
+			vco1: {
+				on: true,
+				type: 'square',
+				detune: -1
+			},
+			vco2: {
+				on: true,
+				type: 'sawtooth',
+				detune: 1
+			},
+			lfo: {
+				on: false,
+				type: 'sawtooth',
+				frequency: 5,
+				gain: 0.15
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.64,
+				resonance: 0,
+				gain: 0
+			}
+		}
+	}, {
+		name: 'fantasy bells',
+		patch: {
+			vcaOn: 1,
+			vca1: {
+				volume: 0.21,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.52
+			},
+			vca2: {
+				volume: 0.17,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.55
+			},
+			vco1: {
+				on: true,
+				type: 'sawtooth',
+				detune: -5
+			},
+			vco2: {
+				on: true,
+				type: 'sine',
+				detune: 8
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.57,
+				resonance: 0.37,
+				gain: 0
+			}
+		}
+	}, {
+		name: 'accordeon',
+		patch: {
+			vcaOn: 0,
+			vca1: {
+				volume: 0.14,
+				attack: 0.19,
+				decay: 0.55,
+				sustain: 0.5,
+				release: 0.43
+			},
+			vca2: {
+				volume: 0.21,
+				attack: 0.16,
+				decay: 0.17,
+				sustain: 0.47,
+				release: 0.38
+			},
+			vco1: {
+				on: true,
+				type: 'square',
+				detune: -3
+			},
+			vco2: {
+				on: true,
+				type: 'sawtooth',
+				detune: 3
+			},
+			lfo: {
+				on: false,
+				type: 'sawtooth',
+				frequency: 5,
+				gain: 0.15
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.51,
+				resonance: 0.14,
+				gain: 0
+			}
+		}
+	}]
 };
 
 const indexAt = (list, prop, value) =>
@@ -111,8 +234,31 @@ const loadSamples = list => stream.onNext(state => obj.patch(state, 'mediaLibrar
 	)
 }));
 
+const addSample = (sample, bank = 'custom') => stream.onNext(state =>
+	obj.patch(state, 'mediaLibrary', [indexAt(state.mediaLibrary.samples, 'name', bank)].map(index => ({
+		samples: [].concat(
+			state.mediaLibrary.samples.slice(0, index),
+			obj.patch(state.mediaLibrary.samples[index], {
+				index: arr.add(state.mediaLibrary.samples[index].items, sample)
+			}),
+			state.mediaLibrary.samples.slice(index + 1)
+		)
+	})).pop())
+);
+
+const addPatch = (name, patch) => stream.onNext(state =>
+	obj.patch(state, 'mediaLibrary', {
+		patches: arr.add(state.mediaLibrary.patches, {
+			name,
+			patch
+		})
+	})
+);
+
 module.exports = {
 	stream,
 	initial,
-	loadSamples
+	loadSamples,
+	addSample,
+	addPatch
 };

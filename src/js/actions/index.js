@@ -36,7 +36,8 @@ const initial = Object.assign({
 	studio: studio.initial,
 	sequencer: sequencer.initial,
 	instrument: instrument.initial,
-	mediaLibrary: mediaLibrary.initial
+	mediaLibrary: mediaLibrary.initial,
+	midiMap: midiMap.initial
 });
 
 // todo merge loaded state
@@ -46,6 +47,9 @@ const load = content => stream.onNext(state => Object.assign({}, state, {
 	instrument: content.instrument || state.instrument
 }));
 const clear = () => load(initial);
+
+const change = (section, prop, val) => stream.onNext(state =>
+	obj.patch(state, [section].concat(prop), val));
 
 module.exports = {
 	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
@@ -58,5 +62,6 @@ module.exports = {
 	midiMap,
 	load,
 	clear,
+	change,
 	initial
 };

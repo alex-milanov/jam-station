@@ -76,9 +76,14 @@ const setVca = index => stream.onNext(
 	state => obj.patch(state, ['instrument', 'vcaOn'], index)
 );
 
+const applyPatch = patch => stream.onNext(
+	state => obj.patch(state, 'instrument', patch)
+);
+
 module.exports = {
 	stream,
 	initial,
 	updateProp,
-	setVca
+	setVca,
+	applyPatch
 };

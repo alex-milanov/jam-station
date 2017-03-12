@@ -13,14 +13,13 @@ $jam-st-header-height: 38px
 	> *
 		+no-margin-padding
 		+header-height($jam-st-header-height)
-	h1
+	ul.center
 		+header-height($jam-st-header-height)
 		font-size: 18px
 		position: absolute
 		top: 0px
 		left: 50%
-		width: 300px
-		margin-left: -150px
+		transform: translate(-50%, 0)
 		text-align: center
 		// margin: 5px 0px 5px 0px
 		background: #eaeaea
@@ -28,11 +27,24 @@ $jam-st-header-height: 38px
 		box-sizing: border-box
 		border: 1px solid #aaa
 		border-width: 0px 1px
+		li
+			margin: 0px 7px
+			> *
+				font-size: 16px
+				margin: 0px 3px
+				float: left
 		img
-			+no-margin-padding
 			height: $jam-st-header-height
-			margin-left: -10px
 			vertical-align: top
+		input
+			+header-height($jam-st-header-height)
+			text-align: center
+			outline: none
+			border: 0px
+			background: inherit
+			transition: background .3s
+			&:focus
+				background: #ddd
 	ul
 		+no-margin-padding
 		+header-height($jam-st-header-height)

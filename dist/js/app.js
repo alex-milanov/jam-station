@@ -2014,7 +2014,250 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":1,"ieee754":13,"isarray":17}],5:[function(require,module,exports){
+},{"base64-js":1,"ieee754":17,"isarray":21}],5:[function(require,module,exports){
+/*
+ * classList.js: Cross-browser full element.classList implementation.
+ * 2014-07-23
+ *
+ * By Eli Grey, http://eligrey.com
+ * Public Domain.
+ * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+ */
+
+/*global self, document, DOMException */
+
+/*! @source http://purl.eligrey.com/github/classList.js/blob/master/classList.js*/
+
+/* Copied from MDN:
+ * https://developer.mozilla.org/en-US/docs/Web/API/Element/classList
+ */
+
+if ("document" in window.self) {
+
+  // Full polyfill for browsers with no classList support
+  // Including IE < Edge missing SVGElement.classList
+  if (!("classList" in document.createElement("_"))
+    || document.createElementNS && !("classList" in document.createElementNS("http://www.w3.org/2000/svg","g"))) {
+
+  (function (view) {
+
+    "use strict";
+
+    if (!('Element' in view)) return;
+
+    var
+        classListProp = "classList"
+      , protoProp = "prototype"
+      , elemCtrProto = view.Element[protoProp]
+      , objCtr = Object
+      , strTrim = String[protoProp].trim || function () {
+        return this.replace(/^\s+|\s+$/g, "");
+      }
+      , arrIndexOf = Array[protoProp].indexOf || function (item) {
+        var
+            i = 0
+          , len = this.length
+        ;
+        for (; i < len; i++) {
+          if (i in this && this[i] === item) {
+            return i;
+          }
+        }
+        return -1;
+      }
+      // Vendors: please allow content code to instantiate DOMExceptions
+      , DOMEx = function (type, message) {
+        this.name = type;
+        this.code = DOMException[type];
+        this.message = message;
+      }
+      , checkTokenAndGetIndex = function (classList, token) {
+        if (token === "") {
+          throw new DOMEx(
+              "SYNTAX_ERR"
+            , "An invalid or illegal string was specified"
+          );
+        }
+        if (/\s/.test(token)) {
+          throw new DOMEx(
+              "INVALID_CHARACTER_ERR"
+            , "String contains an invalid character"
+          );
+        }
+        return arrIndexOf.call(classList, token);
+      }
+      , ClassList = function (elem) {
+        var
+            trimmedClasses = strTrim.call(elem.getAttribute("class") || "")
+          , classes = trimmedClasses ? trimmedClasses.split(/\s+/) : []
+          , i = 0
+          , len = classes.length
+        ;
+        for (; i < len; i++) {
+          this.push(classes[i]);
+        }
+        this._updateClassName = function () {
+          elem.setAttribute("class", this.toString());
+        };
+      }
+      , classListProto = ClassList[protoProp] = []
+      , classListGetter = function () {
+        return new ClassList(this);
+      }
+    ;
+    // Most DOMException implementations don't allow calling DOMException's toString()
+    // on non-DOMExceptions. Error's toString() is sufficient here.
+    DOMEx[protoProp] = Error[protoProp];
+    classListProto.item = function (i) {
+      return this[i] || null;
+    };
+    classListProto.contains = function (token) {
+      token += "";
+      return checkTokenAndGetIndex(this, token) !== -1;
+    };
+    classListProto.add = function () {
+      var
+          tokens = arguments
+        , i = 0
+        , l = tokens.length
+        , token
+        , updated = false
+      ;
+      do {
+        token = tokens[i] + "";
+        if (checkTokenAndGetIndex(this, token) === -1) {
+          this.push(token);
+          updated = true;
+        }
+      }
+      while (++i < l);
+
+      if (updated) {
+        this._updateClassName();
+      }
+    };
+    classListProto.remove = function () {
+      var
+          tokens = arguments
+        , i = 0
+        , l = tokens.length
+        , token
+        , updated = false
+        , index
+      ;
+      do {
+        token = tokens[i] + "";
+        index = checkTokenAndGetIndex(this, token);
+        while (index !== -1) {
+          this.splice(index, 1);
+          updated = true;
+          index = checkTokenAndGetIndex(this, token);
+        }
+      }
+      while (++i < l);
+
+      if (updated) {
+        this._updateClassName();
+      }
+    };
+    classListProto.toggle = function (token, force) {
+      token += "";
+
+      var
+          result = this.contains(token)
+        , method = result ?
+          force !== true && "remove"
+        :
+          force !== false && "add"
+      ;
+
+      if (method) {
+        this[method](token);
+      }
+
+      if (force === true || force === false) {
+        return force;
+      } else {
+        return !result;
+      }
+    };
+    classListProto.toString = function () {
+      return this.join(" ");
+    };
+
+    if (objCtr.defineProperty) {
+      var classListPropDesc = {
+          get: classListGetter
+        , enumerable: true
+        , configurable: true
+      };
+      try {
+        objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+      } catch (ex) { // IE 8 doesn't support enumerable:true
+        if (ex.number === -0x7FF5EC54) {
+          classListPropDesc.enumerable = false;
+          objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+        }
+      }
+    } else if (objCtr[protoProp].__defineGetter__) {
+      elemCtrProto.__defineGetter__(classListProp, classListGetter);
+    }
+
+    }(window.self));
+
+    } else {
+    // There is full or partial native classList support, so just check if we need
+    // to normalize the add/remove and toggle APIs.
+
+    (function () {
+      "use strict";
+
+      var testElement = document.createElement("_");
+
+      testElement.classList.add("c1", "c2");
+
+      // Polyfill for IE 10/11 and Firefox <26, where classList.add and
+      // classList.remove exist but support only one argument at a time.
+      if (!testElement.classList.contains("c2")) {
+        var createMethod = function(method) {
+          var original = DOMTokenList.prototype[method];
+
+          DOMTokenList.prototype[method] = function(token) {
+            var i, len = arguments.length;
+
+            for (i = 0; i < len; i++) {
+              token = arguments[i];
+              original.call(this, token);
+            }
+          };
+        };
+        createMethod('add');
+        createMethod('remove');
+      }
+
+      testElement.classList.toggle("c3", false);
+
+      // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
+      // support the second argument.
+      if (testElement.classList.contains("c3")) {
+        var _toggle = DOMTokenList.prototype.toggle;
+
+        DOMTokenList.prototype.toggle = function(token, force) {
+          if (1 in arguments && !this.contains(token) === !force) {
+            return force;
+          } else {
+            return _toggle.call(this, token);
+          }
+        };
+
+      }
+
+      testElement = null;
+    }());
+  }
+}
+
+},{}],6:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2125,7 +2368,169 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":16}],6:[function(require,module,exports){
+},{"../../is-buffer/index.js":20}],7:[function(require,module,exports){
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Tests for browser support.
+ */
+
+var innerHTMLBug = false;
+var bugTestDiv;
+if (typeof document !== 'undefined') {
+  bugTestDiv = document.createElement('div');
+  // Setup
+  bugTestDiv.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
+  // Make sure that link elements get serialized correctly by innerHTML
+  // This requires a wrapper element in IE
+  innerHTMLBug = !bugTestDiv.getElementsByTagName('link').length;
+  bugTestDiv = undefined;
+}
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  legend: [1, '<fieldset>', '</fieldset>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  // for script/link/style tags to work in IE6-8, you have to wrap
+  // in a div with a non-whitespace character in front, ha!
+  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
+};
+
+map.td =
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+map.option =
+map.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+map.thead =
+map.tbody =
+map.colgroup =
+map.caption =
+map.tfoot = [1, '<table>', '</table>'];
+
+map.polyline =
+map.ellipse =
+map.polygon =
+map.circle =
+map.text =
+map.line =
+map.path =
+map.rect =
+map.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+
+/**
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
+ * instance, depending on the contents of the `html` string.
+ *
+ * @param {String} html - HTML string to "domify"
+ * @param {Document} doc - The `document` instance to create the Node for
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
+ * @api private
+ */
+
+function parse(html, doc) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+
+  // default to the global `document` object
+  if (!doc) doc = document;
+
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) return doc.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = doc.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = doc.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  // one element
+  if (el.firstChild == el.lastChild) {
+    return el.removeChild(el.firstChild);
+  }
+
+  // several elements
+  var fragment = doc.createDocumentFragment();
+  while (el.firstChild) {
+    fragment.appendChild(el.removeChild(el.firstChild));
+  }
+
+  return fragment;
+}
+
+},{}],8:[function(require,module,exports){
+/**
+ * Code refactored from Mozilla Developer Network:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+ */
+
+'use strict';
+
+function assign(target, firstSource) {
+  if (target === undefined || target === null) {
+    throw new TypeError('Cannot convert first argument to object');
+  }
+
+  var to = Object(target);
+  for (var i = 1; i < arguments.length; i++) {
+    var nextSource = arguments[i];
+    if (nextSource === undefined || nextSource === null) {
+      continue;
+    }
+
+    var keysArray = Object.keys(Object(nextSource));
+    for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+      var nextKey = keysArray[nextIndex];
+      var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+      if (desc !== undefined && desc.enumerable) {
+        to[nextKey] = nextSource[nextKey];
+      }
+    }
+  }
+  return to;
+}
+
+function polyfill() {
+  if (!Object.assign) {
+    Object.defineProperty(Object, 'assign', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: assign
+    });
+  }
+}
+
+module.exports = {
+  assign: assign,
+  polyfill: polyfill
+};
+
+},{}],9:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -2429,7 +2834,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /* FileSaver.js
  * A saveAs() FileSaver implementation.
  * 1.3.2
@@ -2619,7 +3024,269 @@ if (typeof module !== "undefined" && module.exports) {
   });
 }
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+// get successful control from form and assemble into object
+// http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
+
+// types which indicate a submit action and are not successful controls
+// these will be ignored
+var k_r_submitter = /^(?:submit|button|image|reset|file)$/i;
+
+// node names which could be successful controls
+var k_r_success_contrls = /^(?:input|select|textarea|keygen)/i;
+
+// Matches bracket notation.
+var brackets = /(\[[^\[\]]*\])/g;
+
+// serializes form fields
+// @param form MUST be an HTMLForm element
+// @param options is an optional argument to configure the serialization. Default output
+// with no options specified is a url encoded string
+//    - hash: [true | false] Configure the output type. If true, the output will
+//    be a js object.
+//    - serializer: [function] Optional serializer function to override the default one.
+//    The function takes 3 arguments (result, key, value) and should return new result
+//    hash and url encoded str serializers are provided with this module
+//    - disabled: [true | false]. If true serialize disabled fields.
+//    - empty: [true | false]. If true serialize empty fields
+function serialize(form, options) {
+    if (typeof options != 'object') {
+        options = { hash: !!options };
+    }
+    else if (options.hash === undefined) {
+        options.hash = true;
+    }
+
+    var result = (options.hash) ? {} : '';
+    var serializer = options.serializer || ((options.hash) ? hash_serializer : str_serialize);
+
+    var elements = form && form.elements ? form.elements : [];
+
+    //Object store each radio and set if it's empty or not
+    var radio_store = Object.create(null);
+
+    for (var i=0 ; i<elements.length ; ++i) {
+        var element = elements[i];
+
+        // ingore disabled fields
+        if ((!options.disabled && element.disabled) || !element.name) {
+            continue;
+        }
+        // ignore anyhting that is not considered a success field
+        if (!k_r_success_contrls.test(element.nodeName) ||
+            k_r_submitter.test(element.type)) {
+            continue;
+        }
+
+        var key = element.name;
+        var val = element.value;
+
+        // we can't just use element.value for checkboxes cause some browsers lie to us
+        // they say "on" for value when the box isn't checked
+        if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) {
+            val = undefined;
+        }
+
+        // If we want empty elements
+        if (options.empty) {
+            // for checkbox
+            if (element.type === 'checkbox' && !element.checked) {
+                val = '';
+            }
+
+            // for radio
+            if (element.type === 'radio') {
+                if (!radio_store[element.name] && !element.checked) {
+                    radio_store[element.name] = false;
+                }
+                else if (element.checked) {
+                    radio_store[element.name] = true;
+                }
+            }
+
+            // if options empty is true, continue only if its radio
+            if (!val && element.type == 'radio') {
+                continue;
+            }
+        }
+        else {
+            // value-less fields are ignored unless options.empty is true
+            if (!val) {
+                continue;
+            }
+        }
+
+        // multi select boxes
+        if (element.type === 'select-multiple') {
+            val = [];
+
+            var selectOptions = element.options;
+            var isSelectedOptions = false;
+            for (var j=0 ; j<selectOptions.length ; ++j) {
+                var option = selectOptions[j];
+                var allowedEmpty = options.empty && !option.value;
+                var hasValue = (option.value || allowedEmpty);
+                if (option.selected && hasValue) {
+                    isSelectedOptions = true;
+
+                    // If using a hash serializer be sure to add the
+                    // correct notation for an array in the multi-select
+                    // context. Here the name attribute on the select element
+                    // might be missing the trailing bracket pair. Both names
+                    // "foo" and "foo[]" should be arrays.
+                    if (options.hash && key.slice(key.length - 2) !== '[]') {
+                        result = serializer(result, key + '[]', option.value);
+                    }
+                    else {
+                        result = serializer(result, key, option.value);
+                    }
+                }
+            }
+
+            // Serialize if no selected options and options.empty is true
+            if (!isSelectedOptions && options.empty) {
+                result = serializer(result, key, '');
+            }
+
+            continue;
+        }
+
+        result = serializer(result, key, val);
+    }
+
+    // Check for all empty radio buttons and serialize them with key=""
+    if (options.empty) {
+        for (var key in radio_store) {
+            if (!radio_store[key]) {
+                result = serializer(result, key, '');
+            }
+        }
+    }
+
+    return result;
+}
+
+function parse_keys(string) {
+    var keys = [];
+    var prefix = /^([^\[\]]*)/;
+    var children = new RegExp(brackets);
+    var match = prefix.exec(string);
+
+    if (match[1]) {
+        keys.push(match[1]);
+    }
+
+    while ((match = children.exec(string)) !== null) {
+        keys.push(match[1]);
+    }
+
+    return keys;
+}
+
+function hash_assign(result, keys, value) {
+    if (keys.length === 0) {
+        result = value;
+        return result;
+    }
+
+    var key = keys.shift();
+    var between = key.match(/^\[(.+?)\]$/);
+
+    if (key === '[]') {
+        result = result || [];
+
+        if (Array.isArray(result)) {
+            result.push(hash_assign(null, keys, value));
+        }
+        else {
+            // This might be the result of bad name attributes like "[][foo]",
+            // in this case the original `result` object will already be
+            // assigned to an object literal. Rather than coerce the object to
+            // an array, or cause an exception the attribute "_values" is
+            // assigned as an array.
+            result._values = result._values || [];
+            result._values.push(hash_assign(null, keys, value));
+        }
+
+        return result;
+    }
+
+    // Key is an attribute name and can be assigned directly.
+    if (!between) {
+        result[key] = hash_assign(result[key], keys, value);
+    }
+    else {
+        var string = between[1];
+        // +var converts the variable into a number
+        // better than parseInt because it doesn't truncate away trailing
+        // letters and actually fails if whole thing is not a number
+        var index = +string;
+
+        // If the characters between the brackets is not a number it is an
+        // attribute name and can be assigned directly.
+        if (isNaN(index)) {
+            result = result || {};
+            result[string] = hash_assign(result[string], keys, value);
+        }
+        else {
+            result = result || [];
+            result[index] = hash_assign(result[index], keys, value);
+        }
+    }
+
+    return result;
+}
+
+// Object/hash encoding serializer.
+function hash_serializer(result, key, value) {
+    var matches = key.match(brackets);
+
+    // Has brackets? Use the recursive assignment function to walk the keys,
+    // construct any missing objects in the result tree and make the assignment
+    // at the end of the chain.
+    if (matches) {
+        var keys = parse_keys(key);
+        hash_assign(result, keys, value);
+    }
+    else {
+        // Non bracket notation can make assignments directly.
+        var existing = result[key];
+
+        // If the value has been assigned already (for instance when a radio and
+        // a checkbox have the same name attribute) convert the previous value
+        // into an array before pushing into it.
+        //
+        // NOTE: If this requirement were removed all hash creation and
+        // assignment could go through `hash_assign`.
+        if (existing) {
+            if (!Array.isArray(existing)) {
+                result[key] = [ existing ];
+            }
+
+            result[key].push(value);
+        }
+        else {
+            result[key] = value;
+        }
+    }
+
+    return result;
+}
+
+// urlform encoding serializer
+function str_serialize(result, key, value) {
+    // encode newlines as \r\n cause the html spec says so
+    value = value.replace(/(\r)?\n/g, '\r\n');
+    value = encodeURIComponent(value);
+
+    // spaces should be '+' rather than '%20'.
+    value = value.replace(/%20/g, '+');
+    return result + (result ? '&' : '') + encodeURIComponent(key) + '=' + value;
+}
+
+module.exports = serialize;
+
+},{}],12:[function(require,module,exports){
 module.exports = {
 	obj: require('./lib/obj'),
 	arr: require('./lib/arr'),
@@ -2627,7 +3294,7 @@ module.exports = {
 	fn: require('./lib/fn')
 };
 
-},{"./lib/arr":9,"./lib/fn":10,"./lib/obj":11}],9:[function(require,module,exports){
+},{"./lib/arr":13,"./lib/fn":14,"./lib/obj":15}],13:[function(require,module,exports){
 'use strict';
 
 const add = (arr, item) => [].concat(arr, [item]);
@@ -2647,7 +3314,7 @@ module.exports = {
 	toggle
 };
 
-},{}],10:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 const compose = (...fList) => (...args) => fList.reduce(
@@ -2662,7 +3329,7 @@ module.exports = {
 	switch: _switch
 };
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 const keyValue = (k, v) => {
@@ -2716,7 +3383,7 @@ module.exports = {
 	chainCall
 };
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 const snabbdom = require('snabbdom');
@@ -2805,7 +3472,7 @@ module.exports = Object.assign(
 	hyperHelpers
 );
 
-},{"iblokz-data":8,"snabbdom":113,"snabbdom/h":105,"snabbdom/modules/attributes":108,"snabbdom/modules/class":109,"snabbdom/modules/eventlisteners":110,"snabbdom/modules/props":111,"snabbdom/modules/style":112}],13:[function(require,module,exports){
+},{"iblokz-data":12,"snabbdom":117,"snabbdom/h":109,"snabbdom/modules/attributes":112,"snabbdom/modules/class":113,"snabbdom/modules/eventlisteners":114,"snabbdom/modules/props":115,"snabbdom/modules/style":116}],17:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -2891,7 +3558,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],14:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (global){
 'use strict';
 var Mutation = global.MutationObserver || global.WebKitMutationObserver;
@@ -2964,7 +3631,7 @@ function immediate(task) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -2989,7 +3656,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],16:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -3012,14 +3679,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],17:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],18:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var support = require('./support');
@@ -3127,7 +3794,7 @@ exports.decode = function(input) {
     return output;
 };
 
-},{"./support":47,"./utils":49}],19:[function(require,module,exports){
+},{"./support":51,"./utils":53}],23:[function(require,module,exports){
 'use strict';
 
 var external = require("./external");
@@ -3204,7 +3871,7 @@ CompressedObject.createWorkerFrom = function (uncompressedWorker, compression, c
 
 module.exports = CompressedObject;
 
-},{"./external":23,"./stream/Crc32Probe":42,"./stream/DataLengthProbe":43,"./stream/DataWorker":44}],20:[function(require,module,exports){
+},{"./external":27,"./stream/Crc32Probe":46,"./stream/DataLengthProbe":47,"./stream/DataWorker":48}],24:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require("./stream/GenericWorker");
@@ -3220,7 +3887,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":24,"./stream/GenericWorker":45}],21:[function(require,module,exports){
+},{"./flate":28,"./stream/GenericWorker":49}],25:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -3300,7 +3967,7 @@ module.exports = function crc32wrapper(input, crc) {
 };
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"./utils":49}],22:[function(require,module,exports){
+},{"./utils":53}],26:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -3313,7 +3980,7 @@ exports.comment = null;
 exports.unixPermissions = null;
 exports.dosPermissions = null;
 
-},{}],23:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /* global Promise */
 'use strict';
 
@@ -3334,7 +4001,7 @@ module.exports = {
     Promise: ES6Promise
 };
 
-},{"lie":90}],24:[function(require,module,exports){
+},{"lie":94}],28:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -3404,7 +4071,7 @@ exports.uncompressWorker = function () {
     return new FlateWorker("Inflate", {});
 };
 
-},{"./stream/GenericWorker":45,"./utils":49,"pako":74}],25:[function(require,module,exports){
+},{"./stream/GenericWorker":49,"./utils":53,"pako":78}],29:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -3946,7 +4613,7 @@ ZipFileWorker.prototype.lock = function () {
 
 module.exports = ZipFileWorker;
 
-},{"../crc32":21,"../signature":40,"../stream/GenericWorker":45,"../utf8":48,"../utils":49}],26:[function(require,module,exports){
+},{"../crc32":25,"../signature":44,"../stream/GenericWorker":49,"../utf8":52,"../utils":53}],30:[function(require,module,exports){
 'use strict';
 
 var compressions = require('../compressions');
@@ -4005,7 +4672,7 @@ exports.generateWorker = function (zip, options, comment) {
     return zipFileWorker;
 };
 
-},{"../compressions":20,"./ZipFileWorker":25}],27:[function(require,module,exports){
+},{"../compressions":24,"./ZipFileWorker":29}],31:[function(require,module,exports){
 'use strict';
 
 /**
@@ -4059,7 +4726,7 @@ JSZip.loadAsync = function (content, options) {
 JSZip.external = require("./external");
 module.exports = JSZip;
 
-},{"./defaults":22,"./external":23,"./load":28,"./object":32,"./support":47}],28:[function(require,module,exports){
+},{"./defaults":26,"./external":27,"./load":32,"./object":36,"./support":51}],32:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
 var external = require("./external");
@@ -4143,7 +4810,7 @@ module.exports = function(data, options) {
     });
 };
 
-},{"./external":23,"./nodejsUtils":31,"./stream/Crc32Probe":42,"./utf8":48,"./utils":49,"./zipEntries":50}],29:[function(require,module,exports){
+},{"./external":27,"./nodejsUtils":35,"./stream/Crc32Probe":46,"./utf8":52,"./utils":53,"./zipEntries":54}],33:[function(require,module,exports){
 "use strict";
 
 var utils = require('../utils');
@@ -4219,7 +4886,7 @@ NodejsStreamInputAdapter.prototype.resume = function () {
 
 module.exports = NodejsStreamInputAdapter;
 
-},{"../stream/GenericWorker":45,"../utils":49}],30:[function(require,module,exports){
+},{"../stream/GenericWorker":49,"../utils":53}],34:[function(require,module,exports){
 'use strict';
 
 var Readable = require('readable-stream').Readable;
@@ -4263,7 +4930,7 @@ NodejsStreamOutputAdapter.prototype._read = function() {
 
 module.exports = NodejsStreamOutputAdapter;
 
-},{"readable-stream":33,"util":120}],31:[function(require,module,exports){
+},{"readable-stream":37,"util":124}],35:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -4301,7 +4968,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],32:[function(require,module,exports){
+},{"buffer":4}],36:[function(require,module,exports){
 'use strict';
 var utf8 = require('./utf8');
 var utils = require('./utils');
@@ -4692,7 +5359,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./compressedObject":19,"./defaults":22,"./generate":26,"./nodejs/NodejsStreamInputAdapter":29,"./nodejsUtils":31,"./stream/GenericWorker":45,"./stream/StreamHelper":46,"./utf8":48,"./utils":49,"./zipObject":52}],33:[function(require,module,exports){
+},{"./compressedObject":23,"./defaults":26,"./generate":30,"./nodejs/NodejsStreamInputAdapter":33,"./nodejsUtils":35,"./stream/GenericWorker":49,"./stream/StreamHelper":50,"./utf8":52,"./utils":53,"./zipObject":56}],37:[function(require,module,exports){
 /*
  * This file is used by module bundlers (browserify/webpack/etc) when
  * including a stream implementation. We use "readable-stream" to get a
@@ -4703,7 +5370,7 @@ module.exports = out;
  */
 module.exports = require("stream");
 
-},{"stream":116}],34:[function(require,module,exports){
+},{"stream":120}],38:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -4762,7 +5429,7 @@ ArrayReader.prototype.readData = function(size) {
 };
 module.exports = ArrayReader;
 
-},{"../utils":49,"./DataReader":35}],35:[function(require,module,exports){
+},{"../utils":53,"./DataReader":39}],39:[function(require,module,exports){
 'use strict';
 var utils = require('../utils');
 
@@ -4880,7 +5547,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"../utils":49}],36:[function(require,module,exports){
+},{"../utils":53}],40:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./Uint8ArrayReader');
 var utils = require('../utils');
@@ -4901,7 +5568,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"../utils":49,"./Uint8ArrayReader":38}],37:[function(require,module,exports){
+},{"../utils":53,"./Uint8ArrayReader":42}],41:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -4941,7 +5608,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"../utils":49,"./DataReader":35}],38:[function(require,module,exports){
+},{"../utils":53,"./DataReader":39}],42:[function(require,module,exports){
 'use strict';
 var ArrayReader = require('./ArrayReader');
 var utils = require('../utils');
@@ -4965,7 +5632,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"../utils":49,"./ArrayReader":34}],39:[function(require,module,exports){
+},{"../utils":53,"./ArrayReader":38}],43:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -4997,7 +5664,7 @@ module.exports = function (data) {
 
 // vim: set shiftwidth=4 softtabstop=4:
 
-},{"../support":47,"../utils":49,"./ArrayReader":34,"./NodeBufferReader":36,"./StringReader":37,"./Uint8ArrayReader":38}],40:[function(require,module,exports){
+},{"../support":51,"../utils":53,"./ArrayReader":38,"./NodeBufferReader":40,"./StringReader":41,"./Uint8ArrayReader":42}],44:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -5006,7 +5673,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],41:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -5034,7 +5701,7 @@ ConvertWorker.prototype.processChunk = function (chunk) {
 };
 module.exports = ConvertWorker;
 
-},{"../utils":49,"./GenericWorker":45}],42:[function(require,module,exports){
+},{"../utils":53,"./GenericWorker":49}],46:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -5060,7 +5727,7 @@ Crc32Probe.prototype.processChunk = function (chunk) {
 };
 module.exports = Crc32Probe;
 
-},{"../crc32":21,"../utils":49,"./GenericWorker":45}],43:[function(require,module,exports){
+},{"../crc32":25,"../utils":53,"./GenericWorker":49}],47:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -5091,7 +5758,7 @@ DataLengthProbe.prototype.processChunk = function (chunk) {
 module.exports = DataLengthProbe;
 
 
-},{"../utils":49,"./GenericWorker":45}],44:[function(require,module,exports){
+},{"../utils":53,"./GenericWorker":49}],48:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -5209,7 +5876,7 @@ DataWorker.prototype._tick = function() {
 
 module.exports = DataWorker;
 
-},{"../utils":49,"./GenericWorker":45}],45:[function(require,module,exports){
+},{"../utils":53,"./GenericWorker":49}],49:[function(require,module,exports){
 'use strict';
 
 /**
@@ -5474,7 +6141,7 @@ GenericWorker.prototype = {
 
 module.exports = GenericWorker;
 
-},{}],46:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -5697,7 +6364,7 @@ StreamHelper.prototype = {
 module.exports = StreamHelper;
 
 }).call(this,require("buffer").Buffer)
-},{"../base64":18,"../external":23,"../nodejs/NodejsStreamOutputAdapter":30,"../support":47,"../utils":49,"./ConvertWorker":41,"./GenericWorker":45,"buffer":4}],47:[function(require,module,exports){
+},{"../base64":22,"../external":27,"../nodejs/NodejsStreamOutputAdapter":34,"../support":51,"../utils":53,"./ConvertWorker":45,"./GenericWorker":49,"buffer":4}],51:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -5739,7 +6406,7 @@ try {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":4,"readable-stream":33}],48:[function(require,module,exports){
+},{"buffer":4,"readable-stream":37}],52:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -6016,7 +6683,7 @@ Utf8EncodeWorker.prototype.processChunk = function (chunk) {
 };
 exports.Utf8EncodeWorker = Utf8EncodeWorker;
 
-},{"./nodejsUtils":31,"./stream/GenericWorker":45,"./support":47,"./utils":49}],49:[function(require,module,exports){
+},{"./nodejsUtils":35,"./stream/GenericWorker":49,"./support":51,"./utils":53}],53:[function(require,module,exports){
 'use strict';
 
 var support = require('./support');
@@ -6496,7 +7163,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
     });
 };
 
-},{"./base64":18,"./external":23,"./nodejsUtils":31,"./support":47,"core-js/library/fn/set-immediate":53}],50:[function(require,module,exports){
+},{"./base64":22,"./external":27,"./nodejsUtils":35,"./support":51,"core-js/library/fn/set-immediate":57}],54:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -6760,7 +7427,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./reader/readerFor":39,"./signature":40,"./support":47,"./utf8":48,"./utils":49,"./zipEntry":51}],51:[function(require,module,exports){
+},{"./reader/readerFor":43,"./signature":44,"./support":51,"./utf8":52,"./utils":53,"./zipEntry":55}],55:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -7054,7 +7721,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":19,"./compressions":20,"./crc32":21,"./reader/readerFor":39,"./support":47,"./utf8":48,"./utils":49}],52:[function(require,module,exports){
+},{"./compressedObject":23,"./compressions":24,"./crc32":25,"./reader/readerFor":43,"./support":51,"./utf8":52,"./utils":53}],56:[function(require,module,exports){
 'use strict';
 
 var StreamHelper = require('./stream/StreamHelper');
@@ -7180,30 +7847,30 @@ for(var i = 0; i < removedMethods.length; i++) {
 }
 module.exports = ZipObject;
 
-},{"./compressedObject":19,"./stream/DataWorker":44,"./stream/GenericWorker":45,"./stream/StreamHelper":46,"./utf8":48}],53:[function(require,module,exports){
+},{"./compressedObject":23,"./stream/DataWorker":48,"./stream/GenericWorker":49,"./stream/StreamHelper":50,"./utf8":52}],57:[function(require,module,exports){
 require('../modules/web.immediate');
 module.exports = require('../modules/_core').setImmediate;
-},{"../modules/_core":57,"../modules/web.immediate":73}],54:[function(require,module,exports){
+},{"../modules/_core":61,"../modules/web.immediate":77}],58:[function(require,module,exports){
 module.exports = function(it){
   if(typeof it != 'function')throw TypeError(it + ' is not a function!');
   return it;
 };
-},{}],55:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var isObject = require('./_is-object');
 module.exports = function(it){
   if(!isObject(it))throw TypeError(it + ' is not an object!');
   return it;
 };
-},{"./_is-object":68}],56:[function(require,module,exports){
+},{"./_is-object":72}],60:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = function(it){
   return toString.call(it).slice(8, -1);
 };
-},{}],57:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 var core = module.exports = {version: '2.3.0'};
 if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
-},{}],58:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 // optional / simple context binding
 var aFunction = require('./_a-function');
 module.exports = function(fn, that, length){
@@ -7224,12 +7891,12 @@ module.exports = function(fn, that, length){
     return fn.apply(that, arguments);
   };
 };
-},{"./_a-function":54}],59:[function(require,module,exports){
+},{"./_a-function":58}],63:[function(require,module,exports){
 // Thank's IE8 for his funny defineProperty
 module.exports = !require('./_fails')(function(){
   return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
-},{"./_fails":62}],60:[function(require,module,exports){
+},{"./_fails":66}],64:[function(require,module,exports){
 var isObject = require('./_is-object')
   , document = require('./_global').document
   // in old IE typeof document.createElement is 'object'
@@ -7237,7 +7904,7 @@ var isObject = require('./_is-object')
 module.exports = function(it){
   return is ? document.createElement(it) : {};
 };
-},{"./_global":63,"./_is-object":68}],61:[function(require,module,exports){
+},{"./_global":67,"./_is-object":72}],65:[function(require,module,exports){
 var global    = require('./_global')
   , core      = require('./_core')
   , ctx       = require('./_ctx')
@@ -7299,7 +7966,7 @@ $export.W = 32;  // wrap
 $export.U = 64;  // safe
 $export.R = 128; // real proto method for `library` 
 module.exports = $export;
-},{"./_core":57,"./_ctx":58,"./_global":63,"./_hide":64}],62:[function(require,module,exports){
+},{"./_core":61,"./_ctx":62,"./_global":67,"./_hide":68}],66:[function(require,module,exports){
 module.exports = function(exec){
   try {
     return !!exec();
@@ -7307,12 +7974,12 @@ module.exports = function(exec){
     return true;
   }
 };
-},{}],63:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
 var global = module.exports = typeof window != 'undefined' && window.Math == Math
   ? window : typeof self != 'undefined' && self.Math == Math ? self : Function('return this')();
 if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
-},{}],64:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var dP         = require('./_object-dp')
   , createDesc = require('./_property-desc');
 module.exports = require('./_descriptors') ? function(object, key, value){
@@ -7321,13 +7988,13 @@ module.exports = require('./_descriptors') ? function(object, key, value){
   object[key] = value;
   return object;
 };
-},{"./_descriptors":59,"./_object-dp":69,"./_property-desc":70}],65:[function(require,module,exports){
+},{"./_descriptors":63,"./_object-dp":73,"./_property-desc":74}],69:[function(require,module,exports){
 module.exports = require('./_global').document && document.documentElement;
-},{"./_global":63}],66:[function(require,module,exports){
+},{"./_global":67}],70:[function(require,module,exports){
 module.exports = !require('./_descriptors') && !require('./_fails')(function(){
   return Object.defineProperty(require('./_dom-create')('div'), 'a', {get: function(){ return 7; }}).a != 7;
 });
-},{"./_descriptors":59,"./_dom-create":60,"./_fails":62}],67:[function(require,module,exports){
+},{"./_descriptors":63,"./_dom-create":64,"./_fails":66}],71:[function(require,module,exports){
 // fast apply, http://jsperf.lnkit.com/fast-apply/5
 module.exports = function(fn, args, that){
   var un = that === undefined;
@@ -7344,11 +8011,11 @@ module.exports = function(fn, args, that){
                       : fn.call(that, args[0], args[1], args[2], args[3]);
   } return              fn.apply(that, args);
 };
-},{}],68:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = function(it){
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
-},{}],69:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var anObject       = require('./_an-object')
   , IE8_DOM_DEFINE = require('./_ie8-dom-define')
   , toPrimitive    = require('./_to-primitive')
@@ -7365,7 +8032,7 @@ exports.f = require('./_descriptors') ? Object.defineProperty : function defineP
   if('value' in Attributes)O[P] = Attributes.value;
   return O;
 };
-},{"./_an-object":55,"./_descriptors":59,"./_ie8-dom-define":66,"./_to-primitive":72}],70:[function(require,module,exports){
+},{"./_an-object":59,"./_descriptors":63,"./_ie8-dom-define":70,"./_to-primitive":76}],74:[function(require,module,exports){
 module.exports = function(bitmap, value){
   return {
     enumerable  : !(bitmap & 1),
@@ -7374,7 +8041,7 @@ module.exports = function(bitmap, value){
     value       : value
   };
 };
-},{}],71:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 var ctx                = require('./_ctx')
   , invoke             = require('./_invoke')
   , html               = require('./_html')
@@ -7450,7 +8117,7 @@ module.exports = {
   set:   setTask,
   clear: clearTask
 };
-},{"./_cof":56,"./_ctx":58,"./_dom-create":60,"./_global":63,"./_html":65,"./_invoke":67}],72:[function(require,module,exports){
+},{"./_cof":60,"./_ctx":62,"./_dom-create":64,"./_global":67,"./_html":69,"./_invoke":71}],76:[function(require,module,exports){
 // 7.1.1 ToPrimitive(input [, PreferredType])
 var isObject = require('./_is-object');
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
@@ -7463,14 +8130,14 @@ module.exports = function(it, S){
   if(!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it)))return val;
   throw TypeError("Can't convert object to primitive value");
 };
-},{"./_is-object":68}],73:[function(require,module,exports){
+},{"./_is-object":72}],77:[function(require,module,exports){
 var $export = require('./_export')
   , $task   = require('./_task');
 $export($export.G + $export.B, {
   setImmediate:   $task.set,
   clearImmediate: $task.clear
 });
-},{"./_export":61,"./_task":71}],74:[function(require,module,exports){
+},{"./_export":65,"./_task":75}],78:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -7486,7 +8153,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":75,"./lib/inflate":76,"./lib/utils/common":77,"./lib/zlib/constants":80}],75:[function(require,module,exports){
+},{"./lib/deflate":79,"./lib/inflate":80,"./lib/utils/common":81,"./lib/zlib/constants":84}],79:[function(require,module,exports){
 'use strict';
 
 
@@ -7888,7 +8555,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":77,"./utils/strings":78,"./zlib/deflate":82,"./zlib/messages":87,"./zlib/zstream":89}],76:[function(require,module,exports){
+},{"./utils/common":81,"./utils/strings":82,"./zlib/deflate":86,"./zlib/messages":91,"./zlib/zstream":93}],80:[function(require,module,exports){
 'use strict';
 
 
@@ -8308,7 +8975,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":77,"./utils/strings":78,"./zlib/constants":80,"./zlib/gzheader":83,"./zlib/inflate":85,"./zlib/messages":87,"./zlib/zstream":89}],77:[function(require,module,exports){
+},{"./utils/common":81,"./utils/strings":82,"./zlib/constants":84,"./zlib/gzheader":87,"./zlib/inflate":89,"./zlib/messages":91,"./zlib/zstream":93}],81:[function(require,module,exports){
 'use strict';
 
 
@@ -8412,7 +9079,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],78:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -8599,7 +9266,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":77}],79:[function(require,module,exports){
+},{"./common":81}],83:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -8633,7 +9300,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],80:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 'use strict';
 
 
@@ -8685,7 +9352,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],81:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -8728,7 +9395,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],82:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 var utils   = require('../utils/common');
@@ -10585,7 +11252,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":77,"./adler32":79,"./crc32":81,"./messages":87,"./trees":88}],83:[function(require,module,exports){
+},{"../utils/common":81,"./adler32":83,"./crc32":85,"./messages":91,"./trees":92}],87:[function(require,module,exports){
 'use strict';
 
 
@@ -10627,7 +11294,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],84:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 'use strict';
 
 // See state defs from inflate.js
@@ -10955,7 +11622,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],85:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 
@@ -12495,7 +13162,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":77,"./adler32":79,"./crc32":81,"./inffast":84,"./inftrees":86}],86:[function(require,module,exports){
+},{"../utils/common":81,"./adler32":83,"./crc32":85,"./inffast":88,"./inftrees":90}],90:[function(require,module,exports){
 'use strict';
 
 
@@ -12822,7 +13489,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":77}],87:[function(require,module,exports){
+},{"../utils/common":81}],91:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -12837,7 +13504,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],88:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 
@@ -14041,7 +14708,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":77}],89:[function(require,module,exports){
+},{"../utils/common":81}],93:[function(require,module,exports){
 'use strict';
 
 
@@ -14072,7 +14739,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],90:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 'use strict';
 var immediate = require('immediate');
 
@@ -14327,7 +14994,7 @@ function race(iterable) {
   }
 }
 
-},{"immediate":14}],91:[function(require,module,exports){
+},{"immediate":18}],95:[function(require,module,exports){
 //! moment.js
 //! version : 2.17.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -18630,7 +19297,7 @@ return hooks;
 
 })));
 
-},{}],92:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -18677,7 +19344,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":93}],93:[function(require,module,exports){
+},{"_process":97}],97:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -18839,10 +19506,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],94:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":95}],95:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":99}],99:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -18918,7 +19585,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":97,"./_stream_writable":99,"core-util-is":5,"inherits":15,"process-nextick-args":92}],96:[function(require,module,exports){
+},{"./_stream_readable":101,"./_stream_writable":103,"core-util-is":6,"inherits":19,"process-nextick-args":96}],100:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -18945,7 +19612,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":98,"core-util-is":5,"inherits":15}],97:[function(require,module,exports){
+},{"./_stream_transform":102,"core-util-is":6,"inherits":19}],101:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -19841,7 +20508,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":95,"_process":93,"buffer":4,"buffer-shims":3,"core-util-is":5,"events":6,"inherits":15,"isarray":17,"process-nextick-args":92,"string_decoder/":117,"util":2}],98:[function(require,module,exports){
+},{"./_stream_duplex":99,"_process":97,"buffer":4,"buffer-shims":3,"core-util-is":6,"events":9,"inherits":19,"isarray":21,"process-nextick-args":96,"string_decoder/":121,"util":2}],102:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -20022,7 +20689,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":95,"core-util-is":5,"inherits":15}],99:[function(require,module,exports){
+},{"./_stream_duplex":99,"core-util-is":6,"inherits":19}],103:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -20551,10 +21218,10 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":95,"_process":93,"buffer":4,"buffer-shims":3,"core-util-is":5,"events":6,"inherits":15,"process-nextick-args":92,"util-deprecate":118}],100:[function(require,module,exports){
+},{"./_stream_duplex":99,"_process":97,"buffer":4,"buffer-shims":3,"core-util-is":6,"events":9,"inherits":19,"process-nextick-args":96,"util-deprecate":122}],104:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":96}],101:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":100}],105:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -20574,13 +21241,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":95,"./lib/_stream_passthrough.js":96,"./lib/_stream_readable.js":97,"./lib/_stream_transform.js":98,"./lib/_stream_writable.js":99,"_process":93}],102:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":99,"./lib/_stream_passthrough.js":100,"./lib/_stream_readable.js":101,"./lib/_stream_transform.js":102,"./lib/_stream_writable.js":103,"_process":97}],106:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":98}],103:[function(require,module,exports){
+},{"./lib/_stream_transform.js":102}],107:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":99}],104:[function(require,module,exports){
+},{"./lib/_stream_writable.js":103}],108:[function(require,module,exports){
 (function (process,global){
 // Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
 
@@ -32972,7 +33639,7 @@ var ReactiveTest = Rx.ReactiveTest = {
 }.call(this));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":93}],105:[function(require,module,exports){
+},{"_process":97}],109:[function(require,module,exports){
 "use strict";
 var vnode_1 = require("./vnode");
 var is = require("./is");
@@ -33032,7 +33699,7 @@ exports.h = h;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = h;
 
-},{"./is":107,"./vnode":115}],106:[function(require,module,exports){
+},{"./is":111,"./vnode":119}],110:[function(require,module,exports){
 "use strict";
 function createElement(tagName) {
     return document.createElement(tagName);
@@ -33099,7 +33766,7 @@ exports.htmlDomApi = {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.htmlDomApi;
 
-},{}],107:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 "use strict";
 exports.array = Array.isArray;
 function primitive(s) {
@@ -33107,7 +33774,7 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],108:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 var NamespaceURIs = {
     "xlink": "http://www.w3.org/1999/xlink"
@@ -33159,7 +33826,7 @@ exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.attributesModule;
 
-},{}],109:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 "use strict";
 function updateClass(oldVnode, vnode) {
     var cur, name, elm = vnode.elm, oldClass = oldVnode.data.class, klass = vnode.data.class;
@@ -33185,7 +33852,7 @@ exports.classModule = { create: updateClass, update: updateClass };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.classModule;
 
-},{}],110:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 function invokeHandler(handler, vnode, event) {
     if (typeof handler === "function") {
@@ -33281,7 +33948,7 @@ exports.eventListenersModule = {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.eventListenersModule;
 
-},{}],111:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 "use strict";
 function updateProps(oldVnode, vnode) {
     var key, cur, old, elm = vnode.elm, oldProps = oldVnode.data.props, props = vnode.data.props;
@@ -33308,7 +33975,7 @@ exports.propsModule = { create: updateProps, update: updateProps };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.propsModule;
 
-},{}],112:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 "use strict";
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
 var nextFrame = function (fn) { raf(function () { raf(fn); }); };
@@ -33395,7 +34062,7 @@ exports.styleModule = {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.styleModule;
 
-},{}],113:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 var vnode_1 = require("./vnode");
 var is = require("./is");
@@ -33702,7 +34369,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":105,"./htmldomapi":106,"./is":107,"./thunk":114,"./vnode":115}],114:[function(require,module,exports){
+},{"./h":109,"./htmldomapi":110,"./is":111,"./thunk":118,"./vnode":119}],118:[function(require,module,exports){
 "use strict";
 var h_1 = require("./h");
 function copyToThunk(vnode, thunk) {
@@ -33749,7 +34416,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.thunk;
 
-},{"./h":105}],115:[function(require,module,exports){
+},{"./h":109}],119:[function(require,module,exports){
 "use strict";
 function vnode(sel, data, children, text, elm) {
     var key = data === undefined ? undefined : data.key;
@@ -33760,7 +34427,7 @@ exports.vnode = vnode;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = vnode;
 
-},{}],116:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -33889,7 +34556,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":6,"inherits":15,"readable-stream/duplex.js":94,"readable-stream/passthrough.js":100,"readable-stream/readable.js":101,"readable-stream/transform.js":102,"readable-stream/writable.js":103}],117:[function(require,module,exports){
+},{"events":9,"inherits":19,"readable-stream/duplex.js":98,"readable-stream/passthrough.js":104,"readable-stream/readable.js":105,"readable-stream/transform.js":106,"readable-stream/writable.js":107}],121:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -34112,7 +34779,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":4}],118:[function(require,module,exports){
+},{"buffer":4}],122:[function(require,module,exports){
 (function (global){
 
 /**
@@ -34183,14 +34850,14 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],119:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],120:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -34780,7 +35447,1361 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":119,"_process":93,"inherits":15}],121:[function(require,module,exports){
+},{"./support/isBuffer":123,"_process":97,"inherits":19}],125:[function(require,module,exports){
+(function (global){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.vexDialog = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Tests for browser support.
+ */
+
+var innerHTMLBug = false;
+var bugTestDiv;
+if (typeof document !== 'undefined') {
+  bugTestDiv = document.createElement('div');
+  // Setup
+  bugTestDiv.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
+  // Make sure that link elements get serialized correctly by innerHTML
+  // This requires a wrapper element in IE
+  innerHTMLBug = !bugTestDiv.getElementsByTagName('link').length;
+  bugTestDiv = undefined;
+}
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  legend: [1, '<fieldset>', '</fieldset>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  // for script/link/style tags to work in IE6-8, you have to wrap
+  // in a div with a non-whitespace character in front, ha!
+  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
+};
+
+map.td =
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+map.option =
+map.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+map.thead =
+map.tbody =
+map.colgroup =
+map.caption =
+map.tfoot = [1, '<table>', '</table>'];
+
+map.polyline =
+map.ellipse =
+map.polygon =
+map.circle =
+map.text =
+map.line =
+map.path =
+map.rect =
+map.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+
+/**
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
+ * instance, depending on the contents of the `html` string.
+ *
+ * @param {String} html - HTML string to "domify"
+ * @param {Document} doc - The `document` instance to create the Node for
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
+ * @api private
+ */
+
+function parse(html, doc) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+
+  // default to the global `document` object
+  if (!doc) doc = document;
+
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) return doc.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = doc.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = doc.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  // one element
+  if (el.firstChild == el.lastChild) {
+    return el.removeChild(el.firstChild);
+  }
+
+  // several elements
+  var fragment = doc.createDocumentFragment();
+  while (el.firstChild) {
+    fragment.appendChild(el.removeChild(el.firstChild));
+  }
+
+  return fragment;
+}
+
+},{}],2:[function(require,module,exports){
+// get successful control from form and assemble into object
+// http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
+
+// types which indicate a submit action and are not successful controls
+// these will be ignored
+var k_r_submitter = /^(?:submit|button|image|reset|file)$/i;
+
+// node names which could be successful controls
+var k_r_success_contrls = /^(?:input|select|textarea|keygen)/i;
+
+// Matches bracket notation.
+var brackets = /(\[[^\[\]]*\])/g;
+
+// serializes form fields
+// @param form MUST be an HTMLForm element
+// @param options is an optional argument to configure the serialization. Default output
+// with no options specified is a url encoded string
+//    - hash: [true | false] Configure the output type. If true, the output will
+//    be a js object.
+//    - serializer: [function] Optional serializer function to override the default one.
+//    The function takes 3 arguments (result, key, value) and should return new result
+//    hash and url encoded str serializers are provided with this module
+//    - disabled: [true | false]. If true serialize disabled fields.
+//    - empty: [true | false]. If true serialize empty fields
+function serialize(form, options) {
+    if (typeof options != 'object') {
+        options = { hash: !!options };
+    }
+    else if (options.hash === undefined) {
+        options.hash = true;
+    }
+
+    var result = (options.hash) ? {} : '';
+    var serializer = options.serializer || ((options.hash) ? hash_serializer : str_serialize);
+
+    var elements = form && form.elements ? form.elements : [];
+
+    //Object store each radio and set if it's empty or not
+    var radio_store = Object.create(null);
+
+    for (var i=0 ; i<elements.length ; ++i) {
+        var element = elements[i];
+
+        // ingore disabled fields
+        if ((!options.disabled && element.disabled) || !element.name) {
+            continue;
+        }
+        // ignore anyhting that is not considered a success field
+        if (!k_r_success_contrls.test(element.nodeName) ||
+            k_r_submitter.test(element.type)) {
+            continue;
+        }
+
+        var key = element.name;
+        var val = element.value;
+
+        // we can't just use element.value for checkboxes cause some browsers lie to us
+        // they say "on" for value when the box isn't checked
+        if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) {
+            val = undefined;
+        }
+
+        // If we want empty elements
+        if (options.empty) {
+            // for checkbox
+            if (element.type === 'checkbox' && !element.checked) {
+                val = '';
+            }
+
+            // for radio
+            if (element.type === 'radio') {
+                if (!radio_store[element.name] && !element.checked) {
+                    radio_store[element.name] = false;
+                }
+                else if (element.checked) {
+                    radio_store[element.name] = true;
+                }
+            }
+
+            // if options empty is true, continue only if its radio
+            if (!val && element.type == 'radio') {
+                continue;
+            }
+        }
+        else {
+            // value-less fields are ignored unless options.empty is true
+            if (!val) {
+                continue;
+            }
+        }
+
+        // multi select boxes
+        if (element.type === 'select-multiple') {
+            val = [];
+
+            var selectOptions = element.options;
+            var isSelectedOptions = false;
+            for (var j=0 ; j<selectOptions.length ; ++j) {
+                var option = selectOptions[j];
+                var allowedEmpty = options.empty && !option.value;
+                var hasValue = (option.value || allowedEmpty);
+                if (option.selected && hasValue) {
+                    isSelectedOptions = true;
+
+                    // If using a hash serializer be sure to add the
+                    // correct notation for an array in the multi-select
+                    // context. Here the name attribute on the select element
+                    // might be missing the trailing bracket pair. Both names
+                    // "foo" and "foo[]" should be arrays.
+                    if (options.hash && key.slice(key.length - 2) !== '[]') {
+                        result = serializer(result, key + '[]', option.value);
+                    }
+                    else {
+                        result = serializer(result, key, option.value);
+                    }
+                }
+            }
+
+            // Serialize if no selected options and options.empty is true
+            if (!isSelectedOptions && options.empty) {
+                result = serializer(result, key, '');
+            }
+
+            continue;
+        }
+
+        result = serializer(result, key, val);
+    }
+
+    // Check for all empty radio buttons and serialize them with key=""
+    if (options.empty) {
+        for (var key in radio_store) {
+            if (!radio_store[key]) {
+                result = serializer(result, key, '');
+            }
+        }
+    }
+
+    return result;
+}
+
+function parse_keys(string) {
+    var keys = [];
+    var prefix = /^([^\[\]]*)/;
+    var children = new RegExp(brackets);
+    var match = prefix.exec(string);
+
+    if (match[1]) {
+        keys.push(match[1]);
+    }
+
+    while ((match = children.exec(string)) !== null) {
+        keys.push(match[1]);
+    }
+
+    return keys;
+}
+
+function hash_assign(result, keys, value) {
+    if (keys.length === 0) {
+        result = value;
+        return result;
+    }
+
+    var key = keys.shift();
+    var between = key.match(/^\[(.+?)\]$/);
+
+    if (key === '[]') {
+        result = result || [];
+
+        if (Array.isArray(result)) {
+            result.push(hash_assign(null, keys, value));
+        }
+        else {
+            // This might be the result of bad name attributes like "[][foo]",
+            // in this case the original `result` object will already be
+            // assigned to an object literal. Rather than coerce the object to
+            // an array, or cause an exception the attribute "_values" is
+            // assigned as an array.
+            result._values = result._values || [];
+            result._values.push(hash_assign(null, keys, value));
+        }
+
+        return result;
+    }
+
+    // Key is an attribute name and can be assigned directly.
+    if (!between) {
+        result[key] = hash_assign(result[key], keys, value);
+    }
+    else {
+        var string = between[1];
+        // +var converts the variable into a number
+        // better than parseInt because it doesn't truncate away trailing
+        // letters and actually fails if whole thing is not a number
+        var index = +string;
+
+        // If the characters between the brackets is not a number it is an
+        // attribute name and can be assigned directly.
+        if (isNaN(index)) {
+            result = result || {};
+            result[string] = hash_assign(result[string], keys, value);
+        }
+        else {
+            result = result || [];
+            result[index] = hash_assign(result[index], keys, value);
+        }
+    }
+
+    return result;
+}
+
+// Object/hash encoding serializer.
+function hash_serializer(result, key, value) {
+    var matches = key.match(brackets);
+
+    // Has brackets? Use the recursive assignment function to walk the keys,
+    // construct any missing objects in the result tree and make the assignment
+    // at the end of the chain.
+    if (matches) {
+        var keys = parse_keys(key);
+        hash_assign(result, keys, value);
+    }
+    else {
+        // Non bracket notation can make assignments directly.
+        var existing = result[key];
+
+        // If the value has been assigned already (for instance when a radio and
+        // a checkbox have the same name attribute) convert the previous value
+        // into an array before pushing into it.
+        //
+        // NOTE: If this requirement were removed all hash creation and
+        // assignment could go through `hash_assign`.
+        if (existing) {
+            if (!Array.isArray(existing)) {
+                result[key] = [ existing ];
+            }
+
+            result[key].push(value);
+        }
+        else {
+            result[key] = value;
+        }
+    }
+
+    return result;
+}
+
+// urlform encoding serializer
+function str_serialize(result, key, value) {
+    // encode newlines as \r\n cause the html spec says so
+    value = value.replace(/(\r)?\n/g, '\r\n');
+    value = encodeURIComponent(value);
+
+    // spaces should be '+' rather than '%20'.
+    value = value.replace(/%20/g, '+');
+    return result + (result ? '&' : '') + encodeURIComponent(key) + '=' + value;
+}
+
+module.exports = serialize;
+
+},{}],3:[function(require,module,exports){
+var domify = require('domify')
+var serialize = require('form-serialize')
+
+// Build DOM elements for the structure of the dialog
+var buildDialogForm = function buildDialogForm (options) {
+  var form = document.createElement('form')
+  form.classList.add('vex-dialog-form')
+
+  var message = document.createElement('div')
+  message.classList.add('vex-dialog-message')
+  message.appendChild(options.message instanceof window.Node ? options.message : domify(options.message))
+
+  var input = document.createElement('div')
+  input.classList.add('vex-dialog-input')
+  input.appendChild(options.input instanceof window.Node ? options.input : domify(options.input))
+
+  form.appendChild(message)
+  form.appendChild(input)
+
+  return form
+}
+
+// Take an array of buttons (see the default buttons below) and turn them into DOM elements
+var buttonsToDOM = function buttonsToDOM (buttons) {
+  var domButtons = document.createElement('div')
+  domButtons.classList.add('vex-dialog-buttons')
+
+  for (var i = 0; i < buttons.length; i++) {
+    var button = buttons[i]
+    var domButton = document.createElement('button')
+    domButton.type = button.type
+    domButton.textContent = button.text
+    domButton.classList.add(button.className)
+    domButton.classList.add('vex-dialog-button')
+    if (i === 0) {
+      domButton.classList.add('vex-first')
+    } else if (i === buttons.length - 1) {
+      domButton.classList.add('vex-last')
+    }
+    // Attach click listener to button with closure
+    (function (button) {
+      domButton.addEventListener('click', function (e) {
+        if (button.click) {
+          button.click.call(this, e)
+        }
+      }.bind(this))
+    }.bind(this)(button))
+
+    domButtons.appendChild(domButton)
+  }
+
+  return domButtons
+}
+
+var plugin = function plugin (vex) {
+  // Define the API first
+  var dialog = {
+    // Plugin name
+    name: 'dialog',
+
+    // Open
+    open: function open (opts) {
+      var options = Object.assign({}, this.defaultOptions, opts)
+
+      // `message` is unsafe internally, so translate
+      // safe default: HTML-escape the message before passing it through
+      if (options.unsafeMessage && !options.message) {
+        options.message = options.unsafeMessage
+      } else if (options.message) {
+        options.message = vex._escapeHtml(options.message)
+      }
+
+      // Build the form from the options
+      var form = options.unsafeContent = buildDialogForm(options)
+
+      // Open the dialog
+      var dialogInstance = vex.open(options)
+
+      // Quick comment - these options and appending buttons and everything
+      // would preferably be done _before_ opening the dialog. However, since
+      // they rely on the context of the vex instance, we have to do them
+      // after. A potential future fix would be to differentiate between
+      // a "created" vex instance and an "opened" vex instance, so any actions
+      // that rely on the specific context of the instance can do their stuff
+      // before opening the dialog on the page.
+
+      // Override the before close callback to also pass the value of the form
+      var beforeClose = options.beforeClose && options.beforeClose.bind(dialogInstance)
+      dialogInstance.options.beforeClose = function dialogBeforeClose () {
+        // Only call the callback once - when the validation in beforeClose, if present, is true
+        var shouldClose = beforeClose ? beforeClose() : true
+        if (shouldClose) {
+          options.callback(this.value || false)
+        }
+        // Return the result of beforeClose() to vex
+        return shouldClose
+      }.bind(dialogInstance)
+
+      // Append buttons to form with correct context
+      form.appendChild(buttonsToDOM.call(dialogInstance, options.buttons))
+
+      // Attach form to instance
+      dialogInstance.form = form
+
+      // Add submit listener to form
+      form.addEventListener('submit', options.onSubmit.bind(dialogInstance))
+
+      // Optionally focus the first input in the form
+      if (options.focusFirstInput) {
+        var el = dialogInstance.contentEl.querySelector('button, input, textarea')
+        if (el) {
+          el.focus()
+        }
+      }
+
+      // For chaining
+      return dialogInstance
+    },
+
+    // Alert
+    alert: function (options) {
+      // Allow string as message
+      if (typeof options === 'string') {
+        options = {
+          message: options
+        }
+      }
+      options = Object.assign({}, this.defaultOptions, this.defaultAlertOptions, options)
+      return this.open(options)
+    },
+
+    // Confirm
+    confirm: function (options) {
+      if (typeof options !== 'object' || typeof options.callback !== 'function') {
+        throw new Error('dialog.confirm(options) requires options.callback.')
+      }
+      options = Object.assign({}, this.defaultOptions, this.defaultConfirmOptions, options)
+      return this.open(options)
+    },
+
+    // Prompt
+    prompt: function (options) {
+      if (typeof options !== 'object' || typeof options.callback !== 'function') {
+        throw new Error('dialog.prompt(options) requires options.callback.')
+      }
+      var defaults = Object.assign({}, this.defaultOptions, this.defaultPromptOptions)
+      var dynamicDefaults = {
+        unsafeMessage: '<label for="vex">' + vex._escapeHtml(options.label || defaults.label) + '</label>',
+        input: '<input name="vex" type="text" class="vex-dialog-prompt-input" placeholder="' + vex._escapeHtml(options.placeholder || defaults.placeholder) + '" value="' + vex._escapeHtml(options.value || defaults.value) + '" />'
+      }
+      options = Object.assign(defaults, dynamicDefaults, options)
+      // Pluck the value of the "vex" input field as the return value for prompt's callback
+      // More closely mimics "window.prompt" in that a single string is returned
+      var callback = options.callback
+      options.callback = function promptCallback (value) {
+        value = value[Object.keys(value)[0]]
+        callback(value)
+      }
+      return this.open(options)
+    }
+  }
+
+  // Now define any additional data that's not the direct dialog API
+  dialog.buttons = {
+    YES: {
+      text: 'OK',
+      type: 'submit',
+      className: 'vex-dialog-button-primary',
+      click: function yesClick () {
+        this.value = true
+      }
+    },
+
+    NO: {
+      text: 'Cancel',
+      type: 'button',
+      className: 'vex-dialog-button-secondary',
+      click: function noClick () {
+        this.value = false
+        this.close()
+      }
+    }
+  }
+
+  dialog.defaultOptions = {
+    callback: function () {},
+    afterOpen: function () {},
+    message: '',
+    input: '',
+    buttons: [
+      dialog.buttons.YES,
+      dialog.buttons.NO
+    ],
+    showCloseButton: false,
+    onSubmit: function onDialogSubmit (e) {
+      e.preventDefault()
+      if (this.options.input) {
+        this.value = serialize(this.form, { hash: true })
+      }
+      return this.close()
+    },
+    focusFirstInput: true
+  }
+
+  dialog.defaultAlertOptions = {
+    buttons: [
+      dialog.buttons.YES
+    ]
+  }
+
+  dialog.defaultPromptOptions = {
+    label: 'Prompt:',
+    placeholder: '',
+    value: ''
+  }
+
+  dialog.defaultConfirmOptions = {}
+
+  return dialog
+}
+
+module.exports = plugin
+
+},{"domify":1,"form-serialize":2}]},{},[3])(3)
+});
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"domify":7,"form-serialize":11}],126:[function(require,module,exports){
+(function (global){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.vex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*
+ * classList.js: Cross-browser full element.classList implementation.
+ * 2014-07-23
+ *
+ * By Eli Grey, http://eligrey.com
+ * Public Domain.
+ * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+ */
+
+/*global self, document, DOMException */
+
+/*! @source http://purl.eligrey.com/github/classList.js/blob/master/classList.js*/
+
+/* Copied from MDN:
+ * https://developer.mozilla.org/en-US/docs/Web/API/Element/classList
+ */
+
+if ("document" in window.self) {
+
+  // Full polyfill for browsers with no classList support
+  // Including IE < Edge missing SVGElement.classList
+  if (!("classList" in document.createElement("_"))
+    || document.createElementNS && !("classList" in document.createElementNS("http://www.w3.org/2000/svg","g"))) {
+
+  (function (view) {
+
+    "use strict";
+
+    if (!('Element' in view)) return;
+
+    var
+        classListProp = "classList"
+      , protoProp = "prototype"
+      , elemCtrProto = view.Element[protoProp]
+      , objCtr = Object
+      , strTrim = String[protoProp].trim || function () {
+        return this.replace(/^\s+|\s+$/g, "");
+      }
+      , arrIndexOf = Array[protoProp].indexOf || function (item) {
+        var
+            i = 0
+          , len = this.length
+        ;
+        for (; i < len; i++) {
+          if (i in this && this[i] === item) {
+            return i;
+          }
+        }
+        return -1;
+      }
+      // Vendors: please allow content code to instantiate DOMExceptions
+      , DOMEx = function (type, message) {
+        this.name = type;
+        this.code = DOMException[type];
+        this.message = message;
+      }
+      , checkTokenAndGetIndex = function (classList, token) {
+        if (token === "") {
+          throw new DOMEx(
+              "SYNTAX_ERR"
+            , "An invalid or illegal string was specified"
+          );
+        }
+        if (/\s/.test(token)) {
+          throw new DOMEx(
+              "INVALID_CHARACTER_ERR"
+            , "String contains an invalid character"
+          );
+        }
+        return arrIndexOf.call(classList, token);
+      }
+      , ClassList = function (elem) {
+        var
+            trimmedClasses = strTrim.call(elem.getAttribute("class") || "")
+          , classes = trimmedClasses ? trimmedClasses.split(/\s+/) : []
+          , i = 0
+          , len = classes.length
+        ;
+        for (; i < len; i++) {
+          this.push(classes[i]);
+        }
+        this._updateClassName = function () {
+          elem.setAttribute("class", this.toString());
+        };
+      }
+      , classListProto = ClassList[protoProp] = []
+      , classListGetter = function () {
+        return new ClassList(this);
+      }
+    ;
+    // Most DOMException implementations don't allow calling DOMException's toString()
+    // on non-DOMExceptions. Error's toString() is sufficient here.
+    DOMEx[protoProp] = Error[protoProp];
+    classListProto.item = function (i) {
+      return this[i] || null;
+    };
+    classListProto.contains = function (token) {
+      token += "";
+      return checkTokenAndGetIndex(this, token) !== -1;
+    };
+    classListProto.add = function () {
+      var
+          tokens = arguments
+        , i = 0
+        , l = tokens.length
+        , token
+        , updated = false
+      ;
+      do {
+        token = tokens[i] + "";
+        if (checkTokenAndGetIndex(this, token) === -1) {
+          this.push(token);
+          updated = true;
+        }
+      }
+      while (++i < l);
+
+      if (updated) {
+        this._updateClassName();
+      }
+    };
+    classListProto.remove = function () {
+      var
+          tokens = arguments
+        , i = 0
+        , l = tokens.length
+        , token
+        , updated = false
+        , index
+      ;
+      do {
+        token = tokens[i] + "";
+        index = checkTokenAndGetIndex(this, token);
+        while (index !== -1) {
+          this.splice(index, 1);
+          updated = true;
+          index = checkTokenAndGetIndex(this, token);
+        }
+      }
+      while (++i < l);
+
+      if (updated) {
+        this._updateClassName();
+      }
+    };
+    classListProto.toggle = function (token, force) {
+      token += "";
+
+      var
+          result = this.contains(token)
+        , method = result ?
+          force !== true && "remove"
+        :
+          force !== false && "add"
+      ;
+
+      if (method) {
+        this[method](token);
+      }
+
+      if (force === true || force === false) {
+        return force;
+      } else {
+        return !result;
+      }
+    };
+    classListProto.toString = function () {
+      return this.join(" ");
+    };
+
+    if (objCtr.defineProperty) {
+      var classListPropDesc = {
+          get: classListGetter
+        , enumerable: true
+        , configurable: true
+      };
+      try {
+        objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+      } catch (ex) { // IE 8 doesn't support enumerable:true
+        if (ex.number === -0x7FF5EC54) {
+          classListPropDesc.enumerable = false;
+          objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+        }
+      }
+    } else if (objCtr[protoProp].__defineGetter__) {
+      elemCtrProto.__defineGetter__(classListProp, classListGetter);
+    }
+
+    }(window.self));
+
+    } else {
+    // There is full or partial native classList support, so just check if we need
+    // to normalize the add/remove and toggle APIs.
+
+    (function () {
+      "use strict";
+
+      var testElement = document.createElement("_");
+
+      testElement.classList.add("c1", "c2");
+
+      // Polyfill for IE 10/11 and Firefox <26, where classList.add and
+      // classList.remove exist but support only one argument at a time.
+      if (!testElement.classList.contains("c2")) {
+        var createMethod = function(method) {
+          var original = DOMTokenList.prototype[method];
+
+          DOMTokenList.prototype[method] = function(token) {
+            var i, len = arguments.length;
+
+            for (i = 0; i < len; i++) {
+              token = arguments[i];
+              original.call(this, token);
+            }
+          };
+        };
+        createMethod('add');
+        createMethod('remove');
+      }
+
+      testElement.classList.toggle("c3", false);
+
+      // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
+      // support the second argument.
+      if (testElement.classList.contains("c3")) {
+        var _toggle = DOMTokenList.prototype.toggle;
+
+        DOMTokenList.prototype.toggle = function(token, force) {
+          if (1 in arguments && !this.contains(token) === !force) {
+            return force;
+          } else {
+            return _toggle.call(this, token);
+          }
+        };
+
+      }
+
+      testElement = null;
+    }());
+  }
+}
+
+},{}],2:[function(require,module,exports){
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Tests for browser support.
+ */
+
+var innerHTMLBug = false;
+var bugTestDiv;
+if (typeof document !== 'undefined') {
+  bugTestDiv = document.createElement('div');
+  // Setup
+  bugTestDiv.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
+  // Make sure that link elements get serialized correctly by innerHTML
+  // This requires a wrapper element in IE
+  innerHTMLBug = !bugTestDiv.getElementsByTagName('link').length;
+  bugTestDiv = undefined;
+}
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  legend: [1, '<fieldset>', '</fieldset>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  // for script/link/style tags to work in IE6-8, you have to wrap
+  // in a div with a non-whitespace character in front, ha!
+  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
+};
+
+map.td =
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+map.option =
+map.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+map.thead =
+map.tbody =
+map.colgroup =
+map.caption =
+map.tfoot = [1, '<table>', '</table>'];
+
+map.polyline =
+map.ellipse =
+map.polygon =
+map.circle =
+map.text =
+map.line =
+map.path =
+map.rect =
+map.g = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+
+/**
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
+ * instance, depending on the contents of the `html` string.
+ *
+ * @param {String} html - HTML string to "domify"
+ * @param {Document} doc - The `document` instance to create the Node for
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
+ * @api private
+ */
+
+function parse(html, doc) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+
+  // default to the global `document` object
+  if (!doc) doc = document;
+
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) return doc.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = doc.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = doc.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  // one element
+  if (el.firstChild == el.lastChild) {
+    return el.removeChild(el.firstChild);
+  }
+
+  // several elements
+  var fragment = doc.createDocumentFragment();
+  while (el.firstChild) {
+    fragment.appendChild(el.removeChild(el.firstChild));
+  }
+
+  return fragment;
+}
+
+},{}],3:[function(require,module,exports){
+/**
+ * Code refactored from Mozilla Developer Network:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+ */
+
+'use strict';
+
+function assign(target, firstSource) {
+  if (target === undefined || target === null) {
+    throw new TypeError('Cannot convert first argument to object');
+  }
+
+  var to = Object(target);
+  for (var i = 1; i < arguments.length; i++) {
+    var nextSource = arguments[i];
+    if (nextSource === undefined || nextSource === null) {
+      continue;
+    }
+
+    var keysArray = Object.keys(Object(nextSource));
+    for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+      var nextKey = keysArray[nextIndex];
+      var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+      if (desc !== undefined && desc.enumerable) {
+        to[nextKey] = nextSource[nextKey];
+      }
+    }
+  }
+  return to;
+}
+
+function polyfill() {
+  if (!Object.assign) {
+    Object.defineProperty(Object, 'assign', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: assign
+    });
+  }
+}
+
+module.exports = {
+  assign: assign,
+  polyfill: polyfill
+};
+
+},{}],4:[function(require,module,exports){
+// classList polyfill for old browsers
+require('classlist-polyfill')
+// Object.assign polyfill
+require('es6-object-assign').polyfill()
+
+// String to DOM function
+var domify = require('domify')
+
+// Use the DOM's HTML parsing to escape any dangerous strings
+var escapeHtml = function escapeHtml (str) {
+  if (typeof str !== 'undefined') {
+    var div = document.createElement('div')
+    div.appendChild(document.createTextNode(str))
+    return div.innerHTML
+  } else {
+    return ''
+  }
+}
+
+// Utility function to add space-delimited class strings to a DOM element's classList
+var addClasses = function addClasses (el, classStr) {
+  if (typeof classStr !== 'string' || classStr.length === 0) {
+    return
+  }
+  var classes = classStr.split(' ')
+  for (var i = 0; i < classes.length; i++) {
+    var className = classes[i]
+    if (className.length) {
+      el.classList.add(className)
+    }
+  }
+}
+
+// Detect CSS Animation End Support
+// https://github.com/limonte/sweetalert2/blob/99bd539f85e15ac170f69d35001d12e092ef0054/src/utils/dom.js#L194
+var animationEndEvent = (function detectAnimationEndEvent () {
+  var el = document.createElement('div')
+  var eventNames = {
+    'WebkitAnimation': 'webkitAnimationEnd',
+    'MozAnimation': 'animationend',
+    'OAnimation': 'oanimationend',
+    'msAnimation': 'MSAnimationEnd',
+    'animation': 'animationend'
+  }
+  for (var i in eventNames) {
+    if (el.style[i] !== undefined) {
+      return eventNames[i]
+    }
+  }
+  return false
+})()
+
+// vex base CSS classes
+var baseClassNames = {
+  vex: 'vex',
+  content: 'vex-content',
+  overlay: 'vex-overlay',
+  close: 'vex-close',
+  closing: 'vex-closing',
+  open: 'vex-open'
+}
+
+// Private lookup table of all open vex objects, keyed by id
+var vexes = {}
+var globalId = 1
+
+// Private boolean to assist the escapeButtonCloses option
+var isEscapeActive = false
+
+// vex itself is an object that exposes a simple API to open and close vex objects in various ways
+var vex = {
+  open: function open (opts) {
+    // Check for usage of deprecated options, and log a warning
+    var warnDeprecated = function warnDeprecated (prop) {
+      console.warn('The "' + prop + '" property is deprecated in vex 3. Use CSS classes and the appropriate "ClassName" options, instead.')
+      console.warn('See http://github.hubspot.com/vex/api/advanced/#options')
+    }
+    if (opts.css) {
+      warnDeprecated('css')
+    }
+    if (opts.overlayCSS) {
+      warnDeprecated('overlayCSS')
+    }
+    if (opts.contentCSS) {
+      warnDeprecated('contentCSS')
+    }
+    if (opts.closeCSS) {
+      warnDeprecated('closeCSS')
+    }
+
+    // The dialog instance
+    var vexInstance = {}
+
+    // Set id
+    vexInstance.id = globalId++
+
+    // Store internally
+    vexes[vexInstance.id] = vexInstance
+
+    // Set state
+    vexInstance.isOpen = true
+
+    // Close function on the vex instance
+    // This is how all API functions should close individual vexes
+    vexInstance.close = function instanceClose () {
+      // Check state
+      if (!this.isOpen) {
+        return true
+      }
+
+      var options = this.options
+
+      // escapeButtonCloses is checked first
+      if (isEscapeActive && !options.escapeButtonCloses) {
+        return false
+      }
+
+      // Allow the user to validate any info or abort the close with the beforeClose callback
+      var shouldClose = (function shouldClose () {
+        // Call before close callback
+        if (options.beforeClose) {
+          return options.beforeClose.call(this)
+        }
+        // Otherwise indicate that it's ok to continue with close
+        return true
+      }.bind(this)())
+
+      // If beforeClose() fails, abort the close
+      if (shouldClose === false) {
+        return false
+      }
+
+      // Update state
+      this.isOpen = false
+
+      // Detect if the content el has any CSS animations defined
+      var style = window.getComputedStyle(this.contentEl)
+      function hasAnimationPre (prefix) {
+        return style.getPropertyValue(prefix + 'animation-name') !== 'none' && style.getPropertyValue(prefix + 'animation-duration') !== '0s'
+      }
+      var hasAnimation = hasAnimationPre('') || hasAnimationPre('-webkit-') || hasAnimationPre('-moz-') || hasAnimationPre('-o-')
+
+      // Define the function that will actually close the instance
+      var close = function close () {
+        if (!this.rootEl.parentNode) {
+          return
+        }
+        // Run once
+        this.rootEl.removeEventListener(animationEndEvent, close)
+        // Remove from lookup table (prevent memory leaks)
+        delete vexes[this.id]
+        // Remove the dialog from the DOM
+        this.rootEl.parentNode.removeChild(this.rootEl)
+        // Call after close callback
+        if (options.afterClose) {
+          options.afterClose.call(this)
+        }
+        // Remove styling from the body, if no more vexes are open
+        if (Object.keys(vexes).length === 0) {
+          document.body.classList.remove(baseClassNames.open)
+        }
+      }.bind(this)
+
+      // Close the vex
+      if (animationEndEvent && hasAnimation) {
+        // Setup the end event listener, to remove the el from the DOM
+        this.rootEl.addEventListener(animationEndEvent, close)
+        // Add the closing class to the dialog, showing the close animation
+        this.rootEl.classList.add(baseClassNames.closing)
+      } else {
+        close()
+      }
+
+      return true
+    }
+
+    // Allow strings as content
+    if (typeof opts === 'string') {
+      opts = {
+        content: opts
+      }
+    }
+
+    // `content` is unsafe internally, so translate
+    // safe default: HTML-escape the content before passing it through
+    if (opts.unsafeContent && !opts.content) {
+      opts.content = opts.unsafeContent
+    } else if (opts.content) {
+      opts.content = escapeHtml(opts.content)
+    }
+
+    // Store options on instance for future reference
+    var options = vexInstance.options = Object.assign({}, vex.defaultOptions, opts)
+
+    // vex root
+    var rootEl = vexInstance.rootEl = document.createElement('div')
+    rootEl.classList.add(baseClassNames.vex)
+    addClasses(rootEl, options.className)
+
+    // Overlay
+    var overlayEl = vexInstance.overlayEl = document.createElement('div')
+    overlayEl.classList.add(baseClassNames.overlay)
+    addClasses(overlayEl, options.overlayClassName)
+    if (options.overlayClosesOnClick) {
+      overlayEl.addEventListener('click', function overlayClickListener (e) {
+        if (e.target === overlayEl) {
+          vexInstance.close()
+        }
+      })
+    }
+    rootEl.appendChild(overlayEl)
+
+    // Content
+    var contentEl = vexInstance.contentEl = document.createElement('div')
+    contentEl.classList.add(baseClassNames.content)
+    addClasses(contentEl, options.contentClassName)
+    contentEl.appendChild(options.content instanceof window.Node ? options.content : domify(options.content))
+    rootEl.appendChild(contentEl)
+
+    // Close button
+    if (options.showCloseButton) {
+      var closeEl = vexInstance.closeEl = document.createElement('div')
+      closeEl.classList.add(baseClassNames.close)
+      addClasses(closeEl, options.closeClassName)
+      closeEl.addEventListener('click', vexInstance.close.bind(vexInstance))
+      contentEl.appendChild(closeEl)
+    }
+
+    // Add to DOM
+    document.querySelector(options.appendLocation).appendChild(rootEl)
+
+    // Call after open callback
+    if (options.afterOpen) {
+      options.afterOpen.call(vexInstance)
+    }
+
+    // Apply styling to the body
+    document.body.classList.add(baseClassNames.open)
+
+    // Return the created vex instance
+    return vexInstance
+  },
+
+  // A top-level vex.close function to close dialogs by reference or id
+  close: function close (vexOrId) {
+    var id
+    if (vexOrId.id) {
+      id = vexOrId.id
+    } else if (typeof vexOrId === 'string') {
+      id = vexOrId
+    } else {
+      throw new TypeError('close requires a vex object or id string')
+    }
+    if (!vexes[id]) {
+      return false
+    }
+    return vexes[id].close()
+  },
+
+  // Close the most recently created/opened vex
+  closeTop: function closeTop () {
+    var ids = Object.keys(vexes)
+    if (!ids.length) {
+      return false
+    }
+    return vexes[ids[ids.length - 1]].close()
+  },
+
+  // Close every vex!
+  closeAll: function closeAll () {
+    for (var id in vexes) {
+      this.close(id)
+    }
+    return true
+  },
+
+  // A getter for the internal lookup table
+  getAll: function getAll () {
+    return vexes
+  },
+
+  // A getter for the internal lookup table
+  getById: function getById (id) {
+    return vexes[id]
+  }
+}
+
+// Close top vex on escape
+window.addEventListener('keyup', function vexKeyupListener (e) {
+  if (e.keyCode === 27) {
+    isEscapeActive = true
+    vex.closeTop()
+    isEscapeActive = false
+  }
+})
+
+// Close all vexes on history pop state (useful in single page apps)
+window.addEventListener('popstate', function () {
+  if (vex.defaultOptions.closeAllOnPopState) {
+    vex.closeAll()
+  }
+})
+
+vex.defaultOptions = {
+  content: '',
+  showCloseButton: true,
+  escapeButtonCloses: true,
+  overlayClosesOnClick: true,
+  appendLocation: 'body',
+  className: '',
+  overlayClassName: '',
+  contentClassName: '',
+  closeClassName: '',
+  closeAllOnPopState: true
+}
+
+// TODO Loading symbols?
+
+// Include escapeHtml function on the library object
+Object.defineProperty(vex, '_escapeHtml', {
+  configurable: false,
+  enumerable: false,
+  writable: false,
+  value: escapeHtml
+})
+
+// Plugin system!
+vex.registerPlugin = function registerPlugin (pluginFn, name) {
+  var plugin = pluginFn(vex)
+  var pluginName = name || plugin.name
+  if (vex[pluginName]) {
+    throw new Error('Plugin ' + name + ' is already registered.')
+  }
+  vex[pluginName] = plugin
+}
+
+module.exports = vex
+
+},{"classlist-polyfill":1,"domify":2,"es6-object-assign":3}]},{},[4])(4)
+});
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"classlist-polyfill":5,"domify":7,"es6-object-assign":8}],127:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -34819,7 +36840,8 @@ const initial = Object.assign({
 	studio: studio.initial,
 	sequencer: sequencer.initial,
 	instrument: instrument.initial,
-	mediaLibrary: mediaLibrary.initial
+	mediaLibrary: mediaLibrary.initial,
+	midiMap: midiMap.initial
 });
 
 // todo merge loaded state
@@ -34829,6 +36851,9 @@ const load = content => stream.onNext(state => Object.assign({}, state, {
 	instrument: content.instrument || state.instrument
 }));
 const clear = () => load(initial);
+
+const change = (section, prop, val) => stream.onNext(state =>
+	obj.patch(state, [section].concat(prop), val));
 
 module.exports = {
 	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
@@ -34841,10 +36866,11 @@ module.exports = {
 	midiMap,
 	load,
 	clear,
+	change,
 	initial
 };
 
-},{"../util/math":150,"./instrument":122,"./media-library":123,"./midi-map":124,"./sequencer":125,"./studio":126,"iblokz-data":8,"rx":104}],122:[function(require,module,exports){
+},{"../util/math":156,"./instrument":128,"./media-library":129,"./midi-map":130,"./sequencer":131,"./studio":132,"iblokz-data":12,"rx":108}],128:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -34923,21 +36949,26 @@ const setVca = index => stream.onNext(
 	state => obj.patch(state, ['instrument', 'vcaOn'], index)
 );
 
+const applyPatch = patch => stream.onNext(
+	state => obj.patch(state, 'instrument', patch)
+);
+
 module.exports = {
 	stream,
 	initial,
 	updateProp,
-	setVca
+	setVca,
+	applyPatch
 };
 
-},{"iblokz-data":8,"rx":104}],123:[function(require,module,exports){
+},{"iblokz-data":12,"rx":108}],129:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {obj} = require('iblokz-data');
+const {obj, arr} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
@@ -35012,8 +37043,131 @@ const initial = {
 			},
 			'ride02.ogg',
 			'rim01.ogg'
-		]}
-	]
+		]},
+		{
+			name: 'custom',
+			items: [
+			]
+		}
+	],
+	patches: [{
+		name: 'default',
+		patch: {
+			vcaOn: 0,
+			vca1: {
+				volume: 0.41,
+				attack: 0.31,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.21
+			},
+			vca2: {
+				volume: 0.43,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.19
+			},
+			vco1: {
+				on: true,
+				type: 'square',
+				detune: -1
+			},
+			vco2: {
+				on: true,
+				type: 'sawtooth',
+				detune: 1
+			},
+			lfo: {
+				on: false,
+				type: 'sawtooth',
+				frequency: 5,
+				gain: 0.15
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.64,
+				resonance: 0,
+				gain: 0
+			}
+		}
+	}, {
+		name: 'fantasy bells',
+		patch: {
+			vcaOn: 1,
+			vca1: {
+				volume: 0.21,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.52
+			},
+			vca2: {
+				volume: 0.17,
+				attack: 0,
+				decay: 0.16,
+				sustain: 0.8,
+				release: 0.55
+			},
+			vco1: {
+				on: true,
+				type: 'sawtooth',
+				detune: -5
+			},
+			vco2: {
+				on: true,
+				type: 'sine',
+				detune: 8
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.57,
+				resonance: 0.37,
+				gain: 0
+			}
+		}
+	}, {
+		name: 'accordeon',
+		patch: {
+			vcaOn: 0,
+			vca1: {
+				volume: 0.14,
+				attack: 0.19,
+				decay: 0.55,
+				sustain: 0.5,
+				release: 0.43
+			},
+			vca2: {
+				volume: 0.21,
+				attack: 0.16,
+				decay: 0.17,
+				sustain: 0.47,
+				release: 0.38
+			},
+			vco1: {
+				on: true,
+				type: 'square',
+				detune: -3
+			},
+			vco2: {
+				on: true,
+				type: 'sawtooth',
+				detune: 3
+			},
+			lfo: {
+				on: false,
+				type: 'sawtooth',
+				frequency: 5,
+				gain: 0.15
+			},
+			vcf: {
+				on: true,
+				cutoff: 0.51,
+				resonance: 0.14,
+				gain: 0
+			}
+		}
+	}]
 };
 
 const indexAt = (list, prop, value) =>
@@ -35044,13 +37198,36 @@ const loadSamples = list => stream.onNext(state => obj.patch(state, 'mediaLibrar
 	)
 }));
 
+const addSample = (sample, bank = 'custom') => stream.onNext(state =>
+	obj.patch(state, 'mediaLibrary', [indexAt(state.mediaLibrary.samples, 'name', bank)].map(index => ({
+		samples: [].concat(
+			state.mediaLibrary.samples.slice(0, index),
+			obj.patch(state.mediaLibrary.samples[index], {
+				index: arr.add(state.mediaLibrary.samples[index].items, sample)
+			}),
+			state.mediaLibrary.samples.slice(index + 1)
+		)
+	})).pop())
+);
+
+const addPatch = (name, patch) => stream.onNext(state =>
+	obj.patch(state, 'mediaLibrary', {
+		patches: arr.add(state.mediaLibrary.patches, {
+			name,
+			patch
+		})
+	})
+);
+
 module.exports = {
 	stream,
 	initial,
-	loadSamples
+	loadSamples,
+	addSample,
+	addPatch
 };
 
-},{"../../util/math":150,"iblokz-data":8,"rx":104}],124:[function(require,module,exports){
+},{"../../util/math":156,"iblokz-data":12,"rx":108}],130:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -35058,19 +37235,39 @@ const {Subject} = Rx;
 
 // util
 const {measureToBeatLength} = require('../../util/math');
+const {obj} = require('iblokz-data');
 
 const stream = new Subject();
 
-const connect = midi => stream.onNext(
-	state => Object.assign({}, state, {midi})
+const connect = devices => stream.onNext(
+	state => obj.patch(state, 'midiMap', {
+		devices
+	})
 );
+
+const initial = {
+	devices: [],
+	map: {
+		controller: {
+			20: ['instrument', ['vcf', 'cutoff']],
+			21: ['instrument', ['vcf', 'resonance']],
+			22: ['studio', ['bpm'], 60, 200, 0],
+			23: ['studio', ['volume']],
+			24: ['instrument', ['eg', 'attack']],
+			25: ['instrument', ['eg', 'decay']],
+			26: ['instrument', ['eg', 'sustain']],
+			27: ['instrument', ['eg', 'release']]
+		}
+	}
+};
 
 module.exports = {
 	stream,
+	initial,
 	connect
 };
 
-},{"../../util/math":150,"rx":104}],125:[function(require,module,exports){
+},{"../../util/math":156,"iblokz-data":12,"rx":108}],131:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35095,7 +37292,13 @@ const toggle = (bar, r, c) => {
 	});
 };
 
-const selectChannel = channel => stream.onNext(state =>
+const clear = channel => stream.onNext(state => {
+	let pattern = state.sequencer.pattern.slice();
+	pattern[state.sequencer.bar][channel] = [];
+	return obj.patch(state, 'sequencer', {pattern});
+});
+
+const select = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channel: (state.sequencer.channel === channel)
 			? -1
@@ -35103,13 +37306,13 @@ const selectChannel = channel => stream.onNext(state =>
 	})
 );
 
-const addChannel = channel => stream.onNext(state =>
+const add = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channels: state.sequencer.channels.concat([0])
 	})
 );
 
-const deleteChannel = channel => (channel > -1) && stream.onNext(state =>
+const remove = channel => (channel > -1) && stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channels: [].concat(
 			state.sequencer.channels.slice(0, channel),
@@ -35156,13 +37359,14 @@ module.exports = {
 	stream,
 	initial,
 	toggle,
-	selectChannel,
-	addChannel,
-	deleteChannel,
+	clear,
+	select,
+	add,
+	remove,
 	setSample
 };
 
-},{"../../util/math":150,"iblokz-data":8,"rx":104}],126:[function(require,module,exports){
+},{"../../util/math":156,"iblokz-data":12,"rx":108}],132:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35237,7 +37441,7 @@ module.exports = {
 	tick
 };
 
-},{"../../util/math":150,"iblokz-data":8,"rx":104}],127:[function(require,module,exports){
+},{"../../util/math":156,"iblokz-data":12,"rx":108}],133:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35296,7 +37500,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 studio.hook({state$, actions});
-audio.hook({state$, midi, actions});
+audio.hook({state$, midi, actions, studio});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -35308,7 +37512,7 @@ state$.map(state => services.refresh({state, actions})).subscribe();
 // files
 f.loadZip('samples/openpathmusic.zip').subscribe(opm => {
 	let opmSamples = Object.keys(opm);
-	console.log(opmSamples);
+	// console.log(opmSamples);
 	$.concat(opmSamples.map(key => $
 		.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
 		.map(buffer => ({key, buffer})))
@@ -35326,16 +37530,6 @@ const basicSynth = new BasicSynth(studio.context, 'C1');
 
 let voices = {};
 
-let midiMap = {
-	20: ['instrument', 'vcf', 'cutoff'],
-	21: ['instrument', 'vcf', 'resonance'],
-	22: ['studio', 'bpm', 60, 200, 0],
-	23: ['studio', 'volume'],
-	24: ['instrument', 'eg', 'attack'],
-	25: ['instrument', 'eg', 'decay'],
-	26: ['instrument', 'eg', 'sustain'],
-	27: ['instrument', 'eg', 'release']
-};
 /*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {
@@ -35390,7 +37584,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":121,"./instr/basic-synth":128,"./instr/sampler":129,"./services":131,"./services/audio":130,"./services/studio":134,"./ui":136,"./util/audio":147,"./util/file":149,"./util/midi":151,"iblokz-snabbdom-helpers":12,"rx":104}],128:[function(require,module,exports){
+},{"./actions":127,"./instr/basic-synth":134,"./instr/sampler":135,"./services":137,"./services/audio":136,"./services/studio":140,"./ui":142,"./util/audio":153,"./util/file":155,"./util/midi":157,"iblokz-snabbdom-helpers":16,"rx":108}],134:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -35581,7 +37775,7 @@ BasicSynth.prototype.clone = function(note) {
 
 module.exports = BasicSynth;
 
-},{}],129:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 'use strict';
 
 /**
@@ -35646,7 +37840,7 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],130:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -35683,7 +37877,9 @@ const updatePrefs = instr => changes$.onNext(nodes =>
 		(node, key) => (instr[key])
 			? a.apply(node, instr[key])
 			: (key === 'voices')
-				? obj.map(node, voice => obj.map(voice, (n, key) => a.apply(n, instr[key])))
+				? obj.map(node, voice => obj.map(voice, (n, key) => (instr[key])
+					? a.apply(n, instr[key])
+					: n))
 				: node));
 
 const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, nodes, {
@@ -35803,38 +37999,63 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions}) => {
+const hook = ({state$, midi, actions, studio}) => {
 	// hook state changes
-	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument);
+	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
 	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
 		.subscribe(updateConnections);
 	// update prefs
-	instrUpdates$
-		.subscribe(updatePrefs);
+	instrUpdates$.subscribe(updatePrefs);
 
-	let midiMap = {
-		20: ['instrument', 'vcf', 'cutoff'],
-		21: ['instrument', 'vcf', 'resonance'],
-		22: ['studio', 'bpm', 60, 200, 0],
-		23: ['studio', 'volume'],
-		24: ['instrument', 'eg', 'attack'],
-		25: ['instrument', 'eg', 'decay'],
-		26: ['instrument', 'eg', 'sustain'],
-		27: ['instrument', 'eg', 'release']
-	};
+	const prepVal = (min = 0, max = 1, digits = 3) => val =>
+		[(min + val * max - val * min).toFixed(digits)]
+			.map(val =>
+				(digits === 0) ? parseInt(val, 10) : parseFloat(val)
+			)
+			.pop();
 
 	// hook midi signals
 	midi.access$.subscribe(data => actions.midiMap.connect(data));
-	midi.msg$
+	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
 		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
+		.share();
+
+	midiState$
+		.filter(({data}) => data.msg.state === 'controller')
+		.distinctUntilChanged(({data}) => data.msg.value)
+		.debounce(50)
+		.subscribe(({data, state}) => {
+			let mmap = obj.sub(state.midiMap.map, [data.msg.state, data.msg.controller]);
+			if (mmap) {
+				let [section, prop] = mmap;
+				// vca
+				if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+				// value
+				let valMods = mmap.slice(2);
+				let val = prepVal.apply(null, valMods)(data.msg.value);
+				actions.change(section, prop, val);
+			}
+		});
+
+	midiState$
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
-					if (data.msg.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					if (data.msg.channel !== 10) {
+						noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					} else {
+						if (state.sequencer.channels[data.msg.note.number - 60])
+							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
+								studio: {volume: state.studio.volume * data.msg.velocity}
+							});
+						if (state.studio.playing && state.studio.tickIndex > -1) {
+							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tickIndex);
+						}
+					}
 					break;
 				case 'noteOff':
 					if (data.msg.channel !== 10) noteOff(state.instrument, data.msg.note);
@@ -35843,27 +38064,17 @@ const hook = ({state$, midi, actions}) => {
 					pitchBend(state.instrument, data.msg.pitchValue);
 					break;
 				case 'controller':
-					let mmap = midiMap[data.msg.controller];
-					if (mmap && mmap[0] === 'instrument') {
-						let value = parseFloat(
-							(mmap[4] || 0) + data.msg.value * (mmap[4] || 1) - data.msg.value * (mmap[3] || 0)
-						).toFixed(mmap[5] || 3);
-						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
-						if (mmap[1] === 'eg') {
-							let vcaNum = `vca${state.instrument.vcaOn + 1}`;
-							console.log(vcaNum, mmap[2], value);
-							actions.instrument.updateProp(vcaNum, mmap[2], value);
-						} else {
-							// actions.instrument.updateProp(mmap[1], mmap[2], value);
-							updatePrefs(obj.patch(state.instrument, [mmap[1], mmap[2]], value));
-						}
-					}
-					if (mmap && mmap[0] === 'studio') {
-						let value = parseFloat(
-							(mmap[2] || 0) + data.msg.value * (mmap[3] || 1) - data.msg.value * (mmap[2] || 0)
-						).toFixed(mmap[4] || 3);
-						value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
-						actions.studio.change(mmap[1], value);
+					if (state.midiMap.map.controller[data.msg.controller]) {
+						let mmap = state.midiMap.map.controller[data.msg.controller];
+						let [section, prop] = mmap;
+						// vca
+						if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+						// value
+						let valMods = mmap.slice(2);
+						let val = prepVal.apply(null, valMods)(data.msg.value);
+
+						if (section === 'instrument')
+							updatePrefs(obj.patch(state.instrument, prop, val));
 					}
 					break;
 				default:
@@ -35876,7 +38087,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":147,"iblokz-data":8,"rx":104}],131:[function(require,module,exports){
+},{"../util/audio":153,"iblokz-data":12,"rx":108}],137:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -35897,23 +38108,29 @@ module.exports = {
 	layout
 };
 
-},{"./layout":132,"./midi":133,"./studio":134}],132:[function(require,module,exports){
+},{"./layout":138,"./midi":139,"./studio":140}],138:[function(require,module,exports){
 'use strict';
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 const init = () => {};
 const refresh = ({state, actions}) => {
-	const ui = document.querySelector('#ui');
-	const list = Array.from(ui.children);
+	const layout = document.querySelector('#layout');
+	const list = Array.from(layout.children);
 
 	const distance = 14;
 
-	list.filter(el => el.className !== 'midi-keyboard').forEach((el, i) => {
-		if (i > 0)
-			el.style.left = list.filter((el, k) => k < i && k > 0)
-				.reduce((w, el) => w + el.offsetWidth + distance, 0) + distance + 'px';
-	});
+	// console.log(list);
+
+	list
+		.filter(el => ['midi-keyboard', 'media-library'].indexOf(el.className) === -1)
+		.map(el => ({el, i: list.indexOf(el)}))
+		.forEach(({el, i}) => {
+			if (i > 0)
+				el.style.left = list[i - 1].offsetLeft + list[i - 1].offsetWidth + distance + 'px';
+			else
+				el.style.left = distance + 'px';
+		});
 
 	list.filter(el => el.className === 'midi-keyboard')
 		.forEach(el => {
@@ -35950,7 +38167,7 @@ module.exports = {
 	refresh
 };
 
-},{}],133:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 'use strict';
 
 const init = () => {};
@@ -35961,7 +38178,7 @@ module.exports = {
 	refresh
 };
 
-},{}],134:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -36076,12 +38293,12 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":129,"../util/context":148,"../util/math":150,"rx":104}],135:[function(require,module,exports){
+},{"../instr/sampler":135,"../util/context":154,"../util/math":156,"rx":108}],141:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
 
-const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz-snabbdom-helpers');
+const {div, h1, header, img, i, ul, li, a, button, input, label} = require('iblokz-snabbdom-helpers');
 
 const fileUtil = require('../../util/file');
 
@@ -36113,13 +38330,22 @@ module.exports = ({state, actions}) => header([
 			on: {click: ev => actions.toggleUI('instrument')}
 		}, [i('.fa.fa-tasks')])]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])])
+		/*
 		li([a({
 			class: {on: state.ui.midiKeyboard},
 			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
+		*/
 	]),
-	h1([
-		img('[src="assets/logo2.png"]')
+	ul('.center', [
+		li([img('[src="assets/logo2.png"]')]),
+		li('.right', [
+			label('BPM'),
+			input('.bpm', {
+				props: {value: state.studio.bpm || 120, size: 3},
+				on: {input: ev => actions.studio.change('bpm', ev.target.value)}
+			})
+		])
 	]),
 	ul('.right', [
 		li([
@@ -36147,8 +38373,13 @@ module.exports = ({state, actions}) => header([
 	])
 ]);
 
-},{"../../util/file":149,"iblokz-snabbdom-helpers":12,"moment":91}],136:[function(require,module,exports){
+},{"../../util/file":155,"iblokz-snabbdom-helpers":16,"moment":95}],142:[function(require,module,exports){
 'use strict';
+
+// vex code
+const vex = require('vex-js');
+vex.registerPlugin(require('vex-dialog'));
+vex.defaultOptions.className = 'vex-theme-top';
 
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
@@ -36160,14 +38391,16 @@ const midiKeyboard = require('./midi-keyboard');
 
 module.exports = ({state, actions}) => div('#ui', [
 	header({state, actions}),
-	state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
-	state.ui.instrument ? instrument({state, actions}) : '',
-	state.ui.sequencer ? sequencer({state, actions}) : '',
-	state.ui.midiMap ? midiMap({state, actions}) : '',
-	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
+	div('#layout', [
+		state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
+		state.ui.instrument ? instrument({state, actions}) : '',
+		state.ui.sequencer ? sequencer({state, actions}) : '',
+		state.ui.midiMap ? midiMap({state, actions}) : '',
+		state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
+	])
 ]);
 
-},{"./header":135,"./instrument":138,"./media-library":143,"./midi-keyboard":144,"./midi-map":145,"./sequencer":146,"iblokz-snabbdom-helpers":12}],137:[function(require,module,exports){
+},{"./header":141,"./instrument":144,"./media-library":149,"./midi-keyboard":150,"./midi-map":151,"./sequencer":152,"iblokz-snabbdom-helpers":16,"vex-dialog":125,"vex-js":126}],143:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36215,13 +38448,20 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],138:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],144:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, ul, li, hr, button, br,
 	form, label, input, fieldset, legend, i, img
 } = require('iblokz-snabbdom-helpers');
+
+// vex dialog
+const vex = require('vex-js');
+const prompt = (message, cb) => vex.dialog.prompt({
+	message,
+	callback: v => v && v !== '' && cb(v)
+});
 
 const vco = require('./vco');
 const vca = require('./vca');
@@ -36240,7 +38480,16 @@ const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
-		h2([i('.fa.fa-tasks'), ' Instrument'])
+		h2([i('.fa.fa-tasks'), ' Instrument']),
+		div('.right', [
+			button('.fa.fa-eraser', {on: {
+				click: () => actions.instrument.applyPatch(
+					state.mediaLibrary.patches.filter(p => p.name === 'default').pop().patch
+				)
+			}}),
+			button('.fa.fa-save', {on: {click: () => prompt('Save patch as',
+				name => actions.mediaLibrary.addPatch(name, state.instrument))}})
+		])
 	]),
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [
@@ -36266,7 +38515,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"./delay":137,"./lfo":139,"./vca":140,"./vcf":141,"./vco":142,"iblokz-snabbdom-helpers":12}],139:[function(require,module,exports){
+},{"./delay":143,"./lfo":145,"./vca":146,"./vcf":147,"./vco":148,"iblokz-snabbdom-helpers":16,"vex-js":126}],145:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36317,7 +38566,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],140:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],146:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36378,7 +38627,7 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],141:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],147:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36419,7 +38668,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],142:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],148:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36472,7 +38721,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],143:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36549,22 +38798,36 @@ const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =
 ));
 
 module.exports = ({state, actions}) => div('.media-library', [
+	/*
 	div('.header', [
 		h2([i('.fa.fa-book'), ' Media Library'])
 	]),
+	*/
 	div('.body', [
 		fieldset([
 			legend('Samples'),
 			parseTree(state.mediaLibrary.samples, state, actions)
 		]),
 		fieldset([
-			legend('Instruments'),
-			ul([li([label('BasicSynth')])])
+			legend('Patches'),
+			ul(state.mediaLibrary.patches.map(patch =>
+				li('[draggable="true"]', {
+					on: {dblclick: () => actions.instrument.applyPatch(
+						patch.patch
+					)}
+				}, [
+					label([
+						i('.fa.fa-file-code-o'),
+						' ',
+						patch.name
+					])
+				]))
+			)
 		])
 	])
 ]);
 
-},{"iblokz-data":8,"iblokz-snabbdom-helpers":12}],144:[function(require,module,exports){
+},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],150:[function(require,module,exports){
 'use strict';
 
 const {
@@ -36611,12 +38874,15 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],145:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],151:[function(require,module,exports){
 'use strict';
 
 const {
-	div, h2, span, p, input, fieldset, legend, label, hr, button, i
+	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
+	ul, li, table, thead, tbody, tr, td, th
 } = require('iblokz-snabbdom-helpers');
+
+const actionMaps = [];
 
 module.exports = ({state, actions}) => div('.midi-map', [
 	div('.header', [
@@ -36624,19 +38890,43 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	]),
 	div('.body', [
 		fieldset([
-			legend('Inputs')
-		].concat(state.midi.inputs.map(inp =>
-			p(inp.name)
-		))),
+			legend('Devices'),
+			p(state.midiMap.devices.inputs.map(inp => inp.name).join(', '))
+		]),
 		fieldset([
-			legend('Outputs')
-		].concat(state.midi.outputs.map(out =>
-			p(out.name)
-		)))
+			legend('Map'),
+			table(
+				thead(tr(
+					th('status'),
+					th('type'),
+					th('section'),
+					th('prop'),
+					th('min'),
+					th('max'),
+					th('digits')
+				)),
+				tbody(Object.keys(state.midiMap.map).map(status => Object.keys(state.midiMap.map[status]).map(type =>
+					tr([
+						td(status),
+						td(type),
+						// section
+						td(state.midiMap.map[status][type][0]),
+						// prop
+						td(state.midiMap.map[status][type][1].join(', ')),
+						// min
+						td(state.midiMap.map[status][type][2] || 0),
+						// max
+						td(state.midiMap.map[status][type][3] || 1),
+						// digits
+						td(state.midiMap.map[status][type][4])
+					])
+				)).reduce((a, a1) => a.concat(a1), []))
+			)
+		])
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],146:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
@@ -36658,21 +38948,20 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			input('.bar[type="number"]', {props: {value: 0, size: 6}}),
 			button('.right.fa.fa-caret-right')
 		]),
-		label('BPM'),
-		input('.bpm', {
-			props: {value: state.studio.bpm || 120, size: 6},
-			on: {input: ev => actions.studio.change('bpm', ev.target.value)}
-		}),
 		label('MSR'),
 		input('.measure', {
 			props: {value: state.studio.measure || '4/4', size: 6},
 			on: {input: ev => actions.studio.change('measure', ev.target.value)}
 		}),
-		(state.sequencer.channel === -1)
-			? button('.fa.fa-plus', {on: {click: () => actions.sequencer.addChannel()}})
-			: button('.fa.fa-minus', {on: {
-				click: () => actions.sequencer.deleteChannel(state.sequencer.channel)
-			}})
+		div('.right', [
+			(state.sequencer.channel !== -1) ? button('.fa.fa-minus', {on: {
+				click: () => actions.sequencer.remove(state.sequencer.channel)
+			}}) : '',
+			(state.sequencer.channel !== -1) ? button('.fa.fa-eraser', {on: {
+				click: () => actions.sequencer.clear(state.sequencer.channel)
+			}}) : '',
+			button('.fa.fa-plus', {on: {click: () => actions.sequencer.add()}})
+		])
 	]),
 	div('.body', [].concat(
 		/*
@@ -36685,11 +38974,15 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		))],
 		*/
 		loop(state.sequencer.channels.length, r =>
-			div(`.row`, [].concat(
+			div(`.row`, {
+				style: {
+					minWidth: 142 + 22 * state.studio.beatLength + 'px'
+				}
+			}, [].concat(
 				[div('.channel', {
 					class: {on: state.sequencer.channel === r},
 					on: {
-						click: () => actions.sequencer.selectChannel(r),
+						click: () => actions.sequencer.select(r),
 						dragover: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'dashed')),
 						dragleave: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'solid')),
 						dragend: ev => ev.preventDefault()
@@ -36722,7 +39015,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz-snabbdom-helpers":12}],147:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
@@ -36889,7 +39182,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz-data":8}],148:[function(require,module,exports){
+},{"iblokz-data":12}],154:[function(require,module,exports){
 var AudioContext = (window.AudioContext ||
   window.webkitAudioContext ||
   window.mozAudioContext ||
@@ -36900,7 +39193,7 @@ module.exports = {
 	AudioContext
 };
 
-},{}],149:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -36920,14 +39213,14 @@ const load = (file, readAs = 'text') => $.create(stream => {
 		);
 		stream.onCompleted();
 	};
-	console.log(file, readAs);
+	// console.log(file, readAs);
 	((typeof file === 'string')
 		? $.fromPromise(fetch(file)).flatMap(res => res.blob())
 		: $.just(file))
-		.subscribe(f => (console.log(f), fn.switch(readAs, {
+		.subscribe(f => fn.switch(readAs, {
 			arrayBuffer: f => fr.readAsArrayBuffer(f),
 			default: f => fr.readAsText(f)
-		})(f)));
+		})(f));
 });
 
 const loadZip = file => load(file, 'arrayBuffer')
@@ -36935,7 +39228,7 @@ const loadZip = file => load(file, 'arrayBuffer')
 	.flatMap(zf => $.concat(
 		Object.keys(zf.files)
 			.filter(k => !zf.files[k].dir)
-			.map(k => (console.log(k), k))
+			// .map(k => (console.log(k), k))
 			.map(k => $.fromPromise(zf.files[k].async('arraybuffer')).map(v => ({k, v})))
 		).reduce((o, {k, v}) => obj.patch(o, k, v), {})
 	);
@@ -36951,7 +39244,7 @@ module.exports = {
 	save
 };
 
-},{"file-saver":7,"iblokz-data":8,"jszip":27,"rx":104}],150:[function(require,module,exports){
+},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":108}],156:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -36965,7 +39258,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],151:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37096,4 +39389,4 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":104}]},{},[127]);
+},{"rx":108}]},{},[133]);

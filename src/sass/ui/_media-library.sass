@@ -1,27 +1,36 @@
 .media-library
-	+editor(20px, 54px)
-	min-width: 260px
+	position: absolute
+	left: 0px
+	top: 0px
+	bottom: 0px
+	display: block
+	background: #bbb
+	min-width: 280px
+	overflow-y: scroll
+	border-left: 5px solid #999
 	.body
 		display: relative
-		fieldset > ul
-			margin: 0px -10px
+		overflow-y: visible
+		fieldset
+			border: 0px
+			padding: 0px
+			margin: 0px
+			legend
+				padding: 5px 7px
+				background: #aaa
+				width: 100%
+				border-top: 1px solid #999
+				border-bottom: 1px solid #999
 		ul
 			list-style: none
-			padding: 0px
-			border-top: 1px solid #bbb
-			border-bottom: 1px solid #bbb
+			padding: 0px 5px
+			margin: 0px
 			li
 				position: relative
+				margin: 0px -5px
 				ul
 					display: none
 					border-bottom: 0px
-				li
-					&:last-child
-						border-bottom: 0px
-					&:first-child
-						border-top: 0px
-					> label
-						padding-left: 10px
 				> input[type=checkbox]
 					display: none
 					&:checked
@@ -34,17 +43,15 @@
 					line-height: 24px
 					font-size: 12px
 					display: block
-					background: #eaeaea
-					transition: background .7s, box-shadow .7s
+					background: #bbb
+					transition: background .3s, box-shadow .3s
 					cursor: pointer
 					&:hover
-						background: #dfe
+						background: #bdc
 						box-shadow: inset 0px 0px 7px #ccc
 					i
 						width: 14px
-
-				&:not(:first-child)
-					border-top: 1px solid #ccc
+						margin-left: 5px
 				button
 					+no-margin-padding
 					padding: 0px 5px

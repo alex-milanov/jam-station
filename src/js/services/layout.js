@@ -4,16 +4,22 @@ const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(tim
 
 const init = () => {};
 const refresh = ({state, actions}) => {
-	const ui = document.querySelector('#ui');
-	const list = Array.from(ui.children);
+	const layout = document.querySelector('#layout');
+	const list = Array.from(layout.children);
 
 	const distance = 14;
 
-	list.filter(el => el.className !== 'midi-keyboard').forEach((el, i) => {
-		if (i > 0)
-			el.style.left = list.filter((el, k) => k < i && k > 0)
-				.reduce((w, el) => w + el.offsetWidth + distance, 0) + distance + 'px';
-	});
+	// console.log(list);
+
+	list
+		.filter(el => ['midi-keyboard', 'media-library'].indexOf(el.className) === -1)
+		.map(el => ({el, i: list.indexOf(el)}))
+		.forEach(({el, i}) => {
+			if (i > 0)
+				el.style.left = list[i - 1].offsetLeft + list[i - 1].offsetWidth + distance + 'px';
+			else
+				el.style.left = distance + 'px';
+		});
 
 	list.filter(el => el.className === 'midi-keyboard')
 		.forEach(el => {

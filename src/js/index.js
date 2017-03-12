@@ -56,7 +56,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
 studio.hook({state$, actions});
-audio.hook({state$, midi, actions});
+audio.hook({state$, midi, actions, studio});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -68,7 +68,7 @@ state$.map(state => services.refresh({state, actions})).subscribe();
 // files
 f.loadZip('samples/openpathmusic.zip').subscribe(opm => {
 	let opmSamples = Object.keys(opm);
-	console.log(opmSamples);
+	// console.log(opmSamples);
 	$.concat(opmSamples.map(key => $
 		.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
 		.map(buffer => ({key, buffer})))
@@ -86,16 +86,6 @@ const basicSynth = new BasicSynth(studio.context, 'C1');
 
 let voices = {};
 
-let midiMap = {
-	20: ['instrument', 'vcf', 'cutoff'],
-	21: ['instrument', 'vcf', 'resonance'],
-	22: ['studio', 'bpm', 60, 200, 0],
-	23: ['studio', 'volume'],
-	24: ['instrument', 'eg', 'attack'],
-	25: ['instrument', 'eg', 'decay'],
-	26: ['instrument', 'eg', 'sustain'],
-	27: ['instrument', 'eg', 'release']
-};
 /*
 midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	.subscribe(({data, state}) => {

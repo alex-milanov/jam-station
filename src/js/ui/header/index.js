@@ -2,7 +2,7 @@
 
 const moment = require('moment');
 
-const {div, h1, header, img, i, ul, li, a, button, input} = require('iblokz-snabbdom-helpers');
+const {div, h1, header, img, i, ul, li, a, button, input, label} = require('iblokz-snabbdom-helpers');
 
 const fileUtil = require('../../util/file');
 
@@ -34,13 +34,22 @@ module.exports = ({state, actions}) => header([
 			on: {click: ev => actions.toggleUI('instrument')}
 		}, [i('.fa.fa-tasks')])]),
 		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])]),
+		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])])
+		/*
 		li([a({
 			class: {on: state.ui.midiKeyboard},
 			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
+		*/
 	]),
-	h1([
-		img('[src="assets/logo2.png"]')
+	ul('.center', [
+		li([img('[src="assets/logo2.png"]')]),
+		li('.right', [
+			label('BPM'),
+			input('.bpm', {
+				props: {value: state.studio.bpm || 120, size: 3},
+				on: {input: ev => actions.studio.change('bpm', ev.target.value)}
+			})
+		])
 	]),
 	ul('.right', [
 		li([

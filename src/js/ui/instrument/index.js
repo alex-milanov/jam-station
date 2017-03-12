@@ -5,6 +5,13 @@ const {
 	form, label, input, fieldset, legend, i, img
 } = require('iblokz-snabbdom-helpers');
 
+// vex dialog
+const vex = require('vex-js');
+const prompt = (message, cb) => vex.dialog.prompt({
+	message,
+	callback: v => v && v !== '' && cb(v)
+});
+
 const vco = require('./vco');
 const vca = require('./vca');
 const vcf = require('./vcf');
@@ -22,7 +29,16 @@ const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions}) => div('.instrument', [
 	div('.header', [
-		h2([i('.fa.fa-tasks'), ' Instrument'])
+		h2([i('.fa.fa-tasks'), ' Instrument']),
+		div('.right', [
+			button('.fa.fa-eraser', {on: {
+				click: () => actions.instrument.applyPatch(
+					state.mediaLibrary.patches.filter(p => p.name === 'default').pop().patch
+				)
+			}}),
+			button('.fa.fa-save', {on: {click: () => prompt('Save patch as',
+				name => actions.mediaLibrary.addPatch(name, state.instrument))}})
+		])
 	]),
 	div('.body', [
 		form({on: {submit: ev => ev.preventDefault()}}, [

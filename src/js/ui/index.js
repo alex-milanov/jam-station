@@ -1,5 +1,10 @@
 'use strict';
 
+// vex code
+const vex = require('vex-js');
+vex.registerPlugin(require('vex-dialog'));
+vex.defaultOptions.className = 'vex-theme-top';
+
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
 const mediaLibrary = require('./media-library');
@@ -10,9 +15,11 @@ const midiKeyboard = require('./midi-keyboard');
 
 module.exports = ({state, actions}) => div('#ui', [
 	header({state, actions}),
-	state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
-	state.ui.instrument ? instrument({state, actions}) : '',
-	state.ui.sequencer ? sequencer({state, actions}) : '',
-	state.ui.midiMap ? midiMap({state, actions}) : '',
-	state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
+	div('#layout', [
+		state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
+		state.ui.instrument ? instrument({state, actions}) : '',
+		state.ui.sequencer ? sequencer({state, actions}) : '',
+		state.ui.midiMap ? midiMap({state, actions}) : '',
+		state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
+	])
 ]);

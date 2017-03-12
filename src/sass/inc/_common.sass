@@ -1,13 +1,40 @@
 body
 	+no-margin-padding
 	background: $jam-station-color-bg
+	overflow: hidden
 input, label, body
 	color: $jam-station-color-text
 	font-family: $jam-station-font-text
 
 .left
-	float: left
+	float: left!important
 .right
-	float: right
+	float: right!important
 .clear
 	clear: both
+
+
+::-webkit-scrollbar
+	width: 2px
+	height: 2px
+::-webkit-scrollbar-button
+	width: 0px
+	height: 0px
+::-webkit-scrollbar-thumb
+	background: #ccc
+	border: 0px none #ffffff
+	border-radius: 50px
+::-webkit-scrollbar-thumb:hover
+	background: #ffffff
+::-webkit-scrollbar-thumb:active
+	background: #000000
+::-webkit-scrollbar-track
+	background: #999
+	border: 0px none #ffffff
+	border-radius: 50px
+::-webkit-scrollbar-track:hover
+	background: #999
+::-webkit-scrollbar-track:active
+	background: #555
+::-webkit-scrollbar-corner
+	background: transparent

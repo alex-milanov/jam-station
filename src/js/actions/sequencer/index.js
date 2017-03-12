@@ -22,7 +22,13 @@ const toggle = (bar, r, c) => {
 	});
 };
 
-const selectChannel = channel => stream.onNext(state =>
+const clear = channel => stream.onNext(state => {
+	let pattern = state.sequencer.pattern.slice();
+	pattern[state.sequencer.bar][channel] = [];
+	return obj.patch(state, 'sequencer', {pattern});
+});
+
+const select = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channel: (state.sequencer.channel === channel)
 			? -1
@@ -30,13 +36,13 @@ const selectChannel = channel => stream.onNext(state =>
 	})
 );
 
-const addChannel = channel => stream.onNext(state =>
+const add = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channels: state.sequencer.channels.concat([0])
 	})
 );
 
-const deleteChannel = channel => (channel > -1) && stream.onNext(state =>
+const remove = channel => (channel > -1) && stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
 		channels: [].concat(
 			state.sequencer.channels.slice(0, channel),
@@ -83,8 +89,9 @@ module.exports = {
 	stream,
 	initial,
 	toggle,
-	selectChannel,
-	addChannel,
-	deleteChannel,
+	clear,
+	select,
+	add,
+	remove,
 	setSample
 };

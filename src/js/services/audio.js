@@ -34,7 +34,9 @@ const updatePrefs = instr => changes$.onNext(nodes =>
 		(node, key) => (instr[key])
 			? a.apply(node, instr[key])
 			: (key === 'voices')
-				? obj.map(node, voice => obj.map(voice, (n, key) => a.apply(n, instr[key])))
+				? obj.map(node, voice => obj.map(voice, (n, key) => (instr[key])
+					? a.apply(n, instr[key])
+					: n))
 				: node));
 
 const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, nodes, {
@@ -154,38 +156,63 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions}) => {
+const hook = ({state$, midi, actions, studio}) => {
 	// hook state changes
-	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument);
+	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
 	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
 		.subscribe(updateConnections);
 	// update prefs
-	instrUpdates$
-		.subscribe(updatePrefs);
+	instrUpdates$.subscribe(updatePrefs);
 
-	let midiMap = {
-		20: ['instrument', 'vcf', 'cutoff'],
-		21: ['instrument', 'vcf', 'resonance'],
-		22: ['studio', 'bpm', 60, 200, 0],
-		23: ['studio', 'volume'],
-		24: ['instrument', 'eg', 'attack'],
-		25: ['instrument', 'eg', 'decay'],
-		26: ['instrument', 'eg', 'sustain'],
-		27: ['instrument', 'eg', 'release']
-	};
+	const prepVal = (min = 0, max = 1, digits = 3) => val =>
+		[(min + val * max - val * min).toFixed(digits)]
+			.map(val =>
+				(digits === 0) ? parseInt(val, 10) : parseFloat(val)
+			)
+			.pop();
 
 	// hook midi signals
 	midi.access$.subscribe(data => actions.midiMap.connect(data));
-	midi.msg$
+	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
 		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
+		.share();
+
+	midiState$
+		.filter(({data}) => data.msg.state === 'controller')
+		.distinctUntilChanged(({data}) => data.msg.value)
+		.debounce(50)
+		.subscribe(({data, state}) => {
+			let mmap = obj.sub(state.midiMap.map, [data.msg.state, data.msg.controller]);
+			if (mmap) {
+				let [section, prop] = mmap;
+				// vca
+				if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+				// value
+				let valMods = mmap.slice(2);
+				let val = prepVal.apply(null, valMods)(data.msg.value);
+				actions.change(section, prop, val);
+			}
+		});
+
+	midiState$
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
-					if (data.msg.channel !== 10) noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					if (data.msg.channel !== 10) {
+						noteOn(state.instrument, data.msg.note, data.msg.velocity);
+					} else {
+						if (state.sequencer.channels[data.msg.note.number - 60])
+							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
+								studio: {volume: state.studio.volume * data.msg.velocity}
+							});
+						if (state.studio.playing && state.studio.tickIndex > -1) {
+							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tickIndex);
+						}
+					}
 					break;
 				case 'noteOff':
 					if (data.msg.channel !== 10) noteOff(state.instrument, data.msg.note);
@@ -194,27 +221,17 @@ const hook = ({state$, midi, actions}) => {
 					pitchBend(state.instrument, data.msg.pitchValue);
 					break;
 				case 'controller':
-					let mmap = midiMap[data.msg.controller];
-					if (mmap && mmap[0] === 'instrument') {
-						let value = parseFloat(
-							(mmap[4] || 0) + data.msg.value * (mmap[4] || 1) - data.msg.value * (mmap[3] || 0)
-						).toFixed(mmap[5] || 3);
-						value = (mmap[5] === 0) ? parseInt(value, 10) : parseFloat(value);
-						if (mmap[1] === 'eg') {
-							let vcaNum = `vca${state.instrument.vcaOn + 1}`;
-							console.log(vcaNum, mmap[2], value);
-							actions.instrument.updateProp(vcaNum, mmap[2], value);
-						} else {
-							// actions.instrument.updateProp(mmap[1], mmap[2], value);
-							updatePrefs(obj.patch(state.instrument, [mmap[1], mmap[2]], value));
-						}
-					}
-					if (mmap && mmap[0] === 'studio') {
-						let value = parseFloat(
-							(mmap[2] || 0) + data.msg.value * (mmap[3] || 1) - data.msg.value * (mmap[2] || 0)
-						).toFixed(mmap[4] || 3);
-						value = (mmap[4] === 0) ? parseInt(value, 10) : parseFloat(value);
-						actions.studio.change(mmap[1], value);
+					if (state.midiMap.map.controller[data.msg.controller]) {
+						let mmap = state.midiMap.map.controller[data.msg.controller];
+						let [section, prop] = mmap;
+						// vca
+						if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+						// value
+						let valMods = mmap.slice(2);
+						let val = prepVal.apply(null, valMods)(data.msg.value);
+
+						if (section === 'instrument')
+							updatePrefs(obj.patch(state.instrument, prop, val));
 					}
 					break;
 				default:

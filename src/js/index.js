@@ -13,6 +13,11 @@ window.f = f;
 const BasicSynth = require('./instr/basic-synth');
 const Sampler = require('./instr/sampler');
 
+// vex code
+const vex = require('vex-js');
+vex.registerPlugin(require('vex-dialog'));
+vex.defaultOptions.className = 'vex-theme-top';
+
 // app
 let actions = require('./actions');
 let ui = require('./ui');

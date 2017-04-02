@@ -13,6 +13,10 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			class: {on: state.studio.playing},
 			on: {click: () => actions.studio.play()}
 		}),
+		button('.fa.fa-circle', {
+			class: {on: state.studio.recording},
+			on: {click: () => actions.studio.record()}
+		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
 		span('.cipher', [
 			button('.left.fa.fa-caret-left'),

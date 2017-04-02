@@ -18,9 +18,12 @@ const tick = () => stream.onNext(
 
 const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !state.studio.playing}));
 
+const record = () => stream.onNext(state => obj.patch(state, 'studio', {recording: !state.studio.recording}));
+
 const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
 	tickIndex: -1,
-	playing: false
+	playing: false,
+	recording: false
 }));
 
 const change = (prop, val) =>
@@ -37,6 +40,7 @@ module.exports = {
 		measure: '4/4',
 		beatLength: 16,
 		playing: false,
+		recording: false,
 		tickIndex: -1,
 		volume: 0.4,
 		channels: [
@@ -67,6 +71,7 @@ module.exports = {
 		]
 	},
 	play,
+	record,
 	stop,
 	change,
 	tick

@@ -1,7 +1,6 @@
 @charset "UTF-8";
 @import url(//fonts.googleapis.com/css?family=Open+Sans);
 @import url(//fonts.googleapis.com/css?family=Play:400,700&subset=latin,cyrillic-ext,cyrillic);
-@import url(//cdn.onlinewebfonts.com//svg_info/packs/web/8b/378/icon.css);
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -3318,7 +3317,7 @@ input, label, body {
       display: inline-block;
       height: 30px;
       line-height: 30px;
-      margin: 4px 7px;
+      margin: 4px 3px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
@@ -3538,19 +3537,20 @@ input, label, body {
       .instrument .body form input[type=number]:active {
         outline: none; }
     .instrument .body form button.btn-opt {
+      margin: 0px 2px;
       height: 20px;
       line-height: 20px;
       padding: 0px 2px;
       box-sizing: border-box;
       border: 0px;
-      color: #777;
+      background: #aaa;
       cursor: pointer;
       outline: none;
-      transition: color .1s; }
+      transition: background .1ss; }
       .instrument .body form button.btn-opt:active {
         outline: none; }
       .instrument .body form button.btn-opt.on {
-        color: #333; }
+        background: #ccc; }
       .instrument .body form button.btn-opt > * {
         height: 20px;
         line-height: 20px;
@@ -3598,7 +3598,7 @@ input, label, body {
       display: inline-block;
       height: 30px;
       line-height: 30px;
-      margin: 4px 7px;
+      margin: 4px 3px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
@@ -3867,7 +3867,7 @@ input, label, body {
       display: inline-block;
       height: 30px;
       line-height: 30px;
-      margin: 4px 7px;
+      margin: 4px 3px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
@@ -4022,7 +4022,7 @@ input, label, body {
       display: inline-block;
       height: 30px;
       line-height: 30px;
-      margin: 4px 7px;
+      margin: 4px 3px;
       outline: none;
       text-align: center;
       border: 0px solid #333;
@@ -4179,3 +4179,5 @@ input, label, body {
         background: #111; }
       .midi-keyboard .body .keys .black + .white {
         margin-left: -1%; }
+
+/*# sourceMappingURL=style.css.map */

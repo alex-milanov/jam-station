@@ -37308,7 +37308,7 @@ const select = channel => stream.onNext(state =>
 
 const add = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
-		channels: state.sequencer.channels.concat([0])
+		channels: [].concat(state.sequencer.channels, [0])
 	})
 );
 
@@ -37323,13 +37323,15 @@ const remove = channel => (channel > -1) && stream.onNext(state =>
 	})
 );
 
-const setSample = (channel, sample) => (channel > -1) && stream.onNext(state =>
+const setSample = (channel, sample) => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
-		channels: [].concat(
-			state.sequencer.channels.slice(0, channel),
-			[sample],
-			state.sequencer.channels.slice(channel + 1)
-		)
+		channels: (channel > -1)
+		? [].concat(
+				state.sequencer.channels.slice(0, channel),
+				[sample],
+				state.sequencer.channels.slice(channel + 1)
+			)
+		: [].concat(state.sequencer.channels, [sample])
 	})
 );
 
@@ -37387,9 +37389,12 @@ const tick = () => stream.onNext(
 
 const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !state.studio.playing}));
 
+const record = () => stream.onNext(state => obj.patch(state, 'studio', {recording: !state.studio.recording}));
+
 const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
 	tickIndex: -1,
-	playing: false
+	playing: false,
+	recording: false
 }));
 
 const change = (prop, val) =>
@@ -37406,6 +37411,7 @@ module.exports = {
 		measure: '4/4',
 		beatLength: 16,
 		playing: false,
+		recording: false,
 		tickIndex: -1,
 		volume: 0.4,
 		channels: [
@@ -37436,6 +37442,7 @@ module.exports = {
 		]
 	},
 	play,
+	record,
 	stop,
 	change,
 	tick
@@ -37456,6 +37463,11 @@ const f = require('./util/file');
 window.f = f;
 const BasicSynth = require('./instr/basic-synth');
 const Sampler = require('./instr/sampler');
+
+// vex code
+const vex = require('vex-js');
+vex.registerPlugin(require('vex-dialog'));
+vex.defaultOptions.className = 'vex-theme-top';
 
 // app
 let actions = require('./actions');
@@ -37584,7 +37596,7 @@ midi.msg$.withLatestFrom(state$, (data, state) => ({data, state}))
 	});
 	*/
 
-},{"./actions":127,"./instr/basic-synth":134,"./instr/sampler":135,"./services":137,"./services/audio":136,"./services/studio":140,"./ui":142,"./util/audio":153,"./util/file":155,"./util/midi":157,"iblokz-snabbdom-helpers":16,"rx":108}],134:[function(require,module,exports){
+},{"./actions":127,"./instr/basic-synth":134,"./instr/sampler":135,"./services":137,"./services/audio":136,"./services/studio":140,"./ui":142,"./util/audio":153,"./util/file":155,"./util/midi":157,"iblokz-snabbdom-helpers":16,"rx":108,"vex-dialog":125,"vex-js":126}],134:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -38052,7 +38064,7 @@ const hook = ({state$, midi, actions, studio}) => {
 							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
 								studio: {volume: state.studio.volume * data.msg.velocity}
 							});
-						if (state.studio.playing && state.studio.tickIndex > -1) {
+						if (state.studio.playing && state.studio.recording && state.studio.tickIndex > -1) {
 							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tickIndex);
 						}
 					}
@@ -38376,10 +38388,6 @@ module.exports = ({state, actions}) => header([
 },{"../../util/file":155,"iblokz-snabbdom-helpers":16,"moment":95}],142:[function(require,module,exports){
 'use strict';
 
-// vex code
-const vex = require('vex-js');
-vex.registerPlugin(require('vex-dialog'));
-vex.defaultOptions.className = 'vex-theme-top';
 
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
@@ -38400,7 +38408,7 @@ module.exports = ({state, actions}) => div('#ui', [
 	])
 ]);
 
-},{"./header":141,"./instrument":144,"./media-library":149,"./midi-keyboard":150,"./midi-map":151,"./sequencer":152,"iblokz-snabbdom-helpers":16,"vex-dialog":125,"vex-js":126}],143:[function(require,module,exports){
+},{"./header":141,"./instrument":144,"./media-library":149,"./midi-keyboard":150,"./midi-map":151,"./sequencer":152,"iblokz-snabbdom-helpers":16}],143:[function(require,module,exports){
 'use strict';
 
 const {
@@ -38582,7 +38590,7 @@ const types = [
 ];
 
 module.exports = ({name, state, actions}) => div('.vertical', [
-	label(`Volume`),
+	label(`GN`),
 	span('.right', `${state.instrument[name].volume}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
@@ -38597,28 +38605,28 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 			)
 		}
 	}),
-	label(`Attack`),
+	label(`ATT`),
 	span('.right', `${state.instrument[name].attack}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].attack},
 		on: {change: ev => actions.instrument.updateProp(name, 'attack', parseFloat(ev.target.value))}
 	}),
-	label(`Decay`),
+	label(`DEC`),
 	span('.right', `${state.instrument[name].decay}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].decay},
 		on: {change: ev => actions.instrument.updateProp(name, 'decay', parseFloat(ev.target.value))}
 	}),
-	label(`Sustain`),
+	label(`SUS`),
 	span('.right', `${state.instrument[name].sustain}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].sustain},
 		on: {change: ev => actions.instrument.updateProp(name, 'sustain', parseFloat(ev.target.value))}
 	}),
-	label(`Release`),
+	label(`REL`),
 	span('.right', `${state.instrument[name].release}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
@@ -38692,7 +38700,7 @@ module.exports = ({name, state, actions}) => fieldset([
 					click: ev => actions.instrument.updateProp(name, 'type', type)
 				},
 				class: {on: (state.instrument[name].type === type)}
-			}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
 		]), [])),
 		img('[src="assets/tuning-fork.png"]'),
 		div('.knob', {
@@ -38941,6 +38949,10 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		button('.fa.fa-play', {
 			class: {on: state.studio.playing},
 			on: {click: () => actions.studio.play()}
+		}),
+		button('.fa.fa-circle', {
+			class: {on: state.studio.recording},
+			on: {click: () => actions.studio.record()}
 		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
 		span('.cipher', [

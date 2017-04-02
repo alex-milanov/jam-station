@@ -13,7 +13,7 @@ const types = [
 ];
 
 module.exports = ({name, state, actions}) => div('.vertical', [
-	label(`Volume`),
+	label(`GN`),
 	span('.right', `${state.instrument[name].volume}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
@@ -28,28 +28,28 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 			)
 		}
 	}),
-	label(`Attack`),
+	label(`ATT`),
 	span('.right', `${state.instrument[name].attack}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].attack},
 		on: {change: ev => actions.instrument.updateProp(name, 'attack', parseFloat(ev.target.value))}
 	}),
-	label(`Decay`),
+	label(`DEC`),
 	span('.right', `${state.instrument[name].decay}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].decay},
 		on: {change: ev => actions.instrument.updateProp(name, 'decay', parseFloat(ev.target.value))}
 	}),
-	label(`Sustain`),
+	label(`SUS`),
 	span('.right', `${state.instrument[name].sustain}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
 		props: {value: state.instrument[name].sustain},
 		on: {change: ev => actions.instrument.updateProp(name, 'sustain', parseFloat(ev.target.value))}
 	}),
-	label(`Release`),
+	label(`REL`),
 	span('.right', `${state.instrument[name].release}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},

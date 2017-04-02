@@ -38,7 +38,7 @@ const select = channel => stream.onNext(state =>
 
 const add = channel => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
-		channels: state.sequencer.channels.concat([0])
+		channels: [].concat(state.sequencer.channels, [0])
 	})
 );
 
@@ -53,13 +53,15 @@ const remove = channel => (channel > -1) && stream.onNext(state =>
 	})
 );
 
-const setSample = (channel, sample) => (channel > -1) && stream.onNext(state =>
+const setSample = (channel, sample) => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
-		channels: [].concat(
-			state.sequencer.channels.slice(0, channel),
-			[sample],
-			state.sequencer.channels.slice(channel + 1)
-		)
+		channels: (channel > -1)
+		? [].concat(
+				state.sequencer.channels.slice(0, channel),
+				[sample],
+				state.sequencer.channels.slice(channel + 1)
+			)
+		: [].concat(state.sequencer.channels, [sample])
 	})
 );
 

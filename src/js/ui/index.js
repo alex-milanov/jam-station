@@ -1,9 +1,5 @@
 'use strict';
 
-// vex code
-const vex = require('vex-js');
-vex.registerPlugin(require('vex-dialog'));
-vex.defaultOptions.className = 'vex-theme-top';
 
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');

@@ -21,7 +21,7 @@ module.exports = ({name, state, actions}) => fieldset([
 					click: ev => actions.instrument.updateProp(name, 'type', type)
 				},
 				class: {on: (state.instrument[name].type === type)}
-			}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
+			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
 		]), [])),
 		img('[src="assets/tuning-fork.png"]'),
 		div('.knob', {

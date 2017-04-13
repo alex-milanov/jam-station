@@ -38554,18 +38554,33 @@ const hook = ({state$, actions}) => {
 		.subscribe(({state, time}) => {
 			// console.log(time);
 			if (state.studio.tickIndex === 0 || time.value === 0) {
-				clearBuffer();
 				let now = context.currentTime;
+				// if (time.value === 0 || buffer.length === 0) {
+				clearBuffer();
 				for (let i = state.studio.tickIndex; i < state.studio.beatLength; i++) {
-					let time = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
+					let timepos = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
 					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
 							let inst = kit[state.sequencer.channels[k]].clone();
-							inst.trigger(state, time);
+							inst.trigger(state, timepos);
 							buffer.push(inst);
 						}
 					});
 				}
+				// }
+				// next index
+				/*
+				for (let i = 0; i < state.studio.beatLength; i++) {
+					let timepos = now + ((state.studio.beatLength + i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
+					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
+						if (row[i]) {
+							let inst = kit[state.sequencer.channels[k]].clone();
+							inst.trigger(state, timepos);
+							buffer.push(inst);
+						}
+					});
+				}
+				*/
 			}
 			/*
 			state.pattern.forEach((row, i) => {
@@ -38599,7 +38614,7 @@ const hook = ({state$, actions}) => {
 		});
 
 	state$
-		.distinctUntilChanged(state => state.studio.bpm)
+		.distinctUntilChanged(state => state.studio.bpm + state.sequencer.pattern)
 		.filter(state => state.studio.playing === true)
 		.subscribe(state => {
 			if (intervalSub) {

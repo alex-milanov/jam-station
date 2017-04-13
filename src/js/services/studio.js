@@ -107,7 +107,7 @@ const hook = ({state$, actions}) => {
 		});
 
 	state$
-		.distinctUntilChanged(state => state.studio.bpm + state.sequencer.pattern)
+		.distinctUntilChanged(state => state.studio.bpm)
 		.filter(state => state.studio.playing === true)
 		.subscribe(state => {
 			if (intervalSub) {

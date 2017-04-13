@@ -1,6 +1,5 @@
 'use strict';
 
-
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
 const mediaLibrary = require('./media-library');

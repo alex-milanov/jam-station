@@ -16,7 +16,10 @@ const connect = devices => stream.onNext(
 );
 
 const initial = {
-	devices: [],
+	devices: {
+		inputs: [],
+		outputs: []
+	},
 	map: {
 		controller: {
 			20: ['instrument', ['vcf', 'cutoff']],

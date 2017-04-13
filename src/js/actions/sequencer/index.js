@@ -22,9 +22,9 @@ const toggle = (bar, r, c) => {
 	});
 };
 
-const clear = channel => stream.onNext(state => {
+const clear = () => stream.onNext(state => {
 	let pattern = state.sequencer.pattern.slice();
-	pattern[state.sequencer.bar][channel] = [];
+	if (state.sequencer.channel > -1) pattern[state.sequencer.bar][state.sequencer.channel] = [];
 	return obj.patch(state, 'sequencer', {pattern});
 });
 
@@ -36,20 +36,39 @@ const select = channel => stream.onNext(state =>
 	})
 );
 
-const add = channel => stream.onNext(state =>
+const prev = () => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
-		channels: [].concat(state.sequencer.channels, [0])
+		channel: (state.sequencer.channel > 0)
+			? state.sequencer.channel - 1
+			: state.sequencer.channels.length - 1
 	})
 );
 
-const remove = channel => (channel > -1) && stream.onNext(state =>
+const next = () => stream.onNext(state =>
 	obj.patch(state, 'sequencer', {
+		channel: (state.sequencer.channel < state.sequencer.channels.length - 1)
+			? state.sequencer.channel + 1
+			: 0
+	})
+);
+
+const add = channel => stream.onNext(state =>
+	obj.patch(state, 'sequencer', {
+		channels: [].concat(state.sequencer.channels, [0]),
+		channel: state.sequencer.channels.length
+	})
+);
+
+const remove = () => stream.onNext(state =>
+	(state.sequencer.channel === -1)
+	? state
+	: obj.patch(state, 'sequencer', {
 		channels: [].concat(
-			state.sequencer.channels.slice(0, channel),
-			state.sequencer.channels.slice(channel + 1)
+			state.sequencer.channels.slice(0, state.sequencer.channel),
+			state.sequencer.channels.slice(state.sequencer.channel + 1)
 		),
-		pattern: state.sequencer.pattern.map(pattern => pattern.filter((r, i) => i !== channel)),
-		channel: (channel === state.sequencer.channel) ? -1 : state.sequencer.channel
+		pattern: state.sequencer.pattern.map(pattern => pattern.filter((r, i) => i !== state.sequencer.channel)),
+		channel: -1
 	})
 );
 
@@ -93,6 +112,8 @@ module.exports = {
 	toggle,
 	clear,
 	select,
+	prev,
+	next,
 	add,
 	remove,
 	setSample

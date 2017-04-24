@@ -4,13 +4,12 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const {AudioContext} = require('../util/context');
+const {context} = require('../util/audio');
 const Sampler = require('../instr/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 const stream = new Subject();
 
-let context = new AudioContext();
 let kit = [
 	'samples/kick01.ogg',
 	'samples/kick02.ogg',
@@ -33,8 +32,7 @@ let kit = [
 	'samples/shaker02.ogg'
 ].map(url => new Sampler(context, url));
 
-const hook = ({state$, actions}) => {
-	let playTime = new Rx.Subject();
+const hook = ({state$, actions, tick$}) => {
 	let buffer = [];
 
 	const clearBuffer = () => {
@@ -43,19 +41,33 @@ const hook = ({state$, actions}) => {
 		buffer = [];
 	};
 
-	playTime.withLatestFrom(state$, (time, state) => ({time, state}))
-		.subscribe(({state, time}) => {
-			// console.log(time);
-			if (state.studio.tickIndex === 0 || time.value === 0) {
-				let now = context.currentTime;
-				// if (time.value === 0 || buffer.length === 0) {
-				clearBuffer();
-				for (let i = state.studio.tickIndex; i < state.studio.beatLength; i++) {
-					let timepos = now + ((i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
-					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
+	state$.distinctUntilChanged(state => state.studio.playing)
+		.filter(state => !state.studio.playing)
+		.subscribe(() => clearBuffer());
+
+	state$.distinctUntilChanged(state => state.studio.bpm)
+		.filter(state => state.studio.playing)
+		.subscribe(() => clearBuffer());
+
+	tick$
+		.withLatestFrom(state$, (time, state) => ({time, state}))
+		.filter(({state}) => state.studio.playing)
+		.subscribe(({time}) => actions.studio.tick(time));
+
+	state$
+		.distinctUntilChanged(state => state.studio.tick)
+		.filter(state => state.studio.playing)
+		.subscribe(({studio, sequencer}) => {
+			if (studio.tick.index === studio.beatLength - 1 || buffer.length === 0) {
+				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
+				let offset = buffer.length === 0 ? 0 : 1;
+
+				for (let i = start; i < studio.beatLength; i++) {
+					let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
+					sequencer.pattern[sequencer.bar].forEach((row, k) => {
 						if (row[i]) {
-							let inst = kit[state.sequencer.channels[k]].clone();
-							inst.trigger(state, timepos);
+							let inst = kit[sequencer.channels[k]].clone();
+							inst.trigger({studio}, timepos);
 							buffer.push(inst);
 						}
 					});
@@ -80,44 +92,6 @@ const hook = ({state$, actions}) => {
 				(row[state.studio.tickIndex]) && kit[i].play()));
 			}
 			*/
-		});
-
-	let intervalSub = null;
-
-	state$
-		.distinctUntilChanged(state => state.studio.playing)
-		.subscribe(state => {
-			if (state.studio.playing) {
-				if (intervalSub === null) {
-					intervalSub = $.interval(bpmToTime(state.studio.bpm) * 1000)
-						.timeInterval().subscribe(time => {
-							actions.studio.tick();
-							playTime.onNext(time);
-						});
-				} else {
-					clearBuffer();
-					intervalSub.dispose();
-					intervalSub = null;
-				}
-			} else if (intervalSub) {
-				clearBuffer();
-				intervalSub.dispose();
-				intervalSub = null;
-			}
-		});
-
-	state$
-		.distinctUntilChanged(state => state.studio.bpm)
-		.filter(state => state.studio.playing === true)
-		.subscribe(state => {
-			if (intervalSub) {
-				intervalSub.dispose();
-				intervalSub = $.interval(bpmToTime(state.studio.bpm) * 1000)
-					.timeInterval().subscribe(time => {
-						actions.studio.tick();
-						playTime.onNext(time);
-					});
-			}
 		});
 };
 

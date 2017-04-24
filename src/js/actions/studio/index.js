@@ -7,13 +7,15 @@ const {Subject} = Rx;
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
+const {context} = require('../../util/audio');
 
 const stream = new Subject();
 
-const tick = () => stream.onNext(
-	state => obj.patch(state, ['studio', 'tickIndex'],
-		(state.studio.tickIndex < state.studio.beatLength - 1) && (state.studio.tickIndex + 1) || 0
-	)
+const tick = (time = context.currentTime) => stream.onNext(
+	state => obj.patch(state, ['studio', 'tick'], {
+		time,
+		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0
+	})
 );
 
 const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !state.studio.playing}));
@@ -21,7 +23,10 @@ const play = () => stream.onNext(state => obj.patch(state, 'studio', {playing: !
 const record = () => stream.onNext(state => obj.patch(state, 'studio', {recording: !state.studio.recording}));
 
 const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
-	tickIndex: -1,
+	tick: {
+		index: -1,
+		time: 0
+	},
 	playing: false,
 	recording: false
 }));
@@ -41,7 +46,10 @@ module.exports = {
 		beatLength: 16,
 		playing: false,
 		recording: false,
-		tickIndex: -1,
+		tick: {
+			index: -1,
+			time: 0
+		},
 		volume: 0.4,
 		channels: [
 			{

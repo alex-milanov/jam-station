@@ -209,8 +209,8 @@ const hook = ({state$, midi, actions, studio}) => {
 							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
 								studio: {volume: state.studio.volume * data.msg.velocity}
 							});
-						if (state.studio.playing && state.studio.recording && state.studio.tickIndex > -1) {
-							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tickIndex);
+						if (state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
+							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tick.index);
 						}
 					}
 					break;

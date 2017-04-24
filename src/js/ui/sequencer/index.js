@@ -43,7 +43,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 		[div('.head', loop(state.studio.beatLength, c =>
 			div('.cell', {
 				class: {
-					tick: (state.studio.tickIndex === c)
+					tick: (state.studio.tick.index === c)
 				}
 			})
 		))],
@@ -66,8 +66,8 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {
-							on: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tickIndex !== c),
-							tick: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tickIndex === c)
+							on: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index !== c),
+							tick: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index === c)
 						},
 						on: {
 							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)

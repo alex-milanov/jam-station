@@ -27,6 +27,7 @@ let actions$;
 
 // services
 const services = require('./services');
+const clock = require('./services/clock');
 const studio = require('./services/studio');
 const audio = require('./services/audio');
 // actions = studio.attach(actions);
@@ -62,7 +63,8 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions}));
-studio.hook({state$, actions});
+clock.hook({state$, actions});
+studio.hook({state$, actions, tick$: clock.tick$});
 audio.hook({state$, midi, actions, studio});
 
 // patch stream to dom

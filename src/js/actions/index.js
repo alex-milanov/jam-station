@@ -40,12 +40,22 @@ const initial = Object.assign({
 	midiMap: midiMap.initial
 });
 
+const changesMap = {
+	studio: [[['tick', 'index'], ['tickIndex']]],
+	sequencer: [],
+	instrument
+};
+
 // todo merge loaded state
-const load = content => stream.onNext(state => Object.assign({}, state, {
-	studio: content.studio || state.studio,
-	sequencer: content.sequencer || state.sequencer,
-	instrument: content.instrument || state.instrument
-}));
+const load = content => stream.onNext(state =>
+	Object.keys(changesMap)
+		.reduce((changes, key) => changes.concat([[key, key]], changesMap[key]), [])
+		.reduce(
+			(state, changes) =>
+				obj.patch(state, changes[0], obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
+				state
+		)
+);
 const clear = () => load(initial);
 
 const change = (section, prop, val) => stream.onNext(state =>

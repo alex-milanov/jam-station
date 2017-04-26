@@ -50,7 +50,8 @@ const hook = ({state$, actions, tick$}) => {
 		.subscribe(() => clearBuffer());
 
 	tick$
-		.withLatestFrom(state$, (time, state) => ({time, state}))
+		// .filter(({time, i}) => i % 24 === 0)
+		.withLatestFrom(state$, ({time}, state) => ({time, state}))
 		.filter(({state}) => state.studio.playing)
 		.subscribe(({time}) => actions.studio.tick(time));
 

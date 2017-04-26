@@ -6,6 +6,7 @@ const Subject = Rx.Subject;
 
 const {obj} = require('iblokz-data');
 const a = require('../util/audio');
+const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 // util
 
@@ -156,7 +157,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions, studio}) => {
+const hook = ({state$, midi, actions, studio, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
@@ -173,10 +174,23 @@ const hook = ({state$, midi, actions, studio}) => {
 			.pop();
 
 	// hook midi signals
-	midi.access$.subscribe(data => actions.midiMap.connect(data));
+	midi.access$.subscribe(data => {
+		actions.midiMap.connect(data);
+		const clockMsg = [248];    // note on, middle C, full velocity
+		if (data.outputs[1]) {
+			const output = data.outputs[1];
+			console.log(output);
+			tick$
+				.filter(({time, i}) => i % 2 === 0)
+				.subscribe(({time}) => {
+					output.send(clockMsg);
+				});
+		}
+	});
+
 	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
 		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();

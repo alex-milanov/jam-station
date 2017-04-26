@@ -65,7 +65,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 const ui$ = state$.map(state => ui({state, actions}));
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
-audio.hook({state$, midi, actions, studio});
+audio.hook({state$, midi, actions, studio, tick$: clock.tick$});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');

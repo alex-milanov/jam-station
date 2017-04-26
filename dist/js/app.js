@@ -37159,12 +37159,22 @@ const initial = Object.assign({
 	midiMap: midiMap.initial
 });
 
+const changesMap = {
+	studio: [[['tick', 'index'], ['tickIndex']]],
+	sequencer: [],
+	instrument
+};
+
 // todo merge loaded state
-const load = content => stream.onNext(state => Object.assign({}, state, {
-	studio: content.studio || state.studio,
-	sequencer: content.sequencer || state.sequencer,
-	instrument: content.instrument || state.instrument
-}));
+const load = content => stream.onNext(state =>
+	Object.keys(changesMap)
+		.reduce((changes, key) => changes.concat([[key, key]], changesMap[key]), [])
+		.reduce(
+			(state, changes) =>
+				obj.patch(state, changes[0], obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
+				state
+		)
+);
 const clear = () => load(initial);
 
 const change = (section, prop, val) => stream.onNext(state =>
@@ -37863,7 +37873,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 const ui$ = state$.map(state => ui({state, actions}));
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
-audio.hook({state$, midi, actions, studio});
+audio.hook({state$, midi, actions, studio, tick$: clock.tick$});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -38185,6 +38195,7 @@ const Subject = Rx.Subject;
 
 const {obj} = require('iblokz-data');
 const a = require('../util/audio');
+const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 // util
 
@@ -38335,7 +38346,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions, studio}) => {
+const hook = ({state$, midi, actions, studio, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
@@ -38352,10 +38363,23 @@ const hook = ({state$, midi, actions, studio}) => {
 			.pop();
 
 	// hook midi signals
-	midi.access$.subscribe(data => actions.midiMap.connect(data));
+	midi.access$.subscribe(data => {
+		actions.midiMap.connect(data);
+		const clockMsg = [248];    // note on, middle C, full velocity
+		if (data.outputs[1]) {
+			const output = data.outputs[1];
+			console.log(output);
+			tick$
+				.filter(({time, i}) => i % 2 === 0)
+				.subscribe(({time}) => {
+					output.send(clockMsg);
+				});
+		}
+	});
+
 	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
 		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();
@@ -38423,7 +38447,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":158,"iblokz-data":12,"rx":112}],141:[function(require,module,exports){
+},{"../util/audio":158,"../util/math":161,"iblokz-data":12,"rx":112}],141:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38434,13 +38458,15 @@ const {context} = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 const tick$ = new Rx.Subject();
-let pos = context.currentTime;
+let i = 0;
+let time = context.currentTime;
 let length = bpmToTime(120);
 
 const tick = () => {
-	tick$.onNext(pos);
-	pos += length;
-	var diff = pos - context.currentTime;
+	tick$.onNext({time, i});
+	time += length;
+	i++;
+	var diff = time - context.currentTime;
 	setTimeout(tick, diff * 1000);
 };
 
@@ -38607,7 +38633,8 @@ const hook = ({state$, actions, tick$}) => {
 		.subscribe(() => clearBuffer());
 
 	tick$
-		.withLatestFrom(state$, (time, state) => ({time, state}))
+		// .filter(({time, i}) => i % 24 === 0)
+		.withLatestFrom(state$, ({time}, state) => ({time, state}))
 		.filter(({state}) => state.studio.playing)
 		.subscribe(({time}) => actions.studio.tick(time));
 

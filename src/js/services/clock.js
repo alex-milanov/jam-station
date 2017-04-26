@@ -8,13 +8,15 @@ const {context} = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 const tick$ = new Rx.Subject();
-let pos = context.currentTime;
+let i = 0;
+let time = context.currentTime;
 let length = bpmToTime(120);
 
 const tick = () => {
-	tick$.onNext(pos);
-	pos += length;
-	var diff = pos - context.currentTime;
+	tick$.onNext({time, i});
+	time += length;
+	i++;
+	var diff = time - context.currentTime;
 	setTimeout(tick, diff * 1000);
 };
 

@@ -39,7 +39,9 @@
     "jszip": "^3.1.3",
     "midi-clock": "0.0.1",
     "moment": "^2.17.1",
+    "raf-stream": "^3.0.0",
     "rx": "^4.1.0",
+    "rx-node": "^1.0.2",
     "superagent": "^3.3.1",
     "uid-safe": "^2.1.3",
     "vex-js": "^3.1.0"

@@ -190,7 +190,7 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 
 	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
 		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();
@@ -209,6 +209,29 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 				let valMods = mmap.slice(2);
 				let val = prepVal.apply(null, valMods)(data.msg.value);
 				actions.change(section, prop, val);
+			}
+		});
+
+	// studio controls
+	midiState$
+		.filter(({data}) =>
+			data.msg.state === 'controller'
+			&& [41, 42, 45].indexOf(data.msg.controller) > -1
+			&& data.msg.value === 1
+		)
+		.subscribe(({data}) => {
+			switch (data.msg.controller) {
+				case 41:
+					actions.studio.play();
+					break;
+				case 42:
+					actions.studio.stop();
+					break;
+				case 45:
+					actions.studio.record();
+					break;
+				default:
+
 			}
 		});
 

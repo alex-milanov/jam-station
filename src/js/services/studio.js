@@ -65,7 +65,11 @@ const hook = ({state$, actions, tick$}) => {
 
 				for (let i = start; i < studio.beatLength; i++) {
 					let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
-					sequencer.pattern[sequencer.bar].forEach((row, k) => {
+					sequencer.pattern[
+						(studio.tick.index === studio.beatLength - 1)
+							? (studio.tick.bar < studio.barsLength - 1) ? studio.tick.bar + 1 : 0
+							: studio.tick.bar
+					].forEach((row, k) => {
 						if (row[i]) {
 							let inst = kit[sequencer.channels[k]].clone();
 							inst.trigger({studio}, timepos);

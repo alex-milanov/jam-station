@@ -37683,7 +37683,7 @@ const setSample = (channel, sample) => stream.onNext(state =>
 );
 
 const initial = {
-	barCount: 0,
+	barsLength: 0,
 	bar: 0,
 	channel: -1,
 	channels: [
@@ -37696,6 +37696,21 @@ const initial = {
 		4
 	],
 	pattern: [
+		[
+			[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+			[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+		],
+		[
+			[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+			[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+		],
+		[
+			[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+			[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+			[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+		],
 		[
 			[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
 			[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
@@ -37734,7 +37749,10 @@ const stream = new Subject();
 const tick = (time = context.currentTime) => stream.onNext(
 	state => obj.patch(state, ['studio', 'tick'], {
 		time,
-		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0
+		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
+		bar: (state.studio.tick.index < state.studio.beatLength - 1)
+			? state.studio.tick.bar
+			: (state.studio.tick.bar < state.studio.barsLength - 1) && (state.studio.tick.bar + 1) || 0
 	})
 );
 
@@ -37745,7 +37763,8 @@ const record = () => stream.onNext(state => obj.patch(state, 'studio', {recordin
 const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
 	tick: {
 		index: -1,
-		time: 0
+		time: 0,
+		bar: 0
 	},
 	playing: false,
 	recording: false
@@ -37758,17 +37777,27 @@ const change = (prop, val) =>
 			: obj.patch(state, 'studio', {beatLength: measureToBeatLength(state.studio.measure)})
 		).pop());
 
+const next = () => stream.onNext(state => obj.patch(state, ['studio', 'tick'], {
+	bar: (state.studio.tick.bar < state.studio.barsLength - 1) ? state.studio.tick.bar + 1 : 0
+}));
+
+const prev = () => stream.onNext(state => obj.patch(state, ['studio', 'tick'], {
+	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.studio.barsLength - 1
+}));
+
 module.exports = {
 	stream,
 	initial: {
 		bpm: '120',
 		measure: '4/4',
 		beatLength: 16,
+		barsLength: 4,
 		playing: false,
 		recording: false,
 		tick: {
 			index: -1,
-			time: 0
+			time: 0,
+			bar: 0
 		},
 		volume: 0.4,
 		channels: [
@@ -37802,7 +37831,9 @@ module.exports = {
 	record,
 	stop,
 	change,
-	tick
+	tick,
+	next,
+	prev
 };
 
 },{"../../util/audio":158,"../../util/math":161,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
@@ -38648,7 +38679,11 @@ const hook = ({state$, actions, tick$}) => {
 
 				for (let i = start; i < studio.beatLength; i++) {
 					let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
-					sequencer.pattern[sequencer.bar].forEach((row, k) => {
+					sequencer.pattern[
+						(studio.tick.index === studio.beatLength - 1)
+							? (studio.tick.bar < studio.barsLength - 1) ? studio.tick.bar + 1 : 0
+							: studio.tick.bar
+					].forEach((row, k) => {
 						if (row[i]) {
 							let inst = kit[sequencer.channels[k]].clone();
 							inst.trigger({studio}, timepos);
@@ -38736,6 +38771,16 @@ module.exports = ({state, actions}) => header([
 			input('.bpm', {
 				props: {value: state.studio.bpm || 120, size: 3},
 				on: {input: ev => actions.studio.change('bpm', ev.target.value)}
+			}),
+			label('LN'),
+			input('.bars-length', {
+				props: {value: state.studio.barsLength || 4, size: 3},
+				on: {input: ev => actions.studio.change('barsLength', ev.target.value)}
+			}),
+			label('SIG'),
+			input('.measure', {
+				props: {value: state.studio.measure || '4/4', size: 6},
+				on: {input: ev => actions.studio.change('measure', ev.target.value)}
 			})
 		])
 	]),
@@ -39334,16 +39379,12 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			on: {click: () => actions.studio.record()}
 		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
+		label('BAR'),
 		span('.cipher', [
-			button('.left.fa.fa-caret-left'),
-			input('.bar[type="number"]', {props: {value: 0, size: 6}}),
-			button('.right.fa.fa-caret-right')
+			button('.left.fa.fa-caret-left', {on: {click: () => actions.studio.prev()}}),
+			input('.bar[type="number"]', {props: {value: state.studio.tick.bar, size: 6}}),
+			button('.right.fa.fa-caret-right', {on: {click: () => actions.studio.next()}})
 		]),
-		label('MSR'),
-		input('.measure', {
-			props: {value: state.studio.measure || '4/4', size: 6},
-			on: {input: ev => actions.studio.change('measure', ev.target.value)}
-		}),
 		div('.right', [
 			(state.sequencer.channel !== -1) ? button('.fa.fa-minus', {on: {
 				click: () => actions.sequencer.remove(state.sequencer.channel)
@@ -39382,11 +39423,11 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {
-							on: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index !== c),
-							tick: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index === c)
+							on: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index !== c),
+							tick: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index === c)
 						},
 						on: {
-							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)
+							click: ev => actions.sequencer.toggle(state.studio.tick.bar, r, c)
 						}
 					})
 				)

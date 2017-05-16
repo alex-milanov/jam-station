@@ -14,7 +14,10 @@ const stream = new Subject();
 const tick = (time = context.currentTime) => stream.onNext(
 	state => obj.patch(state, ['studio', 'tick'], {
 		time,
-		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0
+		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
+		bar: (state.studio.tick.index < state.studio.beatLength - 1)
+			? state.studio.tick.bar
+			: (state.studio.tick.bar < state.studio.barsLength - 1) && (state.studio.tick.bar + 1) || 0
 	})
 );
 
@@ -25,7 +28,8 @@ const record = () => stream.onNext(state => obj.patch(state, 'studio', {recordin
 const stop = () => stream.onNext(state => obj.patch(state, 'studio', {
 	tick: {
 		index: -1,
-		time: 0
+		time: 0,
+		bar: 0
 	},
 	playing: false,
 	recording: false
@@ -38,17 +42,27 @@ const change = (prop, val) =>
 			: obj.patch(state, 'studio', {beatLength: measureToBeatLength(state.studio.measure)})
 		).pop());
 
+const next = () => stream.onNext(state => obj.patch(state, ['studio', 'tick'], {
+	bar: (state.studio.tick.bar < state.studio.barsLength - 1) ? state.studio.tick.bar + 1 : 0
+}));
+
+const prev = () => stream.onNext(state => obj.patch(state, ['studio', 'tick'], {
+	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.studio.barsLength - 1
+}));
+
 module.exports = {
 	stream,
 	initial: {
 		bpm: '120',
 		measure: '4/4',
 		beatLength: 16,
+		barsLength: 4,
 		playing: false,
 		recording: false,
 		tick: {
 			index: -1,
-			time: 0
+			time: 0,
+			bar: 0
 		},
 		volume: 0.4,
 		channels: [
@@ -82,5 +96,7 @@ module.exports = {
 	record,
 	stop,
 	change,
-	tick
+	tick,
+	next,
+	prev
 };

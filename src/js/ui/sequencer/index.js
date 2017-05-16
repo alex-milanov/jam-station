@@ -18,16 +18,12 @@ module.exports = ({state, actions}) => div('.sequencer', [
 			on: {click: () => actions.studio.record()}
 		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
+		label('BAR'),
 		span('.cipher', [
-			button('.left.fa.fa-caret-left'),
-			input('.bar[type="number"]', {props: {value: 0, size: 6}}),
-			button('.right.fa.fa-caret-right')
+			button('.left.fa.fa-caret-left', {on: {click: () => actions.studio.prev()}}),
+			input('.bar[type="number"]', {props: {value: state.studio.tick.bar, size: 6}}),
+			button('.right.fa.fa-caret-right', {on: {click: () => actions.studio.next()}})
 		]),
-		label('MSR'),
-		input('.measure', {
-			props: {value: state.studio.measure || '4/4', size: 6},
-			on: {input: ev => actions.studio.change('measure', ev.target.value)}
-		}),
 		div('.right', [
 			(state.sequencer.channel !== -1) ? button('.fa.fa-minus', {on: {
 				click: () => actions.sequencer.remove(state.sequencer.channel)
@@ -66,11 +62,11 @@ module.exports = ({state, actions}) => div('.sequencer', [
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {
-							on: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index !== c),
-							tick: (isOn(state.sequencer.pattern, state.sequencer.bar, r, c) && state.studio.tick.index === c)
+							on: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index !== c),
+							tick: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index === c)
 						},
 						on: {
-							click: ev => actions.sequencer.toggle(state.sequencer.bar, r, c)
+							click: ev => actions.sequencer.toggle(state.studio.tick.bar, r, c)
 						}
 					})
 				)

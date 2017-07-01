@@ -1,26 +1,29 @@
 'use strict';
-
+// lib
 const Rx = require('rx');
 const $ = Rx.Observable;
 const vdom = require('iblokz-snabbdom-helpers');
-const {h, div, input, hr, p, button} = vdom;
 
+// util
 const midi = require('./util/midi')();
-const a = require('./util/audio');
-window.a = a;
-const f = require('./util/file');
-window.f = f;
-const BasicSynth = require('./instr/basic-synth');
-const Sampler = require('./instr/sampler');
+const a = require('./util/audio'); window.a = a;
+const f = require('./util/file'); window.f = f;
 // gamepad
 const gamepad = require('./util/gamepad');
+// instr (soon to be legacy)
+const BasicSynth = require('./instr/basic-synth');
+const Sampler = require('./instr/sampler');
 
 // vex code
 const vex = require('vex-js');
 vex.registerPlugin(require('vex-dialog'));
 vex.defaultOptions.className = 'vex-theme-top';
 
+// tap tempo
+const tapTempo = require('tap-tempo')();
+
 // app
+const app = require('./util/app');
 let actions = require('./actions');
 let ui = require('./ui');
 let actions$;
@@ -32,13 +35,16 @@ const studio = require('./services/studio');
 const audio = require('./services/audio');
 // actions = studio.attach(actions);
 
+// adapt actions
+actions = app.adapt(actions);
+
 // hot reloading
 if (module.hot) {
 	// actions
 	actions$ = $.fromEventPattern(
     h => module.hot.accept("./actions", h)
 	).flatMap(() => {
-		actions = require('./actions');
+		actions = app.adapt(require('./actions'));
 		return actions.stream.startWith(state => state);
 	}).merge(actions.stream);
 	// ui
@@ -62,7 +68,7 @@ state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 	.subscribe(state => (console.log(state), state));
 
 // map state to ui
-const ui$ = state$.map(state => ui({state, actions}));
+const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
 audio.hook({state$, midi, actions, studio, tick$: clock.tick$});
@@ -119,5 +125,8 @@ document.addEventListener('keydown', e => {
 	if (e.key === 'ArrowUp') actions.sequencer.prev();
 	if (e.key === 'ArrowDown') actions.sequencer.next();
 });
+
+// tap tempo
+tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
 state$.connect();

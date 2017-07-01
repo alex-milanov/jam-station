@@ -22,7 +22,7 @@ const openDialog = cb => {
 	}));
 };
 
-module.exports = ({state, actions}) => header([
+module.exports = ({state, actions, tapTempo}) => header([
 	ul([
 		li([a({
 			class: {on: state.ui.mediaLibrary},
@@ -44,7 +44,11 @@ module.exports = ({state, actions}) => header([
 	ul('.center', [
 		li([img('[src="assets/logo2.png"]')]),
 		li('.right', [
-			label('BPM'),
+			label({
+				on: {
+					click: () => tapTempo.tap()
+				}
+			}, 'BPM'),
 			input('.bpm', {
 				props: {value: state.studio.bpm || 120, size: 3},
 				on: {input: ev => actions.studio.change('bpm', ev.target.value)}

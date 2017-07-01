@@ -8,8 +8,8 @@ const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
 
-module.exports = ({state, actions}) => div('#ui', [
-	header({state, actions}),
+module.exports = ({state, actions, tapTempo}) => div('#ui', [
+	header({state, actions, tapTempo}),
 	div('#layout', [
 		state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
 		state.ui.instrument ? instrument({state, actions}) : '',

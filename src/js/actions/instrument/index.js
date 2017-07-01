@@ -68,20 +68,16 @@ const initial = {
 	}
 };
 
-const updateProp = (param, prop, value) => stream.onNext(
-	state => obj.patch(state, ['instrument', param, prop], value)
-);
+const updateProp = (param, prop, value) =>
+	state => obj.patch(state, ['instrument', param, prop], value);
 
-const setVca = index => stream.onNext(
-	state => obj.patch(state, ['instrument', 'vcaOn'], index)
-);
+const setVca = index =>
+	state => obj.patch(state, ['instrument', 'vcaOn'], index);
 
-const applyPatch = patch => stream.onNext(
-	state => obj.patch(state, 'instrument', patch)
-);
+const applyPatch = patch =>
+	state => obj.patch(state, 'instrument', patch);
 
 module.exports = {
-	stream,
 	initial,
 	updateProp,
 	setVca,

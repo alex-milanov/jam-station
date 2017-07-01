@@ -226,15 +226,15 @@ const treePatch = (nodes, path, item) => (
 			).pop()
 		).pop());
 
-const loadSamples = list => stream.onNext(state => obj.patch(state, 'mediaLibrary', {
+const loadSamples = list => state => obj.patch(state, 'mediaLibrary', {
 	files: [].concat(state.mediaLibrary.files, list.map(item => item.split('/').pop())),
 	samples: [].concat(state.mediaLibrary.samples, list.reduce(
 		(tree, item) => treePatch(tree, item.split('/'), item.split('/').pop()),
 		[])
 	)
-}));
+});
 
-const addSample = (sample, bank = 'custom') => stream.onNext(state =>
+const addSample = (sample, bank = 'custom') => state =>
 	obj.patch(state, 'mediaLibrary', [indexAt(state.mediaLibrary.samples, 'name', bank)].map(index => ({
 		samples: [].concat(
 			state.mediaLibrary.samples.slice(0, index),
@@ -243,20 +243,17 @@ const addSample = (sample, bank = 'custom') => stream.onNext(state =>
 			}),
 			state.mediaLibrary.samples.slice(index + 1)
 		)
-	})).pop())
-);
+	})).pop());
 
-const addPatch = (name, patch) => stream.onNext(state =>
+const addPatch = (name, patch) => state =>
 	obj.patch(state, 'mediaLibrary', {
 		patches: arr.add(state.mediaLibrary.patches, {
 			name,
 			patch
 		})
-	})
-);
+	});
 
 module.exports = {
-	stream,
 	initial,
 	loadSamples,
 	addSample,

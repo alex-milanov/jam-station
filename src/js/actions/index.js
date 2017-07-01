@@ -14,11 +14,9 @@ const mediaLibrary = require('./media-library');
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../util/math');
 
-const stream = new Subject();
+const toggleUI = editor => state => obj.patch(state, ['ui', editor], !state.ui[editor]);
 
-const toggleUI = editor => stream.onNext(state => obj.patch(state, ['ui', editor], !state.ui[editor]));
-
-const ping = () => stream.onNext(state => state);
+const ping = () => state => state;
 
 const initial = Object.assign({
 	ui: {
@@ -47,22 +45,21 @@ const changesMap = {
 };
 
 // todo merge loaded state
-const load = content => stream.onNext(state =>
+const load = content => state =>
 	Object.keys(changesMap)
 		.reduce((changes, key) => changes.concat([[key, key]], changesMap[key]), [])
 		.reduce(
 			(state, changes) =>
 				obj.patch(state, changes[0], obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
 				state
-		)
-);
+		);
+
 const clear = () => load(initial);
 
-const change = (section, prop, val) => stream.onNext(state =>
-	obj.patch(state, [section].concat(prop), val));
+const change = (section, prop, val) => state =>
+	obj.patch(state, [section].concat(prop), val);
 
 module.exports = {
-	stream: $.merge(stream, studio.stream, instrument.stream, sequencer.stream, midiMap.stream, mediaLibrary.stream),
 	toggleUI,
 	ping,
 	studio,

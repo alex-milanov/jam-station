@@ -7,14 +7,6 @@ const {Subject} = Rx;
 const {measureToBeatLength} = require('../../util/math');
 const {obj} = require('iblokz-data');
 
-const stream = new Subject();
-
-const connect = devices => stream.onNext(
-	state => obj.patch(state, 'midiMap', {
-		devices
-	})
-);
-
 const initial = {
 	devices: {
 		inputs: [],
@@ -34,8 +26,12 @@ const initial = {
 	}
 };
 
+const connect = devices =>
+	state => obj.patch(state, 'midiMap', {
+		devices
+	});
+
 module.exports = {
-	stream,
 	initial,
 	connect
 };

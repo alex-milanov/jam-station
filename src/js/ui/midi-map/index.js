@@ -2,7 +2,7 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
-	ul, li, table, thead, tbody, tr, td, th
+	ul, li, table, thead, tbody, tr, td, th, h
 } = require('iblokz-snabbdom-helpers');
 
 const actionMaps = [];
@@ -14,7 +14,40 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	div('.body', [
 		fieldset([
 			legend('Devices'),
-			p(state.midiMap.devices.inputs.map(inp => inp.name).join(', '))
+			div('.devices', [
+				h('dl', [
+					h('dt', 'Inputs'),
+					h('dd', ul(state.midiMap.devices.inputs.map((inp, index) =>
+						li([
+							inp.name,
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.clock.in === index
+								},
+								on: {
+									click: () => actions.midiMap.toggleClock('in', index)
+								}
+							})
+						])
+					)))
+				]),
+				h('dl', [
+					h('dt', 'Outputs'),
+					h('dd', ul(state.midiMap.devices.outputs.map((outp, index) =>
+						li([
+							outp.name,
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.clock.out === index
+								},
+								on: {
+									click: () => actions.midiMap.toggleClock('out', index)
+								}
+							})
+						])
+					)))
+				])
+			])
 		]),
 		fieldset([
 			legend('Map'),

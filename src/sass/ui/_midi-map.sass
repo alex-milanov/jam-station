@@ -1,4 +1,29 @@
 
 .midi-map
 	+editor(1080px, 17px)
-	min-width: 200px
+	width: 600px
+	.devices
+		dl
+			+reset
+			display: inline-block
+			width: 50%
+			border: 1px solid rgba(0,0,0,0)
+			vertical-align: top	
+			dt
+				+reset
+				width: 100%
+				text-align: center
+				background: #aaa
+				font-weight: bold
+			dd
+				+reset
+				width: 100%
+				ul
+					+reset
+					width: 100%
+					list-style: none
+					li
+						+reset
+						width: 100%
+	table
+		width: 100%

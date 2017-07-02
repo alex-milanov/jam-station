@@ -6,8 +6,10 @@ const vdom = require('iblokz-snabbdom-helpers');
 
 // util
 const midi = require('./util/midi')();
-const a = require('./util/audio'); window.a = a;
-const f = require('./util/file'); window.f = f;
+const a = require('./util/audio');
+window.a = a;
+const f = require('./util/file');
+window.f = f;
 // gamepad
 const gamepad = require('./util/gamepad');
 // instr (soon to be legacy)
@@ -59,19 +61,22 @@ if (module.hot) {
 const state$ = actions$
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
+	.map(state => (console.log(state), state))
 	.publish();
 
+/*
 state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 	// .map(state => (console.log(state), state))
 	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
 	.map(({state}) => state)
 	.subscribe(state => (console.log(state), state));
+*/
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
-audio.hook({state$, midi, actions, studio, tick$: clock.tick$});
+audio.hook({state$, midi, actions, studio, tapTempo, tick$: clock.tick$});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');

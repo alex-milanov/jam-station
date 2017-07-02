@@ -9,6 +9,7 @@ const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 // util
+const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
 
 let changes$ = new Subject();
 
@@ -157,7 +158,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions, studio, tick$}) => {
+const hook = ({state$,  midi, actions, studio, tapTempo, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
@@ -174,26 +175,49 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 			.pop();
 
 	// hook midi signals
-	midi.access$.subscribe(data => {
-		actions.midiMap.connect(data);
-		const clockMsg = [248];    // note on, middle C, full velocity
-		if (data.outputs[1]) {
-			const output = data.outputs[1];
-			console.log(output);
+	midi.access$
+		.subscribe(data => {
+			actions.midiMap.connect(data);
+
+			const clockMsg = [248];    // note on, middle C, full velocity
 			tick$
 				.filter(({time, i}) => i % 2 === 0)
-				.subscribe(({time}) => {
-					output.send(clockMsg);
+				.withLatestFrom(state$, (time, state) => ({time, state}))
+				.filter(({state}) => state.midiMap.clock.out !== false && data.outputs[state.midiMap.clock.out])
+				.subscribe(({time, state}) => {
+					console.log(state.midiMap.clock.out, clockMsg);
+					data.outputs[state.midiMap.clock.out].send(clockMsg);
+					// output.send(clockMsg);
 				});
-		}
-	});
+		});
+
+	// output clock
+	// const clockMsg = [248];    // note on, middle C, full velocity
+	// tick$
+	// 	.filter(({time, i}) => i % 2 === 0)
+	// 	.withLatestFrom(state$, midi.access$, (time, state, midiAccess) => ({time, state, midiAccess}))
+	// 	.filter(({state, midiAccess}) => state.midiMap.clock.out !== false && midiAccess.outputs[state.midiMap.clock.out])
+	// 	.subscribe(({time, state, midiAccess}) => {
+	// 		const output = midiAccess.outputs[state.midiMap.clock.out];
+	// 		output.send(clockMsg);
+	// 		console.log(state.midiMap.clock.out, clockMsg, output);
+	// 	});
 
 	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
-		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
+		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		// .map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();
+
+	// clock ticks
+	midiState$
+		.filter(({data}) => data.msg.binary === '11111000')
+		.filter(({data, state}) =>
+			state.midiMap.clock.in === indexAt(state.midiMap.devices.inputs, 'name', data.raw.input.name)
+		)
+		.bufferWithCount(1, 24)
+		.subscribe(() => tapTempo.tap());
 
 	midiState$
 		.filter(({data}) => data.msg.state === 'controller')
@@ -236,6 +260,8 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 		});
 
 	midiState$
+		.filter(({data}) => data.msg.binary !== '11111000')
+		.map(({state, data}) => (console.log(`midi: ${data.msg.binary}`, data.msg), ({state, data})))
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':

@@ -37187,10 +37187,6 @@ const initial = Object.assign({
 		instrument: true,
 		sequencer: true,
 		midiMap: true
-	},
-	midi: {
-		inputs: [],
-		outputs: []
 	}
 }, {
 	studio: studio.initial,
@@ -37235,7 +37231,7 @@ module.exports = {
 	initial
 };
 
-},{"../util/math":163,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
+},{"../util/math":162,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37585,7 +37581,7 @@ module.exports = {
 	addPatch
 };
 
-},{"../../util/math":163,"iblokz-data":12,"rx":112}],135:[function(require,module,exports){
+},{"../../util/math":162,"iblokz-data":12,"rx":112}],135:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -37599,6 +37595,10 @@ const initial = {
 	devices: {
 		inputs: [],
 		outputs: []
+	},
+	clock: {
+		in: false,
+		out: false
 	},
 	map: {
 		controller: {
@@ -37619,12 +37619,17 @@ const connect = devices =>
 		devices
 	});
 
+const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clock', inOut],
+	obj.sub(state, ['midiMap', 'clock'])[inOut] === index ? false : index
+);
+
 module.exports = {
 	initial,
-	connect
+	connect,
+	toggleClock
 };
 
-},{"../../util/math":163,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
+},{"../../util/math":162,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37750,7 +37755,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":163,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
+},{"../../util/math":162,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37766,7 +37771,7 @@ const initial = {
 	bpm: '120',
 	measure: '4/4',
 	beatLength: 16,
-	barsLength: 4,
+	barsLength: 1,
 	playing: false,
 	recording: false,
 	tick: {
@@ -37803,7 +37808,7 @@ const initial = {
 	]
 };
 
-const tick = (time = context.currentTime) => 
+const tick = (time = context.currentTime) =>
 	state => obj.patch(state, ['studio', 'tick'], {
 		time,
 		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
@@ -37852,7 +37857,7 @@ module.exports = {
 	prev
 };
 
-},{"../../util/audio":160,"../../util/math":163,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
+},{"../../util/audio":159,"../../util/math":162,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
 'use strict';
 // lib
 const Rx = require('rx');
@@ -37861,8 +37866,10 @@ const vdom = require('iblokz-snabbdom-helpers');
 
 // util
 const midi = require('./util/midi')();
-const a = require('./util/audio'); window.a = a;
-const f = require('./util/file'); window.f = f;
+const a = require('./util/audio');
+window.a = a;
+const f = require('./util/file');
+window.f = f;
 // gamepad
 const gamepad = require('./util/gamepad');
 // instr (soon to be legacy)
@@ -37914,19 +37921,22 @@ if (module.hot) {
 const state$ = actions$
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
+	.map(state => (console.log(state), state))
 	.publish();
 
+/*
 state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
 	// .map(state => (console.log(state), state))
 	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
 	.map(({state}) => state)
 	.subscribe(state => (console.log(state), state));
+*/
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
-audio.hook({state$, midi, actions, studio, tick$: clock.tick$});
+audio.hook({state$, midi, actions, studio, tapTempo, tick$: clock.tick$});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
@@ -37986,7 +37996,7 @@ tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
 state$.connect();
 
-},{"./actions":132,"./instr/basic-synth":139,"./instr/sampler":140,"./services":143,"./services/audio":141,"./services/clock":142,"./services/studio":146,"./ui":148,"./util/app":159,"./util/audio":160,"./util/file":161,"./util/gamepad":162,"./util/midi":164,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],139:[function(require,module,exports){
+},{"./actions":132,"./instr/basic-synth":139,"./instr/sampler":140,"./services":143,"./services/audio":141,"./services/clock":142,"./services/studio":145,"./ui":147,"./util/app":158,"./util/audio":159,"./util/file":160,"./util/gamepad":161,"./util/midi":163,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],139:[function(require,module,exports){
 'use strict';
 
 const filterSetFreq = (filter, value, context) => {
@@ -38254,6 +38264,7 @@ const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 // util
+const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
 
 let changes$ = new Subject();
 
@@ -38402,7 +38413,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$, midi, actions, studio, tick$}) => {
+const hook = ({state$,  midi, actions, studio, tapTempo, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
@@ -38419,26 +38430,49 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 			.pop();
 
 	// hook midi signals
-	midi.access$.subscribe(data => {
-		actions.midiMap.connect(data);
-		const clockMsg = [248];    // note on, middle C, full velocity
-		if (data.outputs[1]) {
-			const output = data.outputs[1];
-			console.log(output);
+	midi.access$
+		.subscribe(data => {
+			actions.midiMap.connect(data);
+
+			const clockMsg = [248];    // note on, middle C, full velocity
 			tick$
 				.filter(({time, i}) => i % 2 === 0)
-				.subscribe(({time}) => {
-					output.send(clockMsg);
+				.withLatestFrom(state$, (time, state) => ({time, state}))
+				.filter(({state}) => state.midiMap.clock.out !== false && data.outputs[state.midiMap.clock.out])
+				.subscribe(({time, state}) => {
+					console.log(state.midiMap.clock.out, clockMsg);
+					data.outputs[state.midiMap.clock.out].send(clockMsg);
+					// output.send(clockMsg);
 				});
-		}
-	});
+		});
+
+	// output clock
+	// const clockMsg = [248];    // note on, middle C, full velocity
+	// tick$
+	// 	.filter(({time, i}) => i % 2 === 0)
+	// 	.withLatestFrom(state$, midi.access$, (time, state, midiAccess) => ({time, state, midiAccess}))
+	// 	.filter(({state, midiAccess}) => state.midiMap.clock.out !== false && midiAccess.outputs[state.midiMap.clock.out])
+	// 	.subscribe(({time, state, midiAccess}) => {
+	// 		const output = midiAccess.outputs[state.midiMap.clock.out];
+	// 		output.send(clockMsg);
+	// 		console.log(state.midiMap.clock.out, clockMsg, output);
+	// 	});
 
 	const midiState$ = midi.msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		.filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
-		.map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
+		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
+		// .map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();
+
+	// clock ticks
+	midiState$
+		.filter(({data}) => data.msg.binary === '11111000')
+		.filter(({data, state}) =>
+			state.midiMap.clock.in === indexAt(state.midiMap.devices.inputs, 'name', data.raw.input.name)
+		)
+		.bufferWithCount(1, 24)
+		.subscribe(() => tapTempo.tap());
 
 	midiState$
 		.filter(({data}) => data.msg.state === 'controller')
@@ -38481,6 +38515,8 @@ const hook = ({state$, midi, actions, studio, tick$}) => {
 		});
 
 	midiState$
+		.filter(({data}) => data.msg.binary !== '11111000')
+		.map(({state, data}) => (console.log(`midi: ${data.msg.binary}`, data.msg), ({state, data})))
 		.subscribe(({data, state}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
@@ -38526,7 +38562,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":160,"../util/math":163,"iblokz-data":12,"rx":112}],142:[function(require,module,exports){
+},{"../util/audio":159,"../util/math":162,"iblokz-data":12,"rx":112}],142:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38568,14 +38604,14 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":160,"../util/math":163,"rx":112}],143:[function(require,module,exports){
+},{"../util/audio":159,"../util/math":162,"rx":112}],143:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
-const midi = require('./midi');
+// const midi = require('./midi');
 const layout = require('./layout');
 
-const services = [midi, layout];
+const services = [layout];
 
 const init = ({actions}) =>
 	services.forEach(service => service.init({actions}));
@@ -38585,11 +38621,10 @@ const refresh = ({state, actions}) =>
 module.exports = {
 	init,
 	refresh,
-	midi,
 	layout
 };
 
-},{"./layout":144,"./midi":145,"./studio":146}],144:[function(require,module,exports){
+},{"./layout":144,"./studio":145}],144:[function(require,module,exports){
 'use strict';
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
@@ -38649,17 +38684,6 @@ module.exports = {
 };
 
 },{}],145:[function(require,module,exports){
-'use strict';
-
-const init = () => {};
-const refresh = ({state, actions}) => {};
-
-module.exports = {
-	init,
-	refresh
-};
-
-},{}],146:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38768,7 +38792,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":140,"../util/audio":160,"../util/math":163,"rx":112}],147:[function(require,module,exports){
+},{"../instr/sampler":140,"../util/audio":159,"../util/math":162,"rx":112}],146:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
@@ -38862,7 +38886,7 @@ module.exports = ({state, actions, tapTempo}) => header([
 	])
 ]);
 
-},{"../../util/file":161,"iblokz-snabbdom-helpers":16,"moment":95}],148:[function(require,module,exports){
+},{"../../util/file":160,"iblokz-snabbdom-helpers":16,"moment":95}],147:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz-snabbdom-helpers');
@@ -38884,7 +38908,7 @@ module.exports = ({state, actions, tapTempo}) => div('#ui', [
 	])
 ]);
 
-},{"./header":147,"./instrument":150,"./media-library":155,"./midi-keyboard":156,"./midi-map":157,"./sequencer":158,"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
+},{"./header":146,"./instrument":149,"./media-library":154,"./midi-keyboard":155,"./midi-map":156,"./sequencer":157,"iblokz-snabbdom-helpers":16}],148:[function(require,module,exports){
 'use strict';
 
 const {
@@ -38932,7 +38956,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],150:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
 'use strict';
 
 const {
@@ -38999,7 +39023,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"./delay":149,"./lfo":151,"./vca":152,"./vcf":153,"./vco":154,"iblokz-snabbdom-helpers":16,"vex-js":131}],151:[function(require,module,exports){
+},{"./delay":148,"./lfo":150,"./vca":151,"./vcf":152,"./vco":153,"iblokz-snabbdom-helpers":16,"vex-js":131}],150:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39050,7 +39074,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],151:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39111,7 +39135,7 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39152,7 +39176,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],154:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39205,7 +39229,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],155:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],154:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39311,7 +39335,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
+},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],155:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39358,12 +39382,12 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
 'use strict';
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
-	ul, li, table, thead, tbody, tr, td, th
+	ul, li, table, thead, tbody, tr, td, th, h
 } = require('iblokz-snabbdom-helpers');
 
 const actionMaps = [];
@@ -39375,7 +39399,40 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	div('.body', [
 		fieldset([
 			legend('Devices'),
-			p(state.midiMap.devices.inputs.map(inp => inp.name).join(', '))
+			div('.devices', [
+				h('dl', [
+					h('dt', 'Inputs'),
+					h('dd', ul(state.midiMap.devices.inputs.map((inp, index) =>
+						li([
+							inp.name,
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.clock.in === index
+								},
+								on: {
+									click: () => actions.midiMap.toggleClock('in', index)
+								}
+							})
+						])
+					)))
+				]),
+				h('dl', [
+					h('dt', 'Outputs'),
+					h('dd', ul(state.midiMap.devices.outputs.map((outp, index) =>
+						li([
+							outp.name,
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.clock.out === index
+								},
+								on: {
+									click: () => actions.midiMap.toggleClock('out', index)
+								}
+							})
+						])
+					)))
+				])
+			])
 		]),
 		fieldset([
 			legend('Map'),
@@ -39410,7 +39467,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
@@ -39499,7 +39556,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],159:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
 'use strict';
 
 // lib
@@ -39532,7 +39589,7 @@ module.exports = {
 	adapt
 };
 
-},{"iblokz-data":12,"rx":112}],160:[function(require,module,exports){
+},{"iblokz-data":12,"rx":112}],159:[function(require,module,exports){
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
@@ -39699,7 +39756,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz-data":12}],161:[function(require,module,exports){
+},{"iblokz-data":12}],160:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39750,7 +39807,7 @@ module.exports = {
 	save
 };
 
-},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],162:[function(require,module,exports){
+},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],161:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39785,7 +39842,7 @@ module.exports = {
 	changes
 };
 
-},{"./time":165,"rx":112}],163:[function(require,module,exports){
+},{"./time":164,"rx":112}],162:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -39799,7 +39856,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],164:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39930,7 +39987,7 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":112}],165:[function(require,module,exports){
+},{"rx":112}],164:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');

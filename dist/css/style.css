@@ -3076,7 +3076,10 @@ input, label, body {
   user-select: none;
   margin: 0px;
   padding: 0px;
+  margin: 0px;
+  padding: 0px;
   display: inline-block;
+  box-sizing: border-box;
   height: 38px;
   line-height: 38px;
   display: block;
@@ -3086,11 +3089,17 @@ input, label, body {
   #ui > header > * {
     margin: 0px;
     padding: 0px;
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px; }
   #ui > header ul.center {
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     font-size: 18px;
@@ -3114,7 +3123,10 @@ input, label, body {
       height: 38px;
       vertical-align: top; }
     #ui > header ul.center input {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       text-align: center;
@@ -3127,7 +3139,10 @@ input, label, body {
   #ui > header ul {
     margin: 0px;
     padding: 0px;
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     -webkit-user-select: none;
@@ -3146,7 +3161,10 @@ input, label, body {
     #ui > header ul li {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       box-sizing: border-box;
@@ -3155,7 +3173,10 @@ input, label, body {
       #ui > header ul li a {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 38px;
         line-height: 38px;
         width: 38px;
@@ -3167,7 +3188,10 @@ input, label, body {
         cursor: pointer;
         font-size: 12px; }
         #ui > header ul li a i.fa {
+          margin: 0px;
+          padding: 0px;
           display: inline-block;
+          box-sizing: border-box;
           height: 38px;
           line-height: 38px;
           font-size: 16px; }
@@ -3179,7 +3203,10 @@ input, label, body {
       #ui > header ul li input[type=range] {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 26px;
         line-height: 26px;
         display: inline-block;
@@ -3259,7 +3286,10 @@ input, label, body {
           margin: 0px;
           padding: 0px;
           padding: 0px 5px;
+          margin: 0px;
+          padding: 0px;
           display: inline-block;
+          box-sizing: border-box;
           height: 24px;
           line-height: 24px;
           position: absolute;
@@ -3286,7 +3316,10 @@ input, label, body {
   box-shadow: 0px 0px 3px #777;
   min-width: 310px; }
   .instrument .header {
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     display: block;
@@ -3297,7 +3330,10 @@ input, label, body {
     .instrument .header > *, .instrument .header > div > * {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       margin: 0px 7px;
@@ -3308,13 +3344,19 @@ input, label, body {
       .instrument .header > * > i.fa, .instrument .header > div > * > i.fa {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 38px;
         line-height: 38px; }
     .instrument .header > div {
       margin: 0px; }
     .instrument .header input, .instrument .header button {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 4px 3px;
@@ -3344,7 +3386,10 @@ input, label, body {
       .instrument .header .cipher input {
         float: left; }
       .instrument .header .cipher input, .instrument .header .cipher button {
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 30px;
         line-height: 30px;
         margin: 4px 0px;
@@ -3567,7 +3612,10 @@ input, label, body {
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777; }
   .sequencer .header {
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     display: block;
@@ -3578,7 +3626,10 @@ input, label, body {
     .sequencer .header > *, .sequencer .header > div > * {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       margin: 0px 7px;
@@ -3589,13 +3640,19 @@ input, label, body {
       .sequencer .header > * > i.fa, .sequencer .header > div > * > i.fa {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 38px;
         line-height: 38px; }
     .sequencer .header > div {
       margin: 0px; }
     .sequencer .header input, .sequencer .header button {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 4px 3px;
@@ -3625,7 +3682,10 @@ input, label, body {
       .sequencer .header .cipher input {
         float: left; }
       .sequencer .header .cipher input, .sequencer .header .cipher button {
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 30px;
         line-height: 30px;
         margin: 4px 0px;
@@ -3738,7 +3798,10 @@ input, label, body {
     .sequencer .body .row > .bar {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 1px;
@@ -3766,7 +3829,10 @@ input, label, body {
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 1px;
@@ -3793,7 +3859,10 @@ input, label, body {
         padding-top: 2px;
         line-height: 28px; }
     .sequencer .body .row .add-channel {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 1px;
@@ -3815,7 +3884,10 @@ input, label, body {
     .sequencer .body .row .bar {
       width: 20px; }
       .sequencer .body .row .bar:hover, .sequencer .body .row .bar.tick {
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 32px;
         line-height: 32px;
         width: 22px;
@@ -3834,9 +3906,12 @@ input, label, body {
   display: block;
   background: #e0e0e0;
   box-shadow: 0px 0px 3px #777;
-  min-width: 200px; }
+  width: 600px; }
   .midi-map .header {
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     display: block;
@@ -3847,7 +3922,10 @@ input, label, body {
     .midi-map .header > *, .midi-map .header > div > * {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       margin: 0px 7px;
@@ -3858,13 +3936,19 @@ input, label, body {
       .midi-map .header > * > i.fa, .midi-map .header > div > * > i.fa {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 38px;
         line-height: 38px; }
     .midi-map .header > div {
       margin: 0px; }
     .midi-map .header input, .midi-map .header button {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 4px 3px;
@@ -3894,7 +3978,10 @@ input, label, body {
       .midi-map .header .cipher input {
         float: left; }
       .midi-map .header .cipher input, .midi-map .header .cipher button {
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 30px;
         line-height: 30px;
         margin: 4px 0px;
@@ -3981,6 +4068,45 @@ input, label, body {
           cursor: pointer; }
           .midi-map .body fieldset legend span.on {
             color: #333; }
+  .midi-map .devices dl {
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    box-sizing: border-box;
+    display: inline-block;
+    width: 50%;
+    border: 1px solid transparent;
+    vertical-align: top; }
+    .midi-map .devices dl dt {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      width: 100%;
+      text-align: center;
+      background: #aaa;
+      font-weight: bold; }
+    .midi-map .devices dl dd {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      width: 100%; }
+      .midi-map .devices dl dd ul {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        width: 100%;
+        list-style: none; }
+        .midi-map .devices dl dd ul li {
+          margin: 0px;
+          padding: 0px;
+          display: inline-block;
+          box-sizing: border-box;
+          width: 100%; }
+  .midi-map table {
+    width: 100%; }
 
 .midi-keyboard {
   position: absolute;
@@ -3991,7 +4117,10 @@ input, label, body {
   box-shadow: 0px 0px 3px #777;
   min-width: 550px; }
   .midi-keyboard .header {
+    margin: 0px;
+    padding: 0px;
     display: inline-block;
+    box-sizing: border-box;
     height: 38px;
     line-height: 38px;
     display: block;
@@ -4002,7 +4131,10 @@ input, label, body {
     .midi-keyboard .header > *, .midi-keyboard .header > div > * {
       margin: 0px;
       padding: 0px;
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 38px;
       line-height: 38px;
       margin: 0px 7px;
@@ -4013,13 +4145,19 @@ input, label, body {
       .midi-keyboard .header > * > i.fa, .midi-keyboard .header > div > * > i.fa {
         margin: 0px;
         padding: 0px;
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 38px;
         line-height: 38px; }
     .midi-keyboard .header > div {
       margin: 0px; }
     .midi-keyboard .header input, .midi-keyboard .header button {
+      margin: 0px;
+      padding: 0px;
       display: inline-block;
+      box-sizing: border-box;
       height: 30px;
       line-height: 30px;
       margin: 4px 3px;
@@ -4049,7 +4187,10 @@ input, label, body {
       .midi-keyboard .header .cipher input {
         float: left; }
       .midi-keyboard .header .cipher input, .midi-keyboard .header .cipher button {
+        margin: 0px;
+        padding: 0px;
         display: inline-block;
+        box-sizing: border-box;
         height: 30px;
         line-height: 30px;
         margin: 4px 0px;

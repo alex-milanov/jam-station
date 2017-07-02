@@ -13,7 +13,7 @@ const initial = {
 	bpm: '120',
 	measure: '4/4',
 	beatLength: 16,
-	barsLength: 4,
+	barsLength: 1,
 	playing: false,
 	recording: false,
 	tick: {
@@ -50,7 +50,7 @@ const initial = {
 	]
 };
 
-const tick = (time = context.currentTime) => 
+const tick = (time = context.currentTime) =>
 	state => obj.patch(state, ['studio', 'tick'], {
 		time,
 		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,

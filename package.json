@@ -12,7 +12,8 @@
     "watch:js": "watchify -p browserify-hmr src/js/index.js -o dist/js/app.js --debug",
     "watch:sass": "npm run build:sass -- --watch src/sass/**/* ",
     "livereload": "livereload dist/**/*.css -d",
-    "start": "npm run build && serve --path dist & npm run watch"
+    "start": "npm run build && serve --path dist & npm run watch",
+		"sync:gh": "git checkout gh-pages && git rebase master && git push && git checkout master"
   },
   "author": "Alex Milanov <alex@i4web.biz>",
   "license": "ISC",

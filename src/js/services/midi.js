@@ -1,9 +1,9 @@
 'use strict';
 
-const init = () => {};
-const refresh = ({state, actions}) => {};
+const hook = () => {
+
+};
 
 module.exports = {
-	init,
-	refresh
+	hook
 };

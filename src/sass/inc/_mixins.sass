@@ -2,10 +2,17 @@
 	margin: 0px
 	padding: 0px
 
-@mixin header-height($h)
-	display: inline-block
-	height: $h
-	line-height: $h
+=reset
+  margin: 0px
+  padding: 0px
+  display: inline-block
+  box-sizing: border-box
+
+
+=header-height($h)
+  +reset
+  height: $h
+  line-height: $h
 
 @mixin modal($w, $h)
 	display: block

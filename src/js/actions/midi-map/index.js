@@ -12,6 +12,10 @@ const initial = {
 		inputs: [],
 		outputs: []
 	},
+	clock: {
+		in: false,
+		out: false
+	},
 	map: {
 		controller: {
 			20: ['instrument', ['vcf', 'cutoff']],
@@ -31,7 +35,12 @@ const connect = devices =>
 		devices
 	});
 
+const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clock', inOut],
+	obj.sub(state, ['midiMap', 'clock'])[inOut] === index ? false : index
+);
+
 module.exports = {
 	initial,
-	connect
+	connect,
+	toggleClock
 };

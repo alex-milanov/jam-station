@@ -25,10 +25,6 @@ const initial = Object.assign({
 		instrument: true,
 		sequencer: true,
 		midiMap: true
-	},
-	midi: {
-		inputs: [],
-		outputs: []
 	}
 }, {
 	studio: studio.initial,

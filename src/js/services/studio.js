@@ -32,6 +32,10 @@ let kit = [
 	'samples/shaker02.ogg'
 ].map(url => new Sampler(context, url));
 
+const addSample = (key, buffer) => (
+	kit.push(new Sampler(context, key, buffer))
+);
+
 const hook = ({state$, actions, tick$}) => {
 	let buffer = [];
 
@@ -103,5 +107,6 @@ const hook = ({state$, actions, tick$}) => {
 module.exports = {
 	context,
 	kit,
+	addSample,
 	hook
 };

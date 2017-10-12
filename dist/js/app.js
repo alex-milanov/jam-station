@@ -37231,7 +37231,7 @@ module.exports = {
 	initial
 };
 
-},{"../util/math":162,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
+},{"../util/math":163,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37581,7 +37581,7 @@ module.exports = {
 	addPatch
 };
 
-},{"../../util/math":162,"iblokz-data":12,"rx":112}],135:[function(require,module,exports){
+},{"../../util/math":163,"iblokz-data":12,"rx":112}],135:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -37629,7 +37629,7 @@ module.exports = {
 	toggleClock
 };
 
-},{"../../util/math":162,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
+},{"../../util/math":163,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37755,7 +37755,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":162,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
+},{"../../util/math":163,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37857,7 +37857,7 @@ module.exports = {
 	prev
 };
 
-},{"../../util/audio":159,"../../util/math":162,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
+},{"../../util/audio":160,"../../util/math":163,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
 'use strict';
 // lib
 const Rx = require('rx');
@@ -37868,13 +37868,6 @@ const vdom = require('iblokz-snabbdom-helpers');
 const midi = require('./util/midi')();
 const a = require('./util/audio');
 window.a = a;
-const f = require('./util/file');
-window.f = f;
-// gamepad
-const gamepad = require('./util/gamepad');
-// instr (soon to be legacy)
-const BasicSynth = require('./instr/basic-synth');
-const Sampler = require('./instr/sampler');
 
 // vex code
 const vex = require('vex-js');
@@ -37895,6 +37888,8 @@ const services = require('./services');
 const clock = require('./services/clock');
 const studio = require('./services/studio');
 const audio = require('./services/audio');
+const controls = require('./services/controls');
+const assets = require('./services/assets');
 // actions = studio.attach(actions);
 
 // adapt actions
@@ -37924,14 +37919,6 @@ const state$ = actions$
 	.map(state => (console.log(state), state))
 	.publish();
 
-/*
-state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
-	// .map(state => (console.log(state), state))
-	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
-	.map(({state}) => state)
-	.subscribe(state => (console.log(state), state));
-*/
-
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 clock.hook({state$, actions});
@@ -37945,249 +37932,15 @@ vdom.patchStream(ui$, '#ui');
 services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
 
-// files
-f.loadZip('samples/openpathmusic.zip').subscribe(opm => {
-	let opmSamples = Object.keys(opm);
-	// console.log(opmSamples);
-	$.concat(opmSamples.map(key =>
-		$.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
-		.map(buffer => ({key, buffer})))
-	)
-		.subscribe(({key, buffer}) =>
-			studio.kit.push(new Sampler(studio.context, key, buffer))
-		);
-	actions.mediaLibrary.loadSamples(opmSamples);
-});
-
-gamepad.changes()
-	// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))
-	.subscribe(pads => {
-		console.log(pads[0]);
-		if (pads[0]) {
-			if (pads[0].buttons[8].pressed === true) actions.studio.play();
-			if (pads[0].buttons[9].pressed === true) actions.studio.record();
-			if (pads[0].buttons[3].pressed === true) actions.studio.stop();
-			// channels
-			if (pads[0].buttons[0].pressed === true) actions.sequencer.add();
-			if (pads[0].buttons[2].pressed === true) actions.sequencer.clear();
-			if (pads[0].buttons[1].pressed === true) actions.sequencer.remove();
-
-			if (pads[0].axes[1] < 0) actions.sequencer.prev();
-			if (pads[0].axes[1] > 0) actions.sequencer.next();
-		}
-	});
-
-document.addEventListener('keydown', e => {
-	console.log(e);
-	if (e.code === 'Space') actions.studio.play();
-	if (e.key === 'r') actions.studio.record();
-	if (e.key === 't') actions.studio.stop();
-	// channels
-	if (e.key === 'Enter') actions.sequencer.add();
-	if (e.key === 'Delete') actions.sequencer.clear();
-	if (e.key === 'Backspace') actions.sequencer.remove();
-
-	if (e.key === 'ArrowUp') actions.sequencer.prev();
-	if (e.key === 'ArrowDown') actions.sequencer.next();
-});
+assets.hook(state$, actions, studio);
+controls.hook(state$, actions);
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
 state$.connect();
 
-},{"./actions":132,"./instr/basic-synth":139,"./instr/sampler":140,"./services":143,"./services/audio":141,"./services/clock":142,"./services/studio":145,"./ui":147,"./util/app":158,"./util/audio":159,"./util/file":160,"./util/gamepad":161,"./util/midi":163,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],139:[function(require,module,exports){
-'use strict';
-
-const filterSetFreq = (filter, value, context) => {
-	const minValue = 40;
-	const maxValue = context.sampleRate / 2;
-	// Logarithm (base 2) to compute how many octaves fall in the range.
-	var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
-	// Compute a multiplier from 0 to 1 based on an exponential scale.
-	var multiplier = Math.pow(2, numberOfOctaves * (value - 1.0));
-	// Get back to the frequency value between min and max.
-	filter.frequency.value = maxValue * multiplier;
-};
-
-const filterSetQ = (filter, value, context) => {
-	const QUAL_MUL = 30;
-	filter.Q.value = value * QUAL_MUL;
-};
-
-/**
- * BasicSynth instrument.
- * @param {object} context: instance of the audio context.
- * @param {int} note: default note to be played.
- */
-function BasicSynth(context, note) {
-	this.context = context;
-	this.note = note;
-
-	this.vco1 = this.context.createOscillator();
-	this.vco1.frequency.value = this.noteToFrequency(note);
-	this.vco2 = this.context.createOscillator();
-	this.vco2.frequency.value = this.noteToFrequency(note);
-	this.lfo = this.context.createOscillator();
-	this.lfoGain = this.context.createGain();
-	this.vcf = this.context.createBiquadFilter();
-	this.vca = this.context.createGain();
-	// this.vco.connect(this.vca);
-	this.lfo.connect(this.lfoGain);
-	// this.lfoGain.connect(this.vcf.frequency);
-	// this.lfoGain.connect(this.vco.frequency);
-	// this.vcf.connect(this.vca);
-	this.vca.gain.value = 0;
-	this.vco1.type = 'sawtooth';
-	this.vco2.type = 'sawtooth';
-	this.lfo.type = 'sawtooth';
-	this.vco1.start(this.context.currentTime);
-	this.vco2.start(this.context.currentTime);
-	this.lfo.start(this.context.currentTime);
-	this.volume = this.context.createGain();
-	this.volume.gain.value = 0.7;
-	this.vca.connect(this.volume);
-	this.volume.connect(this.context.destination);
-}
-
-BasicSynth.prototype.noteToFrequency = function(note) {
-	var notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
-	var keyNumber;
-	var octave;
-
-	if (note.length === 3) {
-		octave = note.charAt(2);
-	} else {
-		octave = note.charAt(1);
-	}
-
-	keyNumber = notes.indexOf(note.slice(0, -1));
-
-	if (keyNumber < 3) {
-		keyNumber = keyNumber + 12 + ((octave - 1) * 12) + 1;
-	} else {
-		keyNumber = keyNumber + ((octave - 1) * 12) + 1;
-	}
-
-	return 440 * Math.pow(2, (keyNumber - 49) / 12);
-};
-
-BasicSynth.prototype.setup = function(note) {
-
-	/*
-	this.osc = this.context.createOscillator();
-
-	this.osc.frequency.value = this.noteToFrequency(note);
-
-	this.gain = this.context.createGain();
-	this.osc.connect(this.gain);
-	this.gain.connect(this.context.destination)
-	*/
-};
-
-BasicSynth.prototype.noteon = function(state, note, velocity) {
-	const now = this.context.currentTime;
-	const time = now + 0.0001;
-
-	note = note || this.note || 'C';
-	velocity = velocity || 1;
-
-	console.log(time, state.instrument, velocity);
-
-	// this.setup(note);
-	if (state.instrument.vco1.type)
-		this.vco1.type = state.instrument.vco1.type;
-	if (state.instrument.vco1.detune)
-		this.vco1.detune.value = state.instrument.vco1.detune;
-	if (state.instrument.vco2.type)
-		this.vco2.type = state.instrument.vco2.type;
-	if (state.instrument.vco2.detune)
-		this.vco2.detune.value = state.instrument.vco2.detune;
-	if (state.instrument.lfo.type)
-		this.lfo.type = state.instrument.lfo.type;
-	if (state.studio.volume)
-		this.volume.gain.value = state.studio.volume;
-
-	var frequency = this.noteToFrequency(note);
-	console.log(frequency);
-
-	this.vco1.frequency.cancelScheduledValues(0);
-	this.vco2.frequency.cancelScheduledValues(0);
-	this.vca.gain.cancelScheduledValues(0);
-
-	this.vco1.frequency.setValueAtTime(frequency, now);
-	this.vco2.frequency.setValueAtTime(frequency, now);
-
-	if (state.instrument.lfo.on) {
-		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
-		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
-		this.lfoGain.connect(this.vco1.detune);
-		this.lfoGain.connect(this.vco2.detune);
-	}
-
-	if (state.instrument.vcf.on) {
-		if (state.instrument.vco1.on) this.vco1.connect(this.vcf);
-		if (state.instrument.vco2.on) this.vco2.connect(this.vcf);
-		this.vcf.connect(this.vca);
-		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
-		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
-		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
-	} else {
-		if (state.instrument.vco1.on) this.vco1.connect(this.vca);
-		if (state.instrument.vco2.on) this.vco2.connect(this.vca);
-	}
-
-	// attack
-	if (state.instrument.eg.attack > 0)
-		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
-	else
-		this.vca.gain.setValueAtTime(velocity, now);
-
-	// decay
-	if (state.instrument.eg.decay > 0)
-		this.vca.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
-			time + state.instrument.eg.attack, state.instrument.eg.decay);
-	// sustain
-	// relase
-
-	/*
-	this.gain.gain.setValueAtTime(0.1, time);
-	//this.gain.gain.setValueAtTime(0.01, time + duration);
-	this.gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
-
-	this.osc.start(time);
-
-	this.osc.stop(time + duration);
-	*/
-};
-
-BasicSynth.prototype.noteoff = function(state, note) {
-	const time = this.context.currentTime + 0.00001;
-	var frequency = this.noteToFrequency(note);
-	console.log(state.instrument.eg);
-
-	this.vca.gain.cancelScheduledValues(0);
-	this.vca.gain.setValueCurveAtTime(new Float32Array([this.vca.gain.value, 0]),
-		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
-
-	this.vco1.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
-	this.vco2.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
-};
-
-BasicSynth.prototype.play = function(state, note) {
-	// note = note || this.note || 'C';
-	var now = this.context.currentTime;
-	this.trigger(now, state.instrument, note);
-};
-
-BasicSynth.prototype.clone = function(note) {
-	var synth = new BasicSynth(this.context, note || this.note);
-	return synth;
-};
-
-module.exports = BasicSynth;
-
-},{}],140:[function(require,module,exports){
+},{"./actions":132,"./services":144,"./services/assets":140,"./services/audio":141,"./services/clock":142,"./services/controls":143,"./services/studio":146,"./ui":148,"./util/app":159,"./util/audio":160,"./util/midi":164,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],139:[function(require,module,exports){
 'use strict';
 
 /**
@@ -38252,7 +38005,35 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],141:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
+'use strict';
+// lib
+const Rx = require('rx');
+const $ = Rx.Observable;
+// util
+const file = require('../util/file');
+const audio = require('../util/audio');
+
+const hook = (state$, actions, studio) => {
+	file.loadZip('samples/openpathmusic.zip').subscribe(opm => {
+		let opmSamples = Object.keys(opm);
+		// console.log(opmSamples);
+		$.concat(opmSamples.map(key =>
+			$.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
+			.map(buffer => ({key, buffer})))
+		)
+			.subscribe(({key, buffer}) =>
+				studio.addSample(key, buffer)
+			);
+		actions.mediaLibrary.loadSamples(opmSamples);
+	});
+};
+
+module.exports = {
+	hook
+};
+
+},{"../util/audio":160,"../util/file":161,"rx":112}],141:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38413,7 +38194,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$,  midi, actions, studio, tapTempo, tick$}) => {
+const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections
@@ -38562,7 +38343,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":159,"../util/math":162,"iblokz-data":12,"rx":112}],142:[function(require,module,exports){
+},{"../util/audio":160,"../util/math":163,"iblokz-data":12,"rx":112}],142:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38604,7 +38385,53 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":159,"../util/math":162,"rx":112}],143:[function(require,module,exports){
+},{"../util/audio":160,"../util/math":163,"rx":112}],143:[function(require,module,exports){
+'use strict';
+
+// gamepad
+const gamepad = require('../util/gamepad');
+
+const hook = (state$, actions) => {
+	// gamepad
+	gamepad.changes()
+		// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))
+		.subscribe(pads => {
+			console.log(pads[0]);
+			if (pads[0]) {
+				if (pads[0].buttons[8].pressed === true) actions.studio.play();
+				if (pads[0].buttons[9].pressed === true) actions.studio.record();
+				if (pads[0].buttons[3].pressed === true) actions.studio.stop();
+				// channels
+				if (pads[0].buttons[0].pressed === true) actions.sequencer.add();
+				if (pads[0].buttons[2].pressed === true) actions.sequencer.clear();
+				if (pads[0].buttons[1].pressed === true) actions.sequencer.remove();
+
+				if (pads[0].axes[1] < 0) actions.sequencer.prev();
+				if (pads[0].axes[1] > 0) actions.sequencer.next();
+			}
+		});
+
+	// keyboard
+	document.addEventListener('keydown', e => {
+		console.log(e);
+		if (e.code === 'Space') actions.studio.play();
+		if (e.key === 'r') actions.studio.record();
+		if (e.key === 't') actions.studio.stop();
+		// channels
+		if (e.key === 'Enter') actions.sequencer.add();
+		if (e.key === 'Delete') actions.sequencer.clear();
+		if (e.key === 'Backspace') actions.sequencer.remove();
+
+		if (e.key === 'ArrowUp') actions.sequencer.prev();
+		if (e.key === 'ArrowDown') actions.sequencer.next();
+	});
+};
+
+module.exports = {
+	hook
+};
+
+},{"../util/gamepad":162}],144:[function(require,module,exports){
 'use strict';
 
 const studio = require('./studio');
@@ -38624,7 +38451,7 @@ module.exports = {
 	layout
 };
 
-},{"./layout":144,"./studio":145}],144:[function(require,module,exports){
+},{"./layout":145,"./studio":146}],145:[function(require,module,exports){
 'use strict';
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
@@ -38683,7 +38510,7 @@ module.exports = {
 	refresh
 };
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38717,6 +38544,10 @@ let kit = [
 	'samples/shaker01.ogg',
 	'samples/shaker02.ogg'
 ].map(url => new Sampler(context, url));
+
+const addSample = (key, buffer) => (
+	kit.push(new Sampler(context, key, buffer))
+);
 
 const hook = ({state$, actions, tick$}) => {
 	let buffer = [];
@@ -38789,10 +38620,11 @@ const hook = ({state$, actions, tick$}) => {
 module.exports = {
 	context,
 	kit,
+	addSample,
 	hook
 };
 
-},{"../instr/sampler":140,"../util/audio":159,"../util/math":162,"rx":112}],146:[function(require,module,exports){
+},{"../instr/sampler":139,"../util/audio":160,"../util/math":163,"rx":112}],147:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
@@ -38886,7 +38718,7 @@ module.exports = ({state, actions, tapTempo}) => header([
 	])
 ]);
 
-},{"../../util/file":160,"iblokz-snabbdom-helpers":16,"moment":95}],147:[function(require,module,exports){
+},{"../../util/file":161,"iblokz-snabbdom-helpers":16,"moment":95}],148:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz-snabbdom-helpers');
@@ -38908,7 +38740,7 @@ module.exports = ({state, actions, tapTempo}) => div('#ui', [
 	])
 ]);
 
-},{"./header":146,"./instrument":149,"./media-library":154,"./midi-keyboard":155,"./midi-map":156,"./sequencer":157,"iblokz-snabbdom-helpers":16}],148:[function(require,module,exports){
+},{"./header":147,"./instrument":150,"./media-library":155,"./midi-keyboard":156,"./midi-map":157,"./sequencer":158,"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
 'use strict';
 
 const {
@@ -38956,7 +38788,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],150:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39023,7 +38855,7 @@ module.exports = ({state, actions}) => div('.instrument', [
 	])
 ]);
 
-},{"./delay":148,"./lfo":150,"./vca":151,"./vcf":152,"./vco":153,"iblokz-snabbdom-helpers":16,"vex-js":131}],150:[function(require,module,exports){
+},{"./delay":149,"./lfo":151,"./vca":152,"./vcf":153,"./vco":154,"iblokz-snabbdom-helpers":16,"vex-js":131}],151:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39074,7 +38906,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],151:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39135,7 +38967,7 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39176,7 +39008,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],154:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39229,7 +39061,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],154:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],155:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39335,7 +39167,7 @@ module.exports = ({state, actions}) => div('.media-library', [
 	])
 ]);
 
-},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],155:[function(require,module,exports){
+},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39382,7 +39214,7 @@ module.exports = ({state, actions}) => div('.midi-keyboard', [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39467,7 +39299,7 @@ module.exports = ({state, actions}) => div('.midi-map', [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
@@ -39556,7 +39388,7 @@ module.exports = ({state, actions}) => div('.sequencer', [
 	))
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],159:[function(require,module,exports){
 'use strict';
 
 // lib
@@ -39589,7 +39421,7 @@ module.exports = {
 	adapt
 };
 
-},{"iblokz-data":12,"rx":112}],159:[function(require,module,exports){
+},{"iblokz-data":12,"rx":112}],160:[function(require,module,exports){
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
@@ -39756,7 +39588,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz-data":12}],160:[function(require,module,exports){
+},{"iblokz-data":12}],161:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39807,7 +39639,7 @@ module.exports = {
 	save
 };
 
-},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],161:[function(require,module,exports){
+},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],162:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39842,7 +39674,7 @@ module.exports = {
 	changes
 };
 
-},{"./time":164,"rx":112}],162:[function(require,module,exports){
+},{"./time":165,"rx":112}],163:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -39856,7 +39688,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],163:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39987,7 +39819,7 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":112}],164:[function(require,module,exports){
+},{"rx":112}],165:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');

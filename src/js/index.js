@@ -8,13 +8,6 @@ const vdom = require('iblokz-snabbdom-helpers');
 const midi = require('./util/midi')();
 const a = require('./util/audio');
 window.a = a;
-const f = require('./util/file');
-window.f = f;
-// gamepad
-const gamepad = require('./util/gamepad');
-// instr (soon to be legacy)
-const BasicSynth = require('./instr/basic-synth');
-const Sampler = require('./instr/sampler');
 
 // vex code
 const vex = require('vex-js');
@@ -35,6 +28,8 @@ const services = require('./services');
 const clock = require('./services/clock');
 const studio = require('./services/studio');
 const audio = require('./services/audio');
+const controls = require('./services/controls');
+const assets = require('./services/assets');
 // actions = studio.attach(actions);
 
 // adapt actions
@@ -64,14 +59,6 @@ const state$ = actions$
 	.map(state => (console.log(state), state))
 	.publish();
 
-/*
-state$.scan((prev, state) => ({state, prev: prev.state || state}), {})
-	// .map(state => (console.log(state), state))
-	.filter(({state, prev}) => state.studio.tickIndex && (state.studio.tickIndex === prev.studio.tickIndex))
-	.map(({state}) => state)
-	.subscribe(state => (console.log(state), state));
-*/
-
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 clock.hook({state$, actions});
@@ -85,51 +72,8 @@ vdom.patchStream(ui$, '#ui');
 services.init({actions});
 state$.map(state => services.refresh({state, actions})).subscribe();
 
-// files
-f.loadZip('samples/openpathmusic.zip').subscribe(opm => {
-	let opmSamples = Object.keys(opm);
-	// console.log(opmSamples);
-	$.concat(opmSamples.map(key =>
-		$.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
-		.map(buffer => ({key, buffer})))
-	)
-		.subscribe(({key, buffer}) =>
-			studio.kit.push(new Sampler(studio.context, key, buffer))
-		);
-	actions.mediaLibrary.loadSamples(opmSamples);
-});
-
-gamepad.changes()
-	// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))
-	.subscribe(pads => {
-		console.log(pads[0]);
-		if (pads[0]) {
-			if (pads[0].buttons[8].pressed === true) actions.studio.play();
-			if (pads[0].buttons[9].pressed === true) actions.studio.record();
-			if (pads[0].buttons[3].pressed === true) actions.studio.stop();
-			// channels
-			if (pads[0].buttons[0].pressed === true) actions.sequencer.add();
-			if (pads[0].buttons[2].pressed === true) actions.sequencer.clear();
-			if (pads[0].buttons[1].pressed === true) actions.sequencer.remove();
-
-			if (pads[0].axes[1] < 0) actions.sequencer.prev();
-			if (pads[0].axes[1] > 0) actions.sequencer.next();
-		}
-	});
-
-document.addEventListener('keydown', e => {
-	console.log(e);
-	if (e.code === 'Space') actions.studio.play();
-	if (e.key === 'r') actions.studio.record();
-	if (e.key === 't') actions.studio.stop();
-	// channels
-	if (e.key === 'Enter') actions.sequencer.add();
-	if (e.key === 'Delete') actions.sequencer.clear();
-	if (e.key === 'Backspace') actions.sequencer.remove();
-
-	if (e.key === 'ArrowUp') actions.sequencer.prev();
-	if (e.key === 'ArrowDown') actions.sequencer.next();
-});
+assets.hook(state$, actions, studio);
+controls.hook(state$, actions);
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));

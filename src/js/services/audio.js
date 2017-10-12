@@ -158,7 +158,7 @@ const engine$ = changes$
 	.scan((state, change) => change(state), {})
 	.subscribe(state => console.log(state));
 
-const hook = ({state$,  midi, actions, studio, tapTempo, tick$}) => {
+const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 	// hook state changes
 	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
 	// update connections

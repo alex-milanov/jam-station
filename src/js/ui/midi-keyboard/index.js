@@ -31,7 +31,7 @@ const generateKeys = (start, end) => [{start: parseKey(start), end: parseKey(end
 
 // console.log(generateKeys('C1', 'C3'));
 
-module.exports = ({state, actions}) => div('.midi-keyboard', [
+module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params, [
 	div('.header', [
 		h2([i('.fa.fa-keyboard-o'), ' MIDI Keyboard'])
 	]),

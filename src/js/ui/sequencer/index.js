@@ -6,7 +6,7 @@ const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(tim
 
 const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][channel] && pattern[bar][channel][tick];
 
-module.exports = ({state, actions}) => div('.sequencer', [
+module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 	div('.header', [
 		h2([i('.fa.fa-braille'), ' Sequencer']),
 		button('.fa.fa-play', {

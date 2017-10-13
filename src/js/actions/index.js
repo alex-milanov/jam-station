@@ -4,6 +4,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
+const viewport = require('./viewport');
 const studio = require('./studio');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
@@ -13,6 +14,10 @@ const mediaLibrary = require('./media-library');
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../util/math');
+
+// actions
+const set = (key, value) => state => obj.patch(state, key, value);
+const toggle = key => state => obj.patch(state, key, !obj.sub(state, key));
 
 const toggleUI = editor => state => obj.patch(state, ['ui', editor], !state.ui[editor]);
 
@@ -56,15 +61,20 @@ const change = (section, prop, val) => state =>
 	obj.patch(state, [section].concat(prop), val);
 
 module.exports = {
-	toggleUI,
-	ping,
+	initial,
+	// children
+	viewport,
 	studio,
 	instrument,
 	mediaLibrary,
 	sequencer,
 	midiMap,
+	// actions
+	set,
+	toggle,
+	toggleUI,
+	ping,
 	load,
 	clear,
-	change,
-	initial
+	change
 };

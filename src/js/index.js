@@ -24,7 +24,7 @@ let ui = require('./ui');
 let actions$;
 
 // services
-const services = require('./services');
+const viewport = require('./services/viewport');
 const clock = require('./services/clock');
 const studio = require('./services/studio');
 const audio = require('./services/audio');
@@ -61,19 +61,21 @@ const state$ = actions$
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
+
+// services
+viewport.hook({state$, actions});
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
 audio.hook({state$, midi, actions, studio, tapTempo, tick$: clock.tick$});
+assets.hook({state$, actions, studio});
+controls.hook({state$, actions});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
 
 // services
-services.init({actions});
-state$.map(state => services.refresh({state, actions})).subscribe();
-
-assets.hook(state$, actions, studio);
-controls.hook(state$, actions);
+// services.init({actions});
+// state$.map(state => services.refresh({state, actions})).subscribe();
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));

@@ -73,7 +73,7 @@ const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =
 		])
 ));
 
-module.exports = ({state, actions}) => div('.media-library', [
+module.exports = ({state, actions, params = {}}) => div('.media-library', params, [
 	/*
 	div('.header', [
 		h2([i('.fa.fa-book'), ' Media Library'])

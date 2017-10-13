@@ -37166,6 +37166,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const {Subject} = Rx;
 
+const viewport = require('./viewport');
 const studio = require('./studio');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
@@ -37175,6 +37176,10 @@ const mediaLibrary = require('./media-library');
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../util/math');
+
+// actions
+const set = (key, value) => state => obj.patch(state, key, value);
+const toggle = key => state => obj.patch(state, key, !obj.sub(state, key));
 
 const toggleUI = editor => state => obj.patch(state, ['ui', editor], !state.ui[editor]);
 
@@ -37218,20 +37223,25 @@ const change = (section, prop, val) => state =>
 	obj.patch(state, [section].concat(prop), val);
 
 module.exports = {
-	toggleUI,
-	ping,
+	initial,
+	// children
+	viewport,
 	studio,
 	instrument,
 	mediaLibrary,
 	sequencer,
 	midiMap,
+	// actions
+	set,
+	toggle,
+	toggleUI,
+	ping,
 	load,
 	clear,
-	change,
-	initial
+	change
 };
 
-},{"../util/math":163,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
+},{"../util/math":163,"./instrument":133,"./media-library":134,"./midi-map":135,"./sequencer":136,"./studio":137,"./viewport":138,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37859,6 +37869,24 @@ module.exports = {
 
 },{"../../util/audio":160,"../../util/math":163,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
 'use strict';
+
+const initial = {
+	screen: {
+		width: 800,
+		height: 600
+	},
+	mouse: {
+		x: 400,
+		y: 300
+	}
+};
+
+module.exports = {
+	initial
+};
+
+},{}],139:[function(require,module,exports){
+'use strict';
 // lib
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -37884,7 +37912,7 @@ let ui = require('./ui');
 let actions$;
 
 // services
-const services = require('./services');
+const viewport = require('./services/viewport');
 const clock = require('./services/clock');
 const studio = require('./services/studio');
 const audio = require('./services/audio');
@@ -37921,26 +37949,28 @@ const state$ = actions$
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
+
+// services
+viewport.hook({state$, actions});
 clock.hook({state$, actions});
 studio.hook({state$, actions, tick$: clock.tick$});
 audio.hook({state$, midi, actions, studio, tapTempo, tick$: clock.tick$});
+assets.hook({state$, actions, studio});
+controls.hook({state$, actions});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
 
 // services
-services.init({actions});
-state$.map(state => services.refresh({state, actions})).subscribe();
-
-assets.hook(state$, actions, studio);
-controls.hook(state$, actions);
+// services.init({actions});
+// state$.map(state => services.refresh({state, actions})).subscribe();
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
 state$.connect();
 
-},{"./actions":132,"./services":144,"./services/assets":140,"./services/audio":141,"./services/clock":142,"./services/controls":143,"./services/studio":146,"./ui":148,"./util/app":159,"./util/audio":160,"./util/midi":164,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],139:[function(require,module,exports){
+},{"./actions":132,"./services/assets":141,"./services/audio":142,"./services/clock":143,"./services/controls":144,"./services/studio":145,"./services/viewport":146,"./ui":148,"./util/app":159,"./util/audio":160,"./util/midi":164,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],140:[function(require,module,exports){
 'use strict';
 
 /**
@@ -38005,7 +38035,7 @@ Sampler.prototype.clone = function() {
 
 module.exports = Sampler;
 
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 // lib
 const Rx = require('rx');
@@ -38014,7 +38044,7 @@ const $ = Rx.Observable;
 const file = require('../util/file');
 const audio = require('../util/audio');
 
-const hook = (state$, actions, studio) => {
+const hook = ({state$, actions, studio}) => {
 	file.loadZip('samples/openpathmusic.zip').subscribe(opm => {
 		let opmSamples = Object.keys(opm);
 		// console.log(opmSamples);
@@ -38033,7 +38063,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":160,"../util/file":161,"rx":112}],141:[function(require,module,exports){
+},{"../util/audio":160,"../util/file":161,"rx":112}],142:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38343,7 +38373,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":160,"../util/math":163,"iblokz-data":12,"rx":112}],142:[function(require,module,exports){
+},{"../util/audio":160,"../util/math":163,"iblokz-data":12,"rx":112}],143:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38385,13 +38415,13 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":160,"../util/math":163,"rx":112}],143:[function(require,module,exports){
+},{"../util/audio":160,"../util/math":163,"rx":112}],144:[function(require,module,exports){
 'use strict';
 
 // gamepad
 const gamepad = require('../util/gamepad');
 
-const hook = (state$, actions) => {
+const hook = ({state$, actions}) => {
 	// gamepad
 	gamepad.changes()
 		// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))
@@ -38431,86 +38461,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/gamepad":162}],144:[function(require,module,exports){
-'use strict';
-
-const studio = require('./studio');
-// const midi = require('./midi');
-const layout = require('./layout');
-
-const services = [layout];
-
-const init = ({actions}) =>
-	services.forEach(service => service.init({actions}));
-const refresh = ({state, actions}) =>
-	services.forEach(service => service.refresh({state, actions}));
-
-module.exports = {
-	init,
-	refresh,
-	layout
-};
-
-},{"./layout":145,"./studio":146}],145:[function(require,module,exports){
-'use strict';
-
-const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
-
-const init = () => {};
-const refresh = ({state, actions}) => {
-	const layout = document.querySelector('#layout');
-	const list = Array.from(layout.children);
-
-	const distance = 14;
-
-	// console.log(list);
-
-	list
-		.filter(el => ['midi-keyboard', 'media-library'].indexOf(el.className) === -1)
-		.map(el => ({el, i: list.indexOf(el)}))
-		.forEach(({el, i}) => {
-			if (i > 0)
-				el.style.left = list[i - 1].offsetLeft + list[i - 1].offsetWidth + distance + 'px';
-			else
-				el.style.left = distance + 'px';
-		});
-
-	list.filter(el => el.className === 'midi-keyboard')
-		.forEach(el => {
-			const sequencer = document.querySelector('.sequencer');
-			if (sequencer) {
-				el.style.left = sequencer.style.left;
-				el.style.top = 4 * distance + sequencer.offsetHeight + 'px';
-			} else {
-				el.style.left = '50%';
-			}
-
-			const keys = Array.from(el.querySelector('.keys').children);
-			console.log(keys);
-
-			const whiteKeysLength = keys.filter(key => key.className === 'white').length;
-
-			keys.forEach((key, i) => {
-				if (key.className === "white") {
-					key.style.width = (100 / whiteKeysLength) + '%';
-					if (i > 0 && keys[i - 1].className === 'black')
-						key.style.marginLeft = -(70 / whiteKeysLength / 2) + '%';
-				} else {
-					key.style.width = (70 / whiteKeysLength) + '%';
-					if (i > 0)
-						key.style.marginLeft = -(70 / whiteKeysLength / 2) + '%';
-				}
-			});
-		});
-	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
-};
-
-module.exports = {
-	init,
-	refresh
-};
-
-},{}],146:[function(require,module,exports){
+},{"../util/gamepad":162}],145:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38624,7 +38575,33 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":139,"../util/audio":160,"../util/math":163,"rx":112}],147:[function(require,module,exports){
+},{"../instr/sampler":140,"../util/audio":160,"../util/math":163,"rx":112}],146:[function(require,module,exports){
+'use strict';
+// lib
+const Rx = require('rx');
+const $ = Rx.Observable;
+
+const hook = ({state$, actions}) => {
+	// mouse movement
+	$.fromEvent(document, 'mousemove')
+		.subscribe(ev => actions.set(['viewport', 'mouse'], {
+			x: ev.pageX,
+			y: ev.pageY
+		}));
+
+	$.fromEvent(window, 'resize')
+		.startWith({})
+		.subscribe(ev => actions.set(['viewport', 'screen'], {
+			width: window.innerWidth,
+			height: window.innerHeight
+		}));
+};
+
+module.exports = {
+	hook
+};
+
+},{"rx":112}],147:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
@@ -38729,15 +38706,20 @@ const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
 
+const panels = {
+	mediaLibrary,
+	instrument,
+	sequencer,
+	midiMap,
+	midiKeyboard
+};
+
 module.exports = ({state, actions, tapTempo}) => div('#ui', [
 	header({state, actions, tapTempo}),
-	div('#layout', [
-		state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
-		state.ui.instrument ? instrument({state, actions}) : '',
-		state.ui.sequencer ? sequencer({state, actions}) : '',
-		state.ui.midiMap ? midiMap({state, actions}) : '',
-		state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
-	])
+	div('#layout', Object.keys(panels).map((panel, index) =>
+		state.ui[panel] ? panels[panel]({state, actions, params: {
+		}}) : ''
+	))
 ]);
 
 },{"./header":147,"./instrument":150,"./media-library":155,"./midi-keyboard":156,"./midi-map":157,"./sequencer":158,"iblokz-snabbdom-helpers":16}],149:[function(require,module,exports){
@@ -38818,7 +38800,7 @@ const types = [
 
 const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
-module.exports = ({state, actions}) => div('.instrument', [
+module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 	div('.header', [
 		h2([i('.fa.fa-tasks'), ' Instrument']),
 		div('.right', [
@@ -39137,7 +39119,7 @@ const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =
 		])
 ));
 
-module.exports = ({state, actions}) => div('.media-library', [
+module.exports = ({state, actions, params = {}}) => div('.media-library', params, [
 	/*
 	div('.header', [
 		h2([i('.fa.fa-book'), ' Media Library'])
@@ -39201,7 +39183,7 @@ const generateKeys = (start, end) => [{start: parseKey(start), end: parseKey(end
 
 // console.log(generateKeys('C1', 'C3'));
 
-module.exports = ({state, actions}) => div('.midi-keyboard', [
+module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params, [
 	div('.header', [
 		h2([i('.fa.fa-keyboard-o'), ' MIDI Keyboard'])
 	]),
@@ -39224,7 +39206,7 @@ const {
 
 const actionMaps = [];
 
-module.exports = ({state, actions}) => div('.midi-map', [
+module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
 		h2([i('.fa.fa-sitemap'), ' MIDI Map'])
 	]),
@@ -39308,7 +39290,7 @@ const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(tim
 
 const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][channel] && pattern[bar][channel][tick];
 
-module.exports = ({state, actions}) => div('.sequencer', [
+module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 	div('.header', [
 		h2([i('.fa.fa-braille'), ' Sequencer']),
 		button('.fa.fa-play', {
@@ -39839,4 +39821,4 @@ module.exports = {
 	loop
 };
 
-},{"raf-stream":99,"rx":112,"rx-node":111}]},{},[138]);
+},{"raf-stream":99,"rx":112,"rx-node":111}]},{},[139]);

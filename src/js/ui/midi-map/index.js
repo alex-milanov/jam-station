@@ -7,7 +7,7 @@ const {
 
 const actionMaps = [];
 
-module.exports = ({state, actions}) => div('.midi-map', [
+module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
 		h2([i('.fa.fa-sitemap'), ' MIDI Map'])
 	]),

@@ -6,7 +6,7 @@ const $ = Rx.Observable;
 const file = require('../util/file');
 const audio = require('../util/audio');
 
-const hook = (state$, actions, studio) => {
+const hook = ({state$, actions, studio}) => {
 	file.loadZip('samples/openpathmusic.zip').subscribe(opm => {
 		let opmSamples = Object.keys(opm);
 		// console.log(opmSamples);

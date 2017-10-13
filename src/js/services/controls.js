@@ -3,7 +3,7 @@
 // gamepad
 const gamepad = require('../util/gamepad');
 
-const hook = (state$, actions) => {
+const hook = ({state$, actions}) => {
 	// gamepad
 	gamepad.changes()
 		// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))

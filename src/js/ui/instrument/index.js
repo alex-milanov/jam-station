@@ -27,7 +27,7 @@ const types = [
 
 const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
-module.exports = ({state, actions}) => div('.instrument', [
+module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 	div('.header', [
 		h2([i('.fa.fa-tasks'), ' Instrument']),
 		div('.right', [

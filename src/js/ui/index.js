@@ -8,13 +8,18 @@ const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
 
+const panels = {
+	mediaLibrary,
+	instrument,
+	sequencer,
+	midiMap,
+	midiKeyboard
+};
+
 module.exports = ({state, actions, tapTempo}) => div('#ui', [
 	header({state, actions, tapTempo}),
-	div('#layout', [
-		state.ui.mediaLibrary ? mediaLibrary({state, actions}) : '',
-		state.ui.instrument ? instrument({state, actions}) : '',
-		state.ui.sequencer ? sequencer({state, actions}) : '',
-		state.ui.midiMap ? midiMap({state, actions}) : '',
-		state.ui.midiKeyboard ? midiKeyboard({state, actions}) : ''
-	])
+	div('#layout', Object.keys(panels).map((panel, index) =>
+		state.ui[panel] ? panels[panel]({state, actions, params: {
+		}}) : ''
+	))
 ]);

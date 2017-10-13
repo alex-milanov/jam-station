@@ -5,7 +5,6 @@ const $ = Rx.Observable;
 const vdom = require('iblokz-snabbdom-helpers');
 
 // util
-const midi = require('./util/midi')();
 const a = require('./util/audio');
 window.a = a;
 
@@ -24,12 +23,7 @@ let ui = require('./ui');
 let actions$;
 
 // services
-const viewport = require('./services/viewport');
-const clock = require('./services/clock');
-const studio = require('./services/studio');
-const audio = require('./services/audio');
-const controls = require('./services/controls');
-const assets = require('./services/assets');
+const services = require('./services');
 // actions = studio.attach(actions);
 
 // adapt actions
@@ -63,12 +57,7 @@ const state$ = actions$
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
 
 // services
-viewport.hook({state$, actions});
-clock.hook({state$, actions});
-studio.hook({state$, actions, tick$: clock.tick$});
-audio.hook({state$, midi, actions, studio, tapTempo, tick$: clock.tick$});
-assets.hook({state$, actions, studio});
-controls.hook({state$, actions});
+services.hook({state$, actions, tapTempo});
 
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');

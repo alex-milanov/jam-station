@@ -1,10 +1,10 @@
 'use strict';
 
+const time = require('../util/time');
+
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
-const init = () => {};
-const refresh = ({state, actions}) => {
-	const layout = document.querySelector('#layout');
+const refresh = ({layout, state, actions}) => {
 	const list = Array.from(layout.children);
 
 	const distance = 14;
@@ -51,7 +51,14 @@ const refresh = ({state, actions}) => {
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
 };
 
+const hook = ({state$, actions}) => {
+	time.frame()
+		.map(() => document.querySelector('#layout'))
+		.filter(layout => layout)
+		.withLatestFrom(state$, (layout, state) => ({layout, state, actions}))
+		.subscribe(refresh);
+};
+
 module.exports = {
-	init,
-	refresh
+	hook
 };

@@ -18,8 +18,10 @@ const panels = {
 
 module.exports = ({state, actions, tapTempo}) => div('#ui', [
 	header({state, actions, tapTempo}),
-	div('#layout', Object.keys(panels).map((panel, index) =>
-		state.ui[panel] ? panels[panel]({state, actions, params: {
-		}}) : ''
-	))
+	div('#layout', Object.keys(panels)
+		.filter(panel => state.layout[panel].visible)
+		.map(panel =>
+			panels[panel]({state, actions, params: {
+			}})
+		))
 ]);

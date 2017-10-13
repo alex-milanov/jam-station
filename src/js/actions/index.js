@@ -5,6 +5,7 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 const viewport = require('./viewport');
+const layout = require('./layout');
 const studio = require('./studio');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
@@ -31,12 +32,6 @@ const initial = Object.assign({
 		sequencer: true,
 		midiMap: true
 	}
-}, {
-	studio: studio.initial,
-	sequencer: sequencer.initial,
-	instrument: instrument.initial,
-	mediaLibrary: mediaLibrary.initial,
-	midiMap: midiMap.initial
 });
 
 const changesMap = {
@@ -64,6 +59,7 @@ module.exports = {
 	initial,
 	// children
 	viewport,
+	layout,
 	studio,
 	instrument,
 	mediaLibrary,

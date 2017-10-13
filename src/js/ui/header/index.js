@@ -25,16 +25,22 @@ const openDialog = cb => {
 module.exports = ({state, actions, tapTempo}) => header([
 	ul([
 		li([a({
-			class: {on: state.ui.mediaLibrary},
-			on: {click: ev => actions.toggleUI('mediaLibrary')}
+			class: {on: state.layout.mediaLibrary.visible},
+			on: {click: ev => actions.toggle(['layout', 'mediaLibrary', 'visible'])}
 		}, [i('.fa.fa-book')])]),
 		// li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
 		li([a({
-			class: {on: state.ui.instrument},
-			on: {click: ev => actions.toggleUI('instrument')}
+			class: {on: state.layout.instrument.visible},
+			on: {click: ev => actions.toggle(['layout', 'instrument', 'visible'])}
 		}, [i('.fa.fa-tasks')])]),
-		li([a({class: {on: state.ui.sequencer}, on: {click: ev => actions.toggleUI('sequencer')}}, [i('.fa.fa-braille')])]),
-		li([a({class: {on: state.ui.midiMap}, on: {click: ev => actions.toggleUI('midiMap')}}, [i('.fa.fa-sitemap')])])
+		li([a({
+			class: {on: state.layout.sequencer.visible},
+			on: {click: ev => actions.toggle(['layout', 'sequencer', 'visible'])}
+		}, [i('.fa.fa-braille')])]),
+		li([a({
+			class: {on: state.layout.midiMap.visible},
+			on: {click: ev => actions.toggle(['layout', 'midiMap', 'visible'])}
+		}, [i('.fa.fa-sitemap')])])
 		/*
 		li([a({
 			class: {on: state.ui.midiKeyboard},

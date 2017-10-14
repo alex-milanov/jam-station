@@ -65,6 +65,12 @@ const initial = {
 		time: 1,
 		dry: 1,
 		wet: 0
+	},
+	reverb: {
+		on: false,
+		seconds: 3,
+		decay: 2,
+		reverse: 0
 	}
 };
 

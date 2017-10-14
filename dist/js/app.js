@@ -37237,7 +37237,7 @@ module.exports = {
 	change
 };
 
-},{"../util/math":166,"./instrument":133,"./layout":134,"./media-library":135,"./midi-map":136,"./sequencer":137,"./studio":138,"./viewport":139,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
+},{"../util/math":167,"./instrument":133,"./layout":134,"./media-library":135,"./midi-map":136,"./sequencer":137,"./studio":138,"./viewport":139,"iblokz-data":12,"rx":112}],133:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37305,6 +37305,12 @@ const initial = {
 		time: 1,
 		dry: 1,
 		wet: 0
+	},
+	reverb: {
+		on: false,
+		seconds: 3,
+		decay: 2,
+		reverse: 0
 	}
 };
 
@@ -37627,7 +37633,7 @@ module.exports = {
 	addPatch
 };
 
-},{"../../util/math":166,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
+},{"../../util/math":167,"iblokz-data":12,"rx":112}],136:[function(require,module,exports){
 'use strict';
 const Rx = require('rx');
 const $ = Rx.Observable;
@@ -37675,7 +37681,7 @@ module.exports = {
 	toggleClock
 };
 
-},{"../../util/math":166,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
+},{"../../util/math":167,"iblokz-data":12,"rx":112}],137:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37801,7 +37807,7 @@ module.exports = {
 	setSample
 };
 
-},{"../../util/math":166,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
+},{"../../util/math":167,"iblokz-data":12,"rx":112}],138:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -37903,7 +37909,7 @@ module.exports = {
 	prev
 };
 
-},{"../../util/audio":163,"../../util/math":166,"iblokz-data":12,"rx":112}],139:[function(require,module,exports){
+},{"../../util/audio":164,"../../util/math":167,"iblokz-data":12,"rx":112}],139:[function(require,module,exports){
 'use strict';
 
 const initial = {
@@ -37995,7 +38001,7 @@ tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
 state$.connect();
 
-},{"./actions":132,"./services":146,"./ui":151,"./util/app":162,"./util/audio":163,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],141:[function(require,module,exports){
+},{"./actions":132,"./services":147,"./ui":152,"./util/app":163,"./util/audio":164,"iblokz-snabbdom-helpers":16,"rx":112,"tap-tempo":126,"vex-dialog":130,"vex-js":131}],141:[function(require,module,exports){
 'use strict';
 
 /**
@@ -38061,6 +38067,171 @@ Sampler.prototype.clone = function() {
 module.exports = Sampler;
 
 },{}],142:[function(require,module,exports){
+// Copyright (c) 2012 Jordan Santell
+// ref: https://github.com/web-audio-components/simple-reverb
+
+'use strict';
+
+/**
+ * Simple Reverb constructor.
+ *
+ * @param {AudioContext} context
+ * @param {object} opts
+ * @param {number} opts.seconds
+ * @param {number} opts.decay
+ * @param {boolean} opts.reverse
+ */
+
+function SimpleReverb(context, opts) {
+	this.input = this.output = context.createConvolver();
+	this._context = context;
+
+	var p = this.meta.params;
+	opts = opts || {};
+	this._seconds = opts.seconds || p.seconds.defaultValue;
+	this._decay = opts.decay || p.decay.defaultValue;
+	this._reverse = opts.reverse || p.reverse.defaultValue;
+	this._buildImpulse();
+}
+
+SimpleReverb.prototype = Object.create(null, {
+
+	update: {
+		value: function(opts) {
+			console.log(opts);
+			this._seconds = opts.seconds || this._seconds;
+			this._decay = opts.decay || this._decay;
+			this._reverse = opts.reverse || this._reverse;
+			this._buildImpulse();
+		}
+	},
+
+	/**
+	 * AudioNode prototype `connect` method.
+	 *
+	 * @param {AudioNode} dest
+	 */
+
+	connect: {
+		value: function(dest) {
+			this.output.connect(dest.input ? dest.input : dest);
+		}
+	},
+
+	/**
+	 * AudioNode prototype `disconnect` method.
+	 */
+
+	disconnect: {
+		value: function() {
+			this.output.disconnect();
+		}
+	},
+
+	/**
+	 * Utility function for building an impulse response
+	 * from the module parameters.
+	 */
+
+	_buildImpulse: {
+		value: function() {
+			var rate = this._context.sampleRate;
+			var length = rate * this.seconds;
+			var decay = this.decay;
+			var impulse = this._context.createBuffer(2, length, rate);
+			var impulseL = impulse.getChannelData(0);
+			var impulseR = impulse.getChannelData(1);
+			var n;
+			var i;
+
+			for (i = 0; i < length; i++) {
+				n = this.reverse ? length - i : i;
+				impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+				impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+			}
+
+			this.input.buffer = impulse;
+		}
+	},
+
+	/**
+	 * Module parameter metadata.
+	 */
+
+	meta: {
+		value: {
+			name: "SimpleReverb",
+			params: {
+				seconds: {
+					min: 1,
+					max: 50,
+					defaultValue: 3,
+					type: "float"
+				},
+				decay: {
+					min: 0,
+					max: 100,
+					defaultValue: 2,
+					type: "float"
+				},
+				reverse: {
+					min: 0,
+					max: 1,
+					defaultValue: 0,
+					type: "bool"
+				}
+			}
+		}
+	},
+
+	/**
+	 * Public parameters.
+	 */
+
+	seconds: {
+		enumerable: true,
+		get: function() {
+			return this._seconds;
+		},
+		set: function(value) {
+			this._seconds = value;
+			this._buildImpulse();
+		}
+	},
+
+	decay: {
+		enumerable: true,
+		get: function() {
+			return this._decay;
+		},
+		set: function(value) {
+			this._decay = value;
+			this._buildImpulse();
+		}
+	},
+
+	reverse: {
+		enumerable: true,
+		get: function() {
+			return this._reverse;
+		},
+		set: function(value) {
+			this._reverse = value;
+			this._buildImpulse();
+		}
+	}
+
+
+
+});
+
+/**
+ * Exports.
+ */
+
+module.exports = SimpleReverb;
+
+},{}],143:[function(require,module,exports){
 'use strict';
 // lib
 const Rx = require('rx');
@@ -38088,7 +38259,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":163,"../util/file":164,"rx":112}],143:[function(require,module,exports){
+},{"../util/audio":164,"../util/file":165,"rx":112}],144:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38099,6 +38270,7 @@ const {obj} = require('iblokz-data');
 const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
+const SimpleReverb = require('../instr/simple-reverb');
 // util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
 
@@ -38117,15 +38289,16 @@ const initial = {
 	voices: {}, // a.start(a.vco({type: 'square'})),
 	// vca1: a.vca({gain: 0}),
 	vcf: a.vcf({}),
+	reverb: new SimpleReverb(a.context),
 	// lfo: a.lfo({}),
-	volume: a.vca({gain: 0.7}),
+	volume: a.vca({gain: 0.3}),
 	context: a.context
 };
 
 const updatePrefs = instr => changes$.onNext(nodes =>
 	obj.map(nodes,
 		(node, key) => (instr[key])
-			? a.apply(node, instr[key])
+			? key === 'reverb' ? (node.update(instr[key]), node) : a.apply(node, instr[key])
 			: (key === 'voices')
 				? obj.map(node, voice => obj.map(voice, (n, key) => (instr[key])
 					? a.apply(n, instr[key])
@@ -38138,17 +38311,20 @@ const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, no
 		vco2: a.connect(voice.vco2, voice.vca2),
 		vca1: (!instr.vco1.on)
 			? a.disconnect(voice.vca1)
-			: a.reroute(voice.vca1, (instr.vcf.on) ? nodes.vcf : nodes.volume),
+			: a.reroute(voice.vca1, (instr.vcf.on) ? nodes.vcf : (instr.reverb.on) ? nodes.reverb.input : nodes.volume),
 		vca2: (!instr.vco2.on)
 			? a.disconnect(voice.vca2)
-			: a.reroute(voice.vca2, (instr.vcf.on) ? nodes.vcf : nodes.volume)
+			: a.reroute(voice.vca2, (instr.vcf.on) ? nodes.vcf : (instr.reverb.on) ? nodes.reverb.input : nodes.volume)
 	})),
-	vcf: (instr.vcf.on) ? a.connect(nodes.vcf, nodes.volume) : a.disconnect(nodes.vcf, nodes.volume),
+	vcf: (instr.vcf.on)
+		? a.connect(nodes.vcf, (instr.reverb.on) ? nodes.reverb.input : nodes.volume)
+		: a.disconnect(nodes.vcf, (instr.reverb.on) ? nodes.reverb.input : nodes.volume),
+	reverb: ((instr.reverb.on) ? nodes.reverb.connect(nodes.volume.node) : nodes.reverb.disconnect(), nodes.reverb),
 	volume: a.connect(nodes.volume, nodes.context.destination)
 }));
 
 const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
-	let {voices, vcf, volume, context} = nodes;
+	let {voices, vcf, volume, context, reverb} = nodes;
 
 	const now = context.currentTime;
 	const time = now + 0.0001;
@@ -38163,16 +38339,23 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})));
 	let vca1 = voice ? voice.vca1 : a.vca({});
 	vco1 = a.connect(vco1, vca1);
-	vca1 = !(instr.vco1.on) ? a.disconnect(vca1) : a.reroute(vca1, (instr.vcf.on) ? vcf : volume);
+	vca1 = !(instr.vco1.on)
+		? a.disconnect(vca1)
+		: a.reroute(vca1, (instr.vcf.on) ? vcf : (instr.reverb.on) ? reverb.input : volume);
 
 	if (voice.vco2) a.stop(voice.vco2);
 	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})));
 	let vca2 = voice ? voice.vca2 : a.vca({});
 	vco2 = a.connect(vco2, vca2);
-	vca2 = !(instr.vco2.on) ? a.disconnect(vca2) : a.reroute(vca2, (instr.vcf.on) ? vcf : volume);
+	vca2 = !(instr.vco2.on)
+		? a.disconnect(vca2)
+		: a.reroute(vca2, (instr.vcf.on) ? vcf : (instr.reverb.on) ? reverb.input : volume);
 
 	// vcf
-	vcf = (instr.vcf.on) ? a.connect(vcf, volume) : a.disconnect(vcf);
+	vcf = (instr.vcf.on) ? a.connect(vcf, (instr.reverb.on) ? reverb.input : volume) : a.disconnect(vcf);
+
+	if (instr.reverb.on) reverb.connect(nodes.volume.node);
+	else reverb.disconnect();
 
 	vca1.node.gain.cancelScheduledValues(0);
 	vca2.node.gain.cancelScheduledValues(0);
@@ -38398,7 +38581,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":163,"../util/math":166,"iblokz-data":12,"rx":112}],144:[function(require,module,exports){
+},{"../instr/simple-reverb":142,"../util/audio":164,"../util/math":167,"iblokz-data":12,"rx":112}],145:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38440,7 +38623,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/audio":163,"../util/math":166,"rx":112}],145:[function(require,module,exports){
+},{"../util/audio":164,"../util/math":167,"rx":112}],146:[function(require,module,exports){
 'use strict';
 
 // gamepad
@@ -38486,7 +38669,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/gamepad":165}],146:[function(require,module,exports){
+},{"../util/gamepad":166}],147:[function(require,module,exports){
 'use strict';
 
 // util
@@ -38513,7 +38696,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/midi":167,"./assets":142,"./audio":143,"./clock":144,"./controls":145,"./layout":147,"./studio":148,"./viewport":149}],147:[function(require,module,exports){
+},{"../util/midi":168,"./assets":143,"./audio":144,"./clock":145,"./controls":146,"./layout":148,"./studio":149,"./viewport":150}],148:[function(require,module,exports){
 'use strict';
 
 const time = require('../util/time');
@@ -38579,7 +38762,7 @@ module.exports = {
 	hook
 };
 
-},{"../util/time":168}],148:[function(require,module,exports){
+},{"../util/time":169}],149:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -38693,7 +38876,7 @@ module.exports = {
 	hook
 };
 
-},{"../instr/sampler":141,"../util/audio":163,"../util/math":166,"rx":112}],149:[function(require,module,exports){
+},{"../instr/sampler":141,"../util/audio":164,"../util/math":167,"rx":112}],150:[function(require,module,exports){
 'use strict';
 // lib
 const Rx = require('rx');
@@ -38701,12 +38884,13 @@ const $ = Rx.Observable;
 
 const hook = ({state$, actions}) => {
 	// mouse movement
+	/*
 	$.fromEvent(document, 'mousemove')
 		.subscribe(ev => actions.set(['viewport', 'mouse'], {
 			x: ev.pageX,
 			y: ev.pageY
 		}));
-
+	*/
 	$.fromEvent(window, 'resize')
 		.startWith({})
 		.subscribe(ev => actions.set(['viewport', 'screen'], {
@@ -38719,7 +38903,7 @@ module.exports = {
 	hook
 };
 
-},{"rx":112}],150:[function(require,module,exports){
+},{"rx":112}],151:[function(require,module,exports){
 'use strict';
 
 const moment = require('moment');
@@ -38819,7 +39003,7 @@ module.exports = ({state, actions, tapTempo}) => header([
 	])
 ]);
 
-},{"../../util/file":164,"iblokz-snabbdom-helpers":16,"moment":95}],151:[function(require,module,exports){
+},{"../../util/file":165,"iblokz-snabbdom-helpers":16,"moment":95}],152:[function(require,module,exports){
 'use strict';
 
 const {div} = require('iblokz-snabbdom-helpers');
@@ -38848,55 +39032,7 @@ module.exports = ({state, actions, tapTempo}) => div('#ui', [
 		))
 ]);
 
-},{"./header":150,"./instrument":153,"./media-library":158,"./midi-keyboard":159,"./midi-map":160,"./sequencer":161,"iblokz-snabbdom-helpers":16}],152:[function(require,module,exports){
-'use strict';
-
-const {
-	div, h2, span, p, ul, li, hr, button, br,
-	form, label, input, fieldset, legend, i, img
-} = require('iblokz-snabbdom-helpers');
-
-module.exports = ({name, state, actions}) => fieldset([
-	legend([span('.on', name.toUpperCase())]),
-	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
-		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
-		}
-	}),
-	label(`Time`),
-	span('.right', `${state.instrument[name].time}`),
-	input('[type="range"]', {
-		attrs: {min: 0, max: 3, step: 0.01},
-		props: {value: state.instrument[name].cutoff},
-		on: {change: ev => actions.instrument.updateProp(name, 'time', parseFloat(ev.target.value))}
-	}),
-	label(`Dry`),
-	span('.right', `${state.instrument[name].dry}`),
-	input('[type="range"]', {
-		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].dry},
-		on: {change: ev => actions.instrument.updateProp(name, 'dry', parseFloat(ev.target.value))}
-	}),
-	label(`Wet`),
-	span('.right', `${state.instrument[name].wet}`),
-	input('[type="range"]', {
-		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].wet},
-		on: {change: ev => actions.instrument.updateProp(name, 'wet', parseFloat(ev.target.value))}
-	})
-	// label(`Gain`),
-	// span('.right', `${state.instrument[name].gain}`),
-	// input('[type="range"]', {
-	// 	attrs: {min: 0, max: 1, step: 0.005},
-	// 	props: {value: state.instrument[name].gain},
-	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
-	// })
-]);
-
-},{"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
+},{"./header":151,"./instrument":153,"./media-library":159,"./midi-keyboard":160,"./midi-map":161,"./sequencer":162,"iblokz-snabbdom-helpers":16}],153:[function(require,module,exports){
 'use strict';
 
 const {
@@ -38915,7 +39051,7 @@ const vco = require('./vco');
 const vca = require('./vca');
 const vcf = require('./vcf');
 const lfo = require('./lfo');
-const delay = require('./delay');
+const reverb = require('./reverb');
 
 const types = [
 	'sine',
@@ -38954,16 +39090,16 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
-			vcf({state, actions, name: 'vcf'})
+			vcf({state, actions, name: 'vcf'}),
 			// LFO
 			// lfo({state, actions, name: 'lfo'})
-			// DELAY
-			// delay({state, actions, name: 'delay'})
+			// Reverb
+			reverb({state, actions, name: 'reverb'})
 		])
 	])
 ]);
 
-},{"./delay":152,"./lfo":154,"./vca":155,"./vcf":156,"./vco":157,"iblokz-snabbdom-helpers":16,"vex-js":131}],154:[function(require,module,exports){
+},{"./lfo":154,"./reverb":155,"./vca":156,"./vcf":157,"./vco":158,"iblokz-snabbdom-helpers":16,"vex-js":131}],154:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39015,6 +39151,54 @@ module.exports = ({name, state, actions}) => fieldset([
 ]);
 
 },{"iblokz-snabbdom-helpers":16}],155:[function(require,module,exports){
+'use strict';
+
+const {
+	div, h2, span, p, ul, li, hr, button, br,
+	form, label, input, fieldset, legend, i, img
+} = require('iblokz-snabbdom-helpers');
+
+module.exports = ({name, state, actions}) => fieldset([
+	legend([span('.on', name.toUpperCase())]),
+	div('.on-switch.fa', {
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		class: {
+			'fa-circle-thin': !state.instrument[name].on,
+			'on': state.instrument[name].on,
+			'fa-circle': state.instrument[name].on
+		}
+	}),
+	label(`Seconds`),
+	span('.right', `${state.instrument[name].seconds}`),
+	input('[type="range"]', {
+		attrs: {min: 1, max: 50, step: 0.01},
+		props: {value: state.instrument[name].seconds},
+		on: {change: ev => actions.instrument.updateProp(name, 'seconds', parseFloat(ev.target.value))}
+	}),
+	label(`Decay`),
+	span('.right', `${state.instrument[name].decay}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 100, step: 0.01},
+		props: {value: state.instrument[name].decay},
+		on: {change: ev => actions.instrument.updateProp(name, 'decay', parseFloat(ev.target.value))}
+	}),
+	label(`Reverse`),
+	span('.right', `${state.instrument[name].reverse}`),
+	input('[type="range"]', {
+		attrs: {min: 0, max: 1, step: 1},
+		props: {value: state.instrument[name].reverse},
+		on: {change: ev => actions.instrument.updateProp(name, 'reverse', parseInt(ev.target.value, 10))}
+	})
+	// label(`Gain`),
+	// span('.right', `${state.instrument[name].gain}`),
+	// input('[type="range"]', {
+	// 	attrs: {min: 0, max: 1, step: 0.005},
+	// 	props: {value: state.instrument[name].gain},
+	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+	// })
+]);
+
+},{"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39075,7 +39259,7 @@ module.exports = ({name, state, actions}) => div('.vertical', [
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],156:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39116,7 +39300,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	// })
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],157:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39169,7 +39353,7 @@ module.exports = ({name, state, actions}) => fieldset([
 	})
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],158:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],159:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39275,7 +39459,7 @@ module.exports = ({state, actions, params = {}}) => div('.media-library', params
 	])
 ]);
 
-},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],159:[function(require,module,exports){
+},{"iblokz-data":12,"iblokz-snabbdom-helpers":16}],160:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39322,7 +39506,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],160:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],161:[function(require,module,exports){
 'use strict';
 
 const {
@@ -39407,7 +39591,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	])
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],161:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],162:[function(require,module,exports){
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
@@ -39496,7 +39680,7 @@ module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 	))
 ]);
 
-},{"iblokz-snabbdom-helpers":16}],162:[function(require,module,exports){
+},{"iblokz-snabbdom-helpers":16}],163:[function(require,module,exports){
 'use strict';
 
 // lib
@@ -39529,7 +39713,7 @@ module.exports = {
 	adapt
 };
 
-},{"iblokz-data":12,"rx":112}],163:[function(require,module,exports){
+},{"iblokz-data":12,"rx":112}],164:[function(require,module,exports){
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
@@ -39696,7 +39880,7 @@ module.exports = {
 	vca: prefs => apply(create('vca', context), prefs)
 };
 
-},{"iblokz-data":12}],164:[function(require,module,exports){
+},{"iblokz-data":12}],165:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39747,7 +39931,7 @@ module.exports = {
 	save
 };
 
-},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],165:[function(require,module,exports){
+},{"file-saver":10,"iblokz-data":12,"jszip":31,"rx":112}],166:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39782,7 +39966,7 @@ module.exports = {
 	changes
 };
 
-},{"./time":168,"rx":112}],166:[function(require,module,exports){
+},{"./time":169,"rx":112}],167:[function(require,module,exports){
 'use strict';
 
 const measureToBeatLength = measure => measure.split('/')
@@ -39796,7 +39980,7 @@ module.exports = {
 	bpmToTime
 };
 
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');
@@ -39927,7 +40111,7 @@ const init = () => {
 
 module.exports = init;
 
-},{"rx":112}],168:[function(require,module,exports){
+},{"rx":112}],169:[function(require,module,exports){
 'use strict';
 
 const Rx = require('rx');

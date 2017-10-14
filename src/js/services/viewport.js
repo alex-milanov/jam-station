@@ -5,12 +5,13 @@ const $ = Rx.Observable;
 
 const hook = ({state$, actions}) => {
 	// mouse movement
+	/*
 	$.fromEvent(document, 'mousemove')
 		.subscribe(ev => actions.set(['viewport', 'mouse'], {
 			x: ev.pageX,
 			y: ev.pageY
 		}));
-
+	*/
 	$.fromEvent(window, 'resize')
 		.startWith({})
 		.subscribe(ev => actions.set(['viewport', 'screen'], {

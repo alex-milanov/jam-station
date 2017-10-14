@@ -16,7 +16,7 @@ const vco = require('./vco');
 const vca = require('./vca');
 const vcf = require('./vcf');
 const lfo = require('./lfo');
-const delay = require('./delay');
+const reverb = require('./reverb');
 
 const types = [
 	'sine',
@@ -55,11 +55,11 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 				vca({state, actions, name: vcas[state.instrument.vcaOn]})
 			]),
 			// VCF
-			vcf({state, actions, name: 'vcf'})
+			vcf({state, actions, name: 'vcf'}),
 			// LFO
 			// lfo({state, actions, name: 'lfo'})
-			// DELAY
-			// delay({state, actions, name: 'delay'})
+			// Reverb
+			reverb({state, actions, name: 'reverb'})
 		])
 	])
 ]);

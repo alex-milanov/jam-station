@@ -29,11 +29,17 @@ SimpleReverb.prototype = Object.create(null, {
 
 	update: {
 		value: function(opts) {
-			console.log(opts);
-			this._seconds = opts.seconds || this._seconds;
-			this._decay = opts.decay || this._decay;
-			this._reverse = opts.reverse || this._reverse;
-			this._buildImpulse();
+			// console.log(opts);
+			if (
+				this._seconds !== opts.seconds
+				|| this._decay !== opts.decay
+				|| this._reverse !== opts.reverse
+			) {
+				this._seconds = opts.seconds || this._seconds;
+				this._decay = opts.decay || this._decay;
+				this._reverse = opts.reverse || this._reverse;
+				this._buildImpulse();
+			}
 		}
 	},
 

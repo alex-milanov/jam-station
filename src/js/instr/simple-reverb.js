@@ -14,14 +14,33 @@
  */
 
 function SimpleReverb(context, opts) {
-	this.input = this.output = context.createConvolver();
+	this.input = context.createGain();
+	this.output = context.createGain();
+	this.reverb = context.createConvolver();
+
+	this.wetLevel = context.createGain();
+	this.dryLevel = context.createGain();
 	this._context = context;
+
+  // some internal connectionsthis.input.connect(this.reverb);
+	this.input.connect(this.reverb);
+	this.reverb.connect(this.wetLevel);
+	this.wetLevel.connect(this.output);
+
+	this.input.connect(this.dryLevel);
+	this.dryLevel.connect(this.output);
 
 	var p = this.meta.params;
 	opts = opts || {};
 	this._seconds = opts.seconds || p.seconds.defaultValue;
 	this._decay = opts.decay || p.decay.defaultValue;
 	this._reverse = opts.reverse || p.reverse.defaultValue;
+	this._dry = opts.dry || p.dry.defaultValue;
+	this._wet = opts.wet || p.wet.defaultValue;
+
+	this.wetLevel.gain.value = this._wet;
+	this.dryLevel.gain.value = this._dry;
+
 	this._buildImpulse();
 }
 
@@ -37,8 +56,18 @@ SimpleReverb.prototype = Object.create(null, {
 			) {
 				this._seconds = opts.seconds || this._seconds;
 				this._decay = opts.decay || this._decay;
-				this._reverse = opts.reverse || this._reverse;
+				this._reverse = (opts.reverse !== undefined) ? opts.reverse : this._reverse;
 				this._buildImpulse();
+			}
+
+			if (
+				this._wet !== opts.wet
+				|| this._dry !== opts.dry
+			) {
+				this._wet = opts.wet || this._wet;
+				this._dry = opts.dry || this._dry;
+				this.wetLevel.gain.value = this._wet;
+				this.dryLevel.gain.value = this._dry;
 			}
 		}
 	},
@@ -82,12 +111,12 @@ SimpleReverb.prototype = Object.create(null, {
 			var i;
 
 			for (i = 0; i < length; i++) {
-				n = this.reverse ? length - i : i;
+				n = this.reverse === true ? length - i : i;
 				impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
 				impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
 			}
 
-			this.input.buffer = impulse;
+			this.reverb.buffer = impulse;
 		}
 	},
 
@@ -114,8 +143,20 @@ SimpleReverb.prototype = Object.create(null, {
 				reverse: {
 					min: 0,
 					max: 1,
-					defaultValue: 0,
+					defaultValue: false,
 					type: "bool"
+				},
+				dry: {
+					min: 0,
+					max: 1,
+					defaultValue: 1,
+					type: "float"
+				},
+				wet: {
+					min: 0,
+					max: 1,
+					defaultValue: 0,
+					type: "float"
 				}
 			}
 		}
@@ -157,8 +198,6 @@ SimpleReverb.prototype = Object.create(null, {
 			this._buildImpulse();
 		}
 	}
-
-
 
 });
 

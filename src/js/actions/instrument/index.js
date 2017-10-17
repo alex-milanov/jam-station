@@ -70,7 +70,9 @@ const initial = {
 		on: false,
 		seconds: 3,
 		decay: 2,
-		reverse: 0
+		reverse: false,
+		dry: 1,
+		wet: 0
 	}
 };
 

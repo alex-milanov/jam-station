@@ -39931,6 +39931,7 @@ const cutoffToFreq = cutoff => {
 
 const update = (node, prefs) => obj.switch(node.type, {
 	vco: () => (
+		isSet(prefs.type) && set(node.output, 'type', prefs.type),
 		isSet(prefs.freq) && set(node.output.frequency, 'value', prefs.freq),
 		isSet(prefs.detune) && set(node.output.detune, 'value', prefs.detune),
 		node
@@ -39940,6 +39941,7 @@ const update = (node, prefs) => obj.switch(node.type, {
 		node
 	),
 	vcf: () => (
+		isSet(prefs.type) && set(node.through, 'type', prefs.type),
 		isSet(prefs.cutoff) && set(node.through.frequency, 'value', cutoffToFreq(prefs.cutoff)),
 		isSet(prefs.resonance) && set(node.through.Q, 'value', prefs.resonance * 30),
 		node
@@ -39984,7 +39986,9 @@ const disconnect = (node1, node2) => (console.log(node1, node2), (node1.out.inde
 		&& node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
 		|| node1);
 
-const reroute = (node1, node2) => connect(disconnect(node1), node2);
+const reroute = (node1, node2) => (node1.out && node1.out.indexOf(node2) === -1)
+	? connect(disconnect(node1), node2)
+	: node1;
 
 const chain = (...nodes) => (
 	nodes.forEach((n, i) => isSet(n[i + 1]) && connect(n, nodes[i + 1])),

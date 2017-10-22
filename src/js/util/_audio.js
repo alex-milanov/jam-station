@@ -19,17 +19,40 @@ let context = new (
 	connections
 */
 
+const buildImpulse = ({seconds, decay}) => {
+	var length = context.sampleRate * seconds;
+	var impulse = context.createBuffer(2, context.sampleRate * seconds, context.sampleRate);
+	var impulseL = impulse.getChannelData(0);
+	var impulseR = impulse.getChannelData(1);
+	var n;
+	var i;
+
+	for (i = 0; i < length; i++) {
+		// n = this.reverse === true ? length - i : i;
+		n = i;
+		impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+		impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+	}
+	return impulse;
+};
+
 const createMap = {
-	default: (type, context) => ({
-		type,
-		node: {
-			vco: () => context.createOscillator(),
-			lfo: () => context.createOscillator(),
-			vca: () => context.createGain(),
-			vcf: () => context.createBiquadFilter()
-		}[type](),
-		out: []
-	})
+	default: (type, context) =>
+	Object.assign({type, out: []}, {
+		vco: () => ({node: context.createOscillator()}),
+		lfo: () => ({node: context.createOscillator()}),
+		vca: () => ({node: context.createGain()}),
+		vcf: () => ({node: context.createBiquadFilter()}),
+		reverb: () => ({
+			prefs: {seconds: 3, decay: 2},
+			input: context.createGain(),
+			output: context.createGain(),
+			effect: context.createConvolver(),
+			wet: context.createGain(),
+			dry: context.createGain()
+		})
+	}[type]()
+	)
 };
 
 const prefsMap = {

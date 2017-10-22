@@ -8,7 +8,6 @@ const {obj} = require('iblokz-data');
 const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
-const SimpleReverb = require('../instr/simple-reverb');
 // util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
 
@@ -27,7 +26,7 @@ const initial = {
 	voices: {}, // a.start(a.vco({type: 'square'})),
 	// vca1: a.vca({gain: 0}),
 	vcf: a.vcf({}),
-	reverb: new SimpleReverb(a.context),
+	reverb: a.create('reverb'),
 	// lfo: a.lfo({}),
 	volume: a.vca({gain: 0.3}),
 	context: a.context
@@ -36,10 +35,10 @@ const initial = {
 const updatePrefs = instr => changes$.onNext(nodes =>
 	obj.map(nodes,
 		(node, key) => (instr[key])
-			? key === 'reverb' ? (node.update(instr[key]), node) : a.apply(node, instr[key])
+			? a.update(node, instr[key])
 			: (key === 'voices')
 				? obj.map(node, voice => obj.map(voice, (n, key) => (instr[key])
-					? a.apply(n, instr[key])
+					? a.update(n, instr[key])
 					: n))
 				: node));
 
@@ -49,17 +48,17 @@ const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, no
 		vco2: a.connect(voice.vco2, voice.vca2),
 		vca1: (!instr.vco1.on)
 			? a.disconnect(voice.vca1)
-			: a.reroute(voice.vca1, (instr.reverb.on) ? nodes.reverb.input : (instr.vcf.on) ? nodes.vcf : nodes.volume),
+			: a.reroute(voice.vca1, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume),
 		vca2: (!instr.vco2.on)
 			? a.disconnect(voice.vca2)
-			: a.reroute(voice.vca2, (instr.reverb.on) ? nodes.reverb.input : (instr.vcf.on) ? nodes.vcf : nodes.volume)
+			: a.reroute(voice.vca2, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume)
 	})),
-	reverb: ((instr.reverb.on)
-		? nodes.reverb.connect((instr.vcf.on) ? nodes.vcf.node : nodes.volume.node)
-		: nodes.reverb.disconnect(), nodes.reverb),
+	reverb: (instr.reverb.on)
+		? a.reroute(nodes.reverb, (instr.vcf.on) ? nodes.vcf : nodes.volume)
+		: a.disconnect(nodes.reverb),
 	vcf: (instr.vcf.on)
-		? a.connect(nodes.vcf, nodes.volume)
-		: a.disconnect(nodes.vcf, nodes.volume),
+		? a.reroute(nodes.vcf, nodes.volume)
+		: a.disconnect(nodes.vcf),
 	volume: a.connect(nodes.volume, nodes.context.destination)
 }));
 
@@ -81,7 +80,7 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	vco1 = a.connect(vco1, vca1);
 	vca1 = !(instr.vco1.on)
 		? a.disconnect(vca1)
-		: a.reroute(vca1, (instr.reverb.on) ? reverb.input : (instr.vcf.on) ? vcf : volume);
+		: a.reroute(vca1, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
 	if (voice.vco2) a.stop(voice.vco2);
 	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})));
@@ -89,16 +88,16 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	vco2 = a.connect(vco2, vca2);
 	vca2 = !(instr.vco2.on)
 		? a.disconnect(vca2)
-		: a.reroute(vca2, (instr.reverb.on) ? reverb.input : (instr.vcf.on) ? vcf : volume);
+		: a.reroute(vca2, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
-	if (instr.reverb.on) reverb.connect((instr.vcf.on) ? vcf.node : nodes.volume.node);
-	else reverb.disconnect();
+	if (instr.reverb.on) a.reroute(reverb, (instr.vcf.on) ? vcf : volume);
+	else a.disconnect(reverb);
 
 	// vcf
-	vcf = (instr.vcf.on) ? a.connect(vcf, volume) : a.disconnect(vcf);
+	vcf = (instr.vcf.on) ? a.reroute(vcf, volume) : a.disconnect(vcf);
 
-	vca1.node.gain.cancelScheduledValues(0);
-	vca2.node.gain.cancelScheduledValues(0);
+	vca1.through.gain.cancelScheduledValues(0);
+	vca2.through.gain.cancelScheduledValues(0);
 
 	const vca1Changes = [].concat(
 		// attack
@@ -109,7 +108,7 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 			? [[instr.vca1.sustain * velocity * instr.vca1.volume, instr.vca1.decay]] : []
 	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
 
-	a.scheduleChanges(vca1, 'gain', vca1Changes[0], vca1Changes[1]);
+	a.schedule(vca1, 'gain', vca1Changes[0], vca1Changes[1]);
 
 	const vca2Changes = [].concat(
 		// attack
@@ -120,7 +119,7 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 			? [[instr.vca2.sustain * velocity * instr.vca2.volume, instr.vca2.decay]] : []
 	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
 
-	a.scheduleChanges(vca2, 'gain', vca2Changes[0], vca2Changes[1]);
+	a.schedule(vca2, 'gain', vca2Changes[0], vca2Changes[1]);
 
 	return Object.assign({}, nodes, {
 		voices: obj.patch(voices, note.number, {
@@ -142,11 +141,11 @@ const noteOff = (instr, note) => changes$.onNext(nodes => {
 	if (voice) {
 		let {vco1, vca1, vco2, vca2} = voice;
 
-		vca1.node.gain.cancelScheduledValues(0);
-		vca2.node.gain.cancelScheduledValues(0);
-		vca1.node.gain.setValueCurveAtTime(new Float32Array([vca1.node.gain.value, 0]),
+		vca1.through.gain.cancelScheduledValues(0);
+		vca2.through.gain.cancelScheduledValues(0);
+		vca1.through.gain.setValueCurveAtTime(new Float32Array([vca1.through.gain.value, 0]),
 			time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
-		vca2.node.gain.setValueCurveAtTime(new Float32Array([vca2.node.gain.value, 0]),
+		vca2.through.gain.setValueCurveAtTime(new Float32Array([vca2.through.gain.value, 0]),
 			time, instr.vca2.release > 0 && instr.vca2.release || 0.00001);
 
 		a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));

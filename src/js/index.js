@@ -21,9 +21,10 @@ const app = require('./util/app');
 let actions = require('./actions');
 let ui = require('./ui');
 let actions$;
+const state$ = new Rx.BehaviorSubject();
 
 // services
-const services = require('./services');
+let services = require('./services');
 // actions = studio.attach(actions);
 
 // adapt actions
@@ -43,15 +44,21 @@ if (module.hot) {
 		ui = require('./ui');
 		actions.ping();
 	});
+	// services
+	module.hot.accept("./services", function() {
+		// services = require('./services');
+		// services.hook({state$, actions, tapTempo});
+		// actions.stream.onNext(state => state);
+	});
 } else {
 	actions$ = actions.stream;
 }
 // reduce actions to state
-const state$ = actions$
+actions$
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
 	.map(state => (console.log(state), state))
-	.publish();
+	.subscribe(state => state$.onNext(state));
 
 // map state to ui
 const ui$ = state$.map(state => ui({state, actions, tapTempo}));
@@ -69,4 +76,10 @@ vdom.patchStream(ui$, '#ui');
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
 
-state$.connect();
+// state$.connect();
+
+// livereload impl.
+if (module.hot) {
+	document.write(`<script src="http://${(location.host || 'localhost').split(':')[0]}` +
+	`:35729/livereload.js?snipver=1"></script>`);
+}

@@ -16,7 +16,8 @@
 			padding: 0px
 			margin: 0px
 			legend
-				padding: 5px 7px
+				+header-height($jam-st-edior-header-height)
+				padding: 0px 7px
 				background: #aaa
 				width: 100%
 				border-top: 1px solid #999
@@ -24,11 +25,13 @@
 		ul
 			list-style: none
 			padding: 0px 5px
+			padding-top: 10px
 			margin: 0px
 			li
 				position: relative
 				margin: 0px -5px
 				ul
+					padding-top: 0px
 					display: none
 					border-bottom: 0px
 				> input[type=checkbox]

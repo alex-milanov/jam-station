@@ -1,0 +1,147 @@
+.rack
+	+editor(240px, 0px)
+	position: absolute
+	left: 240px
+	top: 0px
+	bottom: 0px
+	display: block
+	background: #ccc
+	overflow-y: scroll
+	min-width: 300px
+	border: 0px
+	.body
+		padding: 10px 0px
+		display: relative
+		overflow-y: visible
+		form
+			+no-margin-padding
+			.on-switch
+				background: #ccc
+				right: 2px
+			label, input[type=radio]
+				cursor: pointer
+			legend
+				div
+					display: inline-block
+					margin: 0px
+				img
+					height: 22px
+					vertical-align: middle
+			.knob
+				position: relative
+				margin-right: 8px
+				width: 22px
+				height: 22px
+				vertical-align: middle
+				border-radius: 100%
+				background: #f0f0f0
+				box-sizing: border-box
+				box-shadow: 0 0px 5px 0px #777, 0 0 10px #ccc inset, 0 0 1px 0px #ccc
+				&::after
+					content: ''
+					position: absolute
+					width: 6px
+					height: 6px
+					border-radius: 100px
+					background: #eee
+					box-shadow: 0 0px 5px 1px #eee, 0px 0px 4px 1px #bbb inset
+					box-sizing: border-box
+					top: 2px
+					left: 50%
+					margin-left: -3px
+			input[type=range]
+				+no-margin-padding
+				margin: 0px
+				display: block
+				width: 100%
+				-webkit-appearance: none
+				background-color: #777
+				outline: none
+				margin: 8px 0px
+				border-radius: 10px
+				height: 2px
+				cursor: pointer
+			input[type=range]::-webkit-slider-thumb
+				-webkit-appearance: none
+				background-color: #bbb
+				border: 1px solid #777
+				width: 12px
+				height: 12px
+				border-radius: 10px
+				transition: .3s
+				&:hover
+					background: $jam-station-color-light
+			.vertical
+				height: 90px
+				position: relative
+				> *
+					display: inline-block
+					float: none
+					position: absolute
+					&:nth-of-type(1)
+						left: 0px
+					&:nth-of-type(2)
+						left: 20%
+					&:nth-of-type(3)
+						left: 40%
+					&:nth-of-type(4)
+						left: 60%
+					&:nth-of-type(5)
+						left: 80%
+				label
+					top: 80px
+					width: 20%
+				input[type=range]
+					top: 0px
+					width: 70px
+					transform: rotate(-90deg)
+					margin: 38px 0px 0px -30px
+				.right
+					top: 0px
+					width: 25%
+					margin-left: 10%
+			input[type=number]
+				display: inline-block
+				text-align: center
+				border: 0px
+				box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5)
+				color: #333
+				// text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5)
+				border-radius: 4px
+				// background: #cff5da
+				background: #dfe
+				-moz-appearance: textfield
+				-webkit-appearance: textfield
+				appearance: textfield
+				position: relative
+				width: 32px
+				height: 20px
+				&::-webkit-inner-spin-button,
+				&::-webkit-outer-spin-button
+					-webkit-appearance: none
+					margin: 0
+				outline: none
+				&:active
+					outline: none
+			button.btn-opt
+				margin: 0px 2px
+				height: 20px
+				line-height: 20px
+				padding: 0px 2px
+				box-sizing: border-box
+				border: 0px
+				background: #aaa
+				cursor: pointer
+				outline: none
+				transition: background .1ss
+				&:active
+					outline: none
+				&.on
+					background: #ccc
+				> *
+					height: 20px
+					line-height: 20px
+					font-size: 20px
+					padding: 0px
+					box-sizing: border-box
+					border: 0px

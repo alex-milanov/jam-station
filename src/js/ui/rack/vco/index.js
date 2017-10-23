@@ -20,32 +20,32 @@ module.exports = ({name, state, actions}) => fieldset([
 				on: {
 					click: ev => actions.instrument.updateProp(name, 'type', type)
 				},
-				class: {on: (state.instrument[name].type === type)}
+				class: {on: (state.rack[name].type === type)}
 			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
 		]), [])),
 		img('[src="assets/tuning-fork.png"]'),
 		div('.knob', {
 			style: {
-				transform: `rotate(${state.instrument[name].detune / 100 * 135}deg)`
+				transform: `rotate(${state.rack[name].detune / 100 * 135}deg)`
 			},
 			on: {
 				wheel: ev => (
 					ev.preventDefault(),
-					actions.instrument.updateProp(name, 'detune', state.instrument[name].detune - ev.deltaY / 53)
+					actions.instrument.updateProp(name, 'detune', state.rack[name].detune - ev.deltaY / 53)
 				)
 			}
 		}),
 		input('[size="3"][type="number"]', {
-			props: {value: state.instrument[name].detune},
+			props: {value: state.rack[name].detune},
 			on: {input: ev => actions.instrument.updateProp(name, 'detune', ev.target.value)}
 		})
 	]),
 	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.rack[name].on)},
 		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
+			'fa-circle-thin': !state.rack[name].on,
+			'on': state.rack[name].on,
+			'fa-circle': state.rack[name].on
 		}
 	})
 ]);

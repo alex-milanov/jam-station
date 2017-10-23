@@ -20,30 +20,30 @@ module.exports = ({name, state, actions}) => fieldset([
 				on: {
 					click: ev => actions.instrument.updateProp(name, 'type', type)
 				},
-				class: {on: (state.instrument[name].type === type)}
+				class: {on: (state.rack[name].type === type)}
 			}, [i(`.i_${type === 'triangle' ? 'triangular' : type}_wave`)])
 		]), []))
 	]),
 	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.rack[name].on)},
 		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
+			'fa-circle-thin': !state.rack[name].on,
+			'on': state.rack[name].on,
+			'fa-circle': state.rack[name].on
 		}
 	}),
 	label(`Frequency`),
-	span('.right', `${state.instrument[name].frequency}`),
+	span('.right', `${state.rack[name].frequency}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 100, step: 0.05},
-		props: {value: state.instrument[name].frequency},
+		props: {value: state.rack[name].frequency},
 		on: {change: ev => actions.instrument.updateProp(name, 'frequency', parseFloat(ev.target.value))}
 	}),
 	label(`Gain`),
-	span('.right', `${state.instrument[name].gain}`),
+	span('.right', `${state.rack[name].gain}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1000, step: 1},
-		props: {value: state.instrument[name].gain},
+		props: {value: state.rack[name].gain},
 		on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
 	})
 ]);

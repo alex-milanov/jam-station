@@ -7,7 +7,7 @@ const initial = {
 			width: 280
 		}
 	},
-	instrument: {
+	rack: {
 		visible: true,
 		dim: {
 			width: 310

@@ -27,9 +27,9 @@ const types = [
 
 const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
-module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
+module.exports = ({state, actions, params = {}}) => div('.rack', params, [
 	div('.header', [
-		h2([i('.fa.fa-tasks'), ' Instrument']),
+		// h2([i('.fa.fa-tasks'), ' Instrument']),
 		div('.right', [
 			button('.fa.fa-eraser', {on: {
 				click: () => actions.instrument.applyPatch(
@@ -37,7 +37,7 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 				)
 			}}),
 			button('.fa.fa-save', {on: {click: () => prompt('Save patch as',
-				name => actions.mediaLibrary.addPatch(name, state.instrument))}})
+				name => actions.mediaLibrary.addPatch(name, state.rack))}})
 		])
 	]),
 	div('.body', [
@@ -48,11 +48,11 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 			fieldset([
 				legend(vcas.map((name, i) =>
 					span({
-						class: {on: state.instrument.vcaOn === i},
+						class: {on: state.rack.vcaOn === i},
 						on: {click: () => actions.instrument.setVca(i)}
 					}, name.toUpperCase())
 				)),
-				vca({state, actions, name: vcas[state.instrument.vcaOn]})
+				vca({state, actions, name: vcas[state.rack.vcaOn]})
 			]),
 			// VCF
 			vcf({state, actions, name: 'vcf'}),

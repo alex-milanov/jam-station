@@ -173,7 +173,7 @@ const engine$ = changes$
 
 const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 	// hook state changes
-	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
+	const instrUpdates$ = state$.distinctUntilChanged(state => state.rack).map(state => state.rack).share();
 	// update connections
 	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
 		.subscribe(updateConnections);
@@ -241,7 +241,7 @@ const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 			if (mmap) {
 				let [section, prop] = mmap;
 				// vca
-				if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+				if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.rack.vcaOn + 1}`, prop[1]];
 				// value
 				let valMods = mmap.slice(2);
 				let val = prepVal.apply(null, valMods)(data.msg.value);
@@ -279,7 +279,7 @@ const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 			switch (data.msg.state) {
 				case 'noteOn':
 					if (data.msg.channel !== 10) {
-						noteOn(state.instrument, data.msg.note, data.msg.velocity);
+						noteOn(state.rack, data.msg.note, data.msg.velocity);
 					} else {
 						if (state.sequencer.channels[data.msg.note.number - 60])
 							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
@@ -291,23 +291,23 @@ const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 					}
 					break;
 				case 'noteOff':
-					if (data.msg.channel !== 10) noteOff(state.instrument, data.msg.note);
+					if (data.msg.channel !== 10) noteOff(state.rack, data.msg.note);
 					break;
 				case 'pitchBend':
-					pitchBend(state.instrument, data.msg.pitchValue);
+					pitchBend(state.rack, data.msg.pitchValue);
 					break;
 				case 'controller':
 					if (state.midiMap.map.controller[data.msg.controller]) {
 						let mmap = state.midiMap.map.controller[data.msg.controller];
 						let [section, prop] = mmap;
 						// vca
-						if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+						if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.rack.vcaOn + 1}`, prop[1]];
 						// value
 						let valMods = mmap.slice(2);
 						let val = prepVal.apply(null, valMods)(data.msg.value);
 
 						if (section === 'instrument')
-							updatePrefs(obj.patch(state.instrument, prop, val));
+							updatePrefs(obj.patch(state.rack, prop, val));
 					}
 					break;
 				default:

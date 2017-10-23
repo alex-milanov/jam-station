@@ -8,39 +8,39 @@ const {
 module.exports = ({name, state, actions}) => fieldset([
 	legend([span('.on', name.toUpperCase())]),
 	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.rack[name].on)},
 		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
+			'fa-circle-thin': !state.rack[name].on,
+			'on': state.rack[name].on,
+			'fa-circle': state.rack[name].on
 		}
 	}),
 	label(`Time`),
-	span('.right', `${state.instrument[name].time}`),
+	span('.right', `${state.rack[name].time}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 3, step: 0.01},
-		props: {value: state.instrument[name].cutoff},
+		props: {value: state.rack[name].cutoff},
 		on: {change: ev => actions.instrument.updateProp(name, 'time', parseFloat(ev.target.value))}
 	}),
 	label(`Dry`),
-	span('.right', `${state.instrument[name].dry}`),
+	span('.right', `${state.rack[name].dry}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].dry},
+		props: {value: state.rack[name].dry},
 		on: {change: ev => actions.instrument.updateProp(name, 'dry', parseFloat(ev.target.value))}
 	}),
 	label(`Wet`),
-	span('.right', `${state.instrument[name].wet}`),
+	span('.right', `${state.rack[name].wet}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].wet},
+		props: {value: state.rack[name].wet},
 		on: {change: ev => actions.instrument.updateProp(name, 'wet', parseFloat(ev.target.value))}
 	})
 	// label(`Gain`),
-	// span('.right', `${state.instrument[name].gain}`),
+	// span('.right', `${state.rack[name].gain}`),
 	// input('[type="range"]', {
 	// 	attrs: {min: 0, max: 1, step: 0.005},
-	// 	props: {value: state.instrument[name].gain},
+	// 	props: {value: state.rack[name].gain},
 	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
 	// })
 ]);

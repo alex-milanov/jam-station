@@ -7,7 +7,7 @@ const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(tim
 const refresh = ({layout, state, actions}) => {
 	const list = Array.from(layout.children);
 
-	const distance = 14;
+	const distance = 0;
 
 	// console.log(list);
 

@@ -3068,6 +3068,319 @@ input, label, body {
     right: 0px;
     height: 100%;
     overflow-x: scroll; }
+    #ui #layout .rack {
+      position: absolute;
+      left: 240px;
+      top: 0px;
+      display: block;
+      background: #ddd;
+      box-shadow: 0px 0px 2px #999;
+      position: absolute;
+      left: 240px;
+      top: 0px;
+      bottom: 0px;
+      display: block;
+      background: #ccc;
+      overflow-y: scroll;
+      min-width: 300px;
+      border: 0px; }
+      #ui #layout .rack .header {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 34px;
+        line-height: 34px;
+        display: block;
+        cursor: pointer;
+        margin: 0px;
+        box-sizing: border-box;
+        background: #c5c5c5;
+        border-top: 1px solid #999;
+        border-bottom: 1px solid #999; }
+        #ui #layout .rack .header > *, #ui #layout .rack .header > div > * {
+          margin: 0px;
+          padding: 0px;
+          margin: 0px;
+          padding: 0px;
+          display: inline-block;
+          box-sizing: border-box;
+          height: 34px;
+          line-height: 34px;
+          margin: 0px 7px;
+          font-size: 14px;
+          display: inline-block;
+          box-sizing: border-box;
+          float: left; }
+          #ui #layout .rack .header > * > i.fa, #ui #layout .rack .header > div > * > i.fa {
+            margin: 0px;
+            padding: 0px;
+            margin: 0px;
+            padding: 0px;
+            display: inline-block;
+            box-sizing: border-box;
+            height: 34px;
+            line-height: 34px; }
+        #ui #layout .rack .header > div {
+          margin: 0px; }
+        #ui #layout .rack .header input, #ui #layout .rack .header button {
+          margin: 0px;
+          padding: 0px;
+          display: inline-block;
+          box-sizing: border-box;
+          height: 26px;
+          line-height: 26px;
+          margin: 4px 3px;
+          outline: none;
+          text-align: center;
+          border: 0px solid #333;
+          background: inherit;
+          border-radius: 2px;
+          transition: box-shadow .5s, text-shadow .5s, background .5s; }
+        #ui #layout .rack .header input {
+          box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1);
+          color: #333; }
+          #ui #layout .rack .header input:focus {
+            background: #dfe;
+            box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3); }
+          #ui #layout .rack .header input[type=number] {
+            -moz-appearance: textfield;
+            -webkit-appearance: textfield;
+            appearance: textfield;
+            position: relative;
+            width: 58px; }
+            #ui #layout .rack .header input[type=number]::-webkit-inner-spin-button, #ui #layout .rack .header input[type=number]::-webkit-outer-spin-button {
+              -webkit-appearance: none;
+              margin: 0; }
+        #ui #layout .rack .header .cipher {
+          position: relative; }
+          #ui #layout .rack .header .cipher input {
+            float: left; }
+          #ui #layout .rack .header .cipher input, #ui #layout .rack .header .cipher button {
+            margin: 0px;
+            padding: 0px;
+            display: inline-block;
+            box-sizing: border-box;
+            height: 26px;
+            line-height: 26px;
+            margin: 4px 0px;
+            font-size: 14px; }
+          #ui #layout .rack .header .cipher button {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 99; }
+          #ui #layout .rack .header .cipher .left, #ui #layout .rack .header .cipher .right {
+            float: none; }
+          #ui #layout .rack .header .cipher .left {
+            left: 0px; }
+          #ui #layout .rack .header .cipher .right {
+            right: 0px; }
+          #ui #layout .rack .header .cipher button:hover {
+            opacity: 0.7; }
+        #ui #layout .rack .header button {
+          width: 24px;
+          text-align: center;
+          cursor: pointer;
+          outline: none; }
+          #ui #layout .rack .header button.on {
+            box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3);
+            background: #dfe; }
+          #ui #layout .rack .header button:hover {
+            text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
+            outline: none; }
+          #ui #layout .rack .header button:active, #ui #layout .rack .header button:focus, #ui #layout .rack .header button::-moz-focus-inner {
+            outline: none;
+            border-image: none;
+            border: 0px; }
+      #ui #layout .rack .body {
+        margin: 0px;
+        padding: 0px;
+        padding: 10px 4px;
+        font-size: 14px; }
+        #ui #layout .rack .body fieldset {
+          position: relative;
+          padding: 0px 10px;
+          border: 0px solid #aaa;
+          border-top-width: 1px; }
+          #ui #layout .rack .body fieldset .on-switch {
+            position: absolute;
+            top: 0px;
+            right: 8px;
+            height: 32px;
+            line-height: 32px;
+            width: 16px;
+            cursor: pointer;
+            outline: none;
+            background: #e0e0e0;
+            color: #aaa;
+            text-align: center;
+            transition: color .3s, text-shadow .3s; }
+            #ui #layout .rack .body fieldset .on-switch.on {
+              color: #dfe;
+              font-size: 12px;
+              text-shadow: 0px 0px 1px rgba(33, 33, 33, 0.7); }
+          #ui #layout .rack .body fieldset div {
+            margin: 0px 0px 10px 0px; }
+          #ui #layout .rack .body fieldset legend {
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 32px;
+            height: 32px;
+            padding: 0px 5px; }
+            #ui #layout .rack .body fieldset legend > :not(:last-child):not(.knob)::after {
+              content: '';
+              border-top: 1px solid #999;
+              display: inline-block;
+              height: 1px;
+              width: 7px;
+              margin: 0px 3px;
+              margin-top: -2px;
+              vertical-align: middle; }
+            #ui #layout .rack .body fieldset legend span {
+              -webkit-user-select: none;
+              -moz-user-select: none;
+              -ms-user-select: none;
+              user-select: none;
+              color: #999;
+              height: 16px;
+              line-height: 16px;
+              cursor: pointer; }
+              #ui #layout .rack .body fieldset legend span.on {
+                color: #333; }
+      #ui #layout .rack .body {
+        padding: 10px 0px;
+        display: relative;
+        overflow-y: visible; }
+        #ui #layout .rack .body form {
+          margin: 0px;
+          padding: 0px; }
+          #ui #layout .rack .body form .on-switch {
+            background: #ccc;
+            right: 2px; }
+          #ui #layout .rack .body form label, #ui #layout .rack .body form input[type=radio] {
+            cursor: pointer; }
+          #ui #layout .rack .body form legend div {
+            display: inline-block;
+            margin: 0px; }
+          #ui #layout .rack .body form legend img {
+            height: 22px;
+            vertical-align: middle; }
+          #ui #layout .rack .body form .knob {
+            position: relative;
+            margin-right: 8px;
+            width: 22px;
+            height: 22px;
+            vertical-align: middle;
+            border-radius: 100%;
+            background: #f0f0f0;
+            box-sizing: border-box;
+            box-shadow: 0 0px 5px 0px #777, 0 0 10px #ccc inset, 0 0 1px 0px #ccc; }
+            #ui #layout .rack .body form .knob::after {
+              content: '';
+              position: absolute;
+              width: 6px;
+              height: 6px;
+              border-radius: 100px;
+              background: #eee;
+              box-shadow: 0 0px 5px 1px #eee, 0px 0px 4px 1px #bbb inset;
+              box-sizing: border-box;
+              top: 2px;
+              left: 50%;
+              margin-left: -3px; }
+          #ui #layout .rack .body form input[type=range] {
+            margin: 0px;
+            padding: 0px;
+            margin: 0px;
+            display: block;
+            width: 100%;
+            -webkit-appearance: none;
+            background-color: #777;
+            outline: none;
+            margin: 8px 0px;
+            border-radius: 10px;
+            height: 2px;
+            cursor: pointer; }
+          #ui #layout .rack .body form input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background-color: #bbb;
+            border: 1px solid #777;
+            width: 12px;
+            height: 12px;
+            border-radius: 10px;
+            transition: .3s; }
+            #ui #layout .rack .body form input[type=range]::-webkit-slider-thumb:hover {
+              background: #dfe; }
+          #ui #layout .rack .body form .vertical {
+            height: 90px;
+            position: relative; }
+            #ui #layout .rack .body form .vertical > * {
+              display: inline-block;
+              float: none;
+              position: absolute; }
+              #ui #layout .rack .body form .vertical > *:nth-of-type(1) {
+                left: 0px; }
+              #ui #layout .rack .body form .vertical > *:nth-of-type(2) {
+                left: 20%; }
+              #ui #layout .rack .body form .vertical > *:nth-of-type(3) {
+                left: 40%; }
+              #ui #layout .rack .body form .vertical > *:nth-of-type(4) {
+                left: 60%; }
+              #ui #layout .rack .body form .vertical > *:nth-of-type(5) {
+                left: 80%; }
+            #ui #layout .rack .body form .vertical label {
+              top: 80px;
+              width: 20%; }
+            #ui #layout .rack .body form .vertical input[type=range] {
+              top: 0px;
+              width: 70px;
+              transform: rotate(-90deg);
+              margin: 38px 0px 0px -30px; }
+            #ui #layout .rack .body form .vertical .right {
+              top: 0px;
+              width: 25%;
+              margin-left: 10%; }
+          #ui #layout .rack .body form input[type=number] {
+            display: inline-block;
+            text-align: center;
+            border: 0px;
+            box-shadow: inset 0px 0px 5px rgba(33, 77, 55, 0.5);
+            color: #333;
+            border-radius: 4px;
+            background: #dfe;
+            -moz-appearance: textfield;
+            -webkit-appearance: textfield;
+            appearance: textfield;
+            position: relative;
+            width: 32px;
+            height: 20px;
+            outline: none; }
+            #ui #layout .rack .body form input[type=number]::-webkit-inner-spin-button, #ui #layout .rack .body form input[type=number]::-webkit-outer-spin-button {
+              -webkit-appearance: none;
+              margin: 0; }
+            #ui #layout .rack .body form input[type=number]:active {
+              outline: none; }
+          #ui #layout .rack .body form button.btn-opt {
+            margin: 0px 2px;
+            height: 20px;
+            line-height: 20px;
+            padding: 0px 2px;
+            box-sizing: border-box;
+            border: 0px;
+            background: #aaa;
+            cursor: pointer;
+            outline: none;
+            transition: background .1ss; }
+            #ui #layout .rack .body form button.btn-opt:active {
+              outline: none; }
+            #ui #layout .rack .body form button.btn-opt.on {
+              background: #ccc; }
+            #ui #layout .rack .body form button.btn-opt > * {
+              height: 20px;
+              line-height: 20px;
+              font-size: 20px;
+              padding: 0px;
+              box-sizing: border-box;
+              border: 0px; }
 
 #ui > header {
   -webkit-user-select: none;
@@ -3108,10 +3421,10 @@ input, label, body {
     left: 50%;
     transform: translate(-50%, 0);
     text-align: center;
-    background: #eaeaea;
+    background: #ddd;
     padding: 0px;
     box-sizing: border-box;
-    border: 1px solid #aaa;
+    box-shadow: 0px 0px 2px #333;
     border-width: 0px 1px; }
     #ui > header ul.center li {
       margin: 0px 7px; }
@@ -3135,7 +3448,8 @@ input, label, body {
       background: inherit;
       transition: background .3s; }
       #ui > header ul.center input:focus {
-        background: #ddd; }
+        background: #dadada;
+        box-shadow: inset 0px 0px 7px #ccc; }
   #ui > header ul {
     margin: 0px;
     padding: 0px;
@@ -3247,7 +3561,13 @@ input, label, body {
       padding: 0px;
       margin: 0px; }
       .media-library .body fieldset legend {
-        padding: 5px 7px;
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 34px;
+        line-height: 34px;
+        padding: 0px 7px;
         background: #aaa;
         width: 100%;
         border-top: 1px solid #999;
@@ -3255,11 +3575,13 @@ input, label, body {
     .media-library .body ul {
       list-style: none;
       padding: 0px 5px;
+      padding-top: 10px;
       margin: 0px; }
       .media-library .body ul li {
         position: relative;
         margin: 0px -5px; }
         .media-library .body ul li ul {
+          padding-top: 0px;
           display: none;
           border-bottom: 0px; }
         .media-library .body ul li > input[type=checkbox] {
@@ -3312,21 +3634,23 @@ input, label, body {
   left: 240px;
   top: 17px;
   display: block;
-  background: #e0e0e0;
-  box-shadow: 0px 0px 3px #777;
+  background: #ddd;
+  box-shadow: 0px 0px 2px #999;
   min-width: 310px; }
   .instrument .header {
     margin: 0px;
     padding: 0px;
     display: inline-block;
     box-sizing: border-box;
-    height: 38px;
-    line-height: 38px;
+    height: 34px;
+    line-height: 34px;
     display: block;
     cursor: pointer;
     margin: 0px;
-    box-sizing: content-box;
-    background: #eaeaea; }
+    box-sizing: border-box;
+    background: #c5c5c5;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999; }
     .instrument .header > *, .instrument .header > div > * {
       margin: 0px;
       padding: 0px;
@@ -3334,8 +3658,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 38px;
-      line-height: 38px;
+      height: 34px;
+      line-height: 34px;
       margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
@@ -3348,8 +3672,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 38px;
-        line-height: 38px; }
+        height: 34px;
+        line-height: 34px; }
     .instrument .header > div {
       margin: 0px; }
     .instrument .header input, .instrument .header button {
@@ -3357,8 +3681,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 30px;
-      line-height: 30px;
+      height: 26px;
+      line-height: 26px;
       margin: 4px 3px;
       outline: none;
       text-align: center;
@@ -3390,8 +3714,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 30px;
-        line-height: 30px;
+        height: 26px;
+        line-height: 26px;
         margin: 4px 0px;
         font-size: 14px; }
       .instrument .header .cipher button {
@@ -3407,7 +3731,7 @@ input, label, body {
       .instrument .header .cipher button:hover {
         opacity: 0.7; }
     .instrument .header button {
-      width: 28px;
+      width: 24px;
       text-align: center;
       cursor: pointer;
       outline: none; }
@@ -3424,7 +3748,7 @@ input, label, body {
   .instrument .body {
     margin: 0px;
     padding: 0px;
-    padding: 2px;
+    padding: 10px 4px;
     font-size: 14px; }
     .instrument .body fieldset {
       position: relative;
@@ -3607,22 +3931,24 @@ input, label, body {
 .sequencer {
   position: absolute;
   left: 560px;
-  top: 17px;
+  top: 0px;
   display: block;
-  background: #e0e0e0;
-  box-shadow: 0px 0px 3px #777; }
+  background: #ddd;
+  box-shadow: 0px 0px 2px #999; }
   .sequencer .header {
     margin: 0px;
     padding: 0px;
     display: inline-block;
     box-sizing: border-box;
-    height: 38px;
-    line-height: 38px;
+    height: 34px;
+    line-height: 34px;
     display: block;
     cursor: pointer;
     margin: 0px;
-    box-sizing: content-box;
-    background: #eaeaea; }
+    box-sizing: border-box;
+    background: #c5c5c5;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999; }
     .sequencer .header > *, .sequencer .header > div > * {
       margin: 0px;
       padding: 0px;
@@ -3630,8 +3956,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 38px;
-      line-height: 38px;
+      height: 34px;
+      line-height: 34px;
       margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
@@ -3644,8 +3970,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 38px;
-        line-height: 38px; }
+        height: 34px;
+        line-height: 34px; }
     .sequencer .header > div {
       margin: 0px; }
     .sequencer .header input, .sequencer .header button {
@@ -3653,8 +3979,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 30px;
-      line-height: 30px;
+      height: 26px;
+      line-height: 26px;
       margin: 4px 3px;
       outline: none;
       text-align: center;
@@ -3686,8 +4012,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 30px;
-        line-height: 30px;
+        height: 26px;
+        line-height: 26px;
         margin: 4px 0px;
         font-size: 14px; }
       .sequencer .header .cipher button {
@@ -3703,7 +4029,7 @@ input, label, body {
       .sequencer .header .cipher button:hover {
         opacity: 0.7; }
     .sequencer .header button {
-      width: 28px;
+      width: 24px;
       text-align: center;
       cursor: pointer;
       outline: none; }
@@ -3720,7 +4046,7 @@ input, label, body {
   .sequencer .body {
     margin: 0px;
     padding: 0px;
-    padding: 2px;
+    padding: 10px 4px;
     font-size: 14px; }
     .sequencer .body fieldset {
       position: relative;
@@ -3805,11 +4131,11 @@ input, label, body {
       height: 30px;
       line-height: 30px;
       margin: 1px;
-      border: 1px solid #ccc;
+      border: 1px solid #bbb;
       box-shadow: inset 0px 0px 10px rgba(33, 33, 33, 0.1);
       display: inline-block;
       cursor: pointer;
-      background: #eee;
+      background: #ddd;
       transition: box-shadow .3s, font-size .3s, background .3s;
       box-sizing: border-box;
       float: left; }
@@ -3842,9 +4168,9 @@ input, label, body {
       width: 140px;
       float: left;
       cursor: pointer;
-      background: #eee;
+      background: #ddd;
       box-sizing: border-box;
-      border: 1px solid #ccc;
+      border: 1px solid #bbb;
       box-shadow: inset 0px 0px 15px #ccc;
       transition: background .3s, box-shadow .3s; }
       .sequencer .body .row .channel:hover {
@@ -3893,7 +4219,7 @@ input, label, body {
         width: 22px;
         margin: 0px; }
       .sequencer .body .row .bar:nth-child(2n-1) {
-        background: #f5f5f5; }
+        background: #e5e5e5; }
       .sequencer .body .row .bar.on {
         background: #d0dadf; }
       .sequencer .body .row .bar.tick {
@@ -3902,23 +4228,25 @@ input, label, body {
 .midi-map {
   position: absolute;
   left: 1080px;
-  top: 17px;
+  top: 0px;
   display: block;
-  background: #e0e0e0;
-  box-shadow: 0px 0px 3px #777;
+  background: #ddd;
+  box-shadow: 0px 0px 2px #999;
   width: 600px; }
   .midi-map .header {
     margin: 0px;
     padding: 0px;
     display: inline-block;
     box-sizing: border-box;
-    height: 38px;
-    line-height: 38px;
+    height: 34px;
+    line-height: 34px;
     display: block;
     cursor: pointer;
     margin: 0px;
-    box-sizing: content-box;
-    background: #eaeaea; }
+    box-sizing: border-box;
+    background: #c5c5c5;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999; }
     .midi-map .header > *, .midi-map .header > div > * {
       margin: 0px;
       padding: 0px;
@@ -3926,8 +4254,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 38px;
-      line-height: 38px;
+      height: 34px;
+      line-height: 34px;
       margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
@@ -3940,8 +4268,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 38px;
-        line-height: 38px; }
+        height: 34px;
+        line-height: 34px; }
     .midi-map .header > div {
       margin: 0px; }
     .midi-map .header input, .midi-map .header button {
@@ -3949,8 +4277,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 30px;
-      line-height: 30px;
+      height: 26px;
+      line-height: 26px;
       margin: 4px 3px;
       outline: none;
       text-align: center;
@@ -3982,8 +4310,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 30px;
-        line-height: 30px;
+        height: 26px;
+        line-height: 26px;
         margin: 4px 0px;
         font-size: 14px; }
       .midi-map .header .cipher button {
@@ -3999,7 +4327,7 @@ input, label, body {
       .midi-map .header .cipher button:hover {
         opacity: 0.7; }
     .midi-map .header button {
-      width: 28px;
+      width: 24px;
       text-align: center;
       cursor: pointer;
       outline: none; }
@@ -4016,7 +4344,7 @@ input, label, body {
   .midi-map .body {
     margin: 0px;
     padding: 0px;
-    padding: 2px;
+    padding: 10px 4px;
     font-size: 14px; }
     .midi-map .body fieldset {
       position: relative;
@@ -4113,21 +4441,23 @@ input, label, body {
   left: 560px;
   top: 334px;
   display: block;
-  background: #e0e0e0;
-  box-shadow: 0px 0px 3px #777;
+  background: #ddd;
+  box-shadow: 0px 0px 2px #999;
   min-width: 550px; }
   .midi-keyboard .header {
     margin: 0px;
     padding: 0px;
     display: inline-block;
     box-sizing: border-box;
-    height: 38px;
-    line-height: 38px;
+    height: 34px;
+    line-height: 34px;
     display: block;
     cursor: pointer;
     margin: 0px;
-    box-sizing: content-box;
-    background: #eaeaea; }
+    box-sizing: border-box;
+    background: #c5c5c5;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999; }
     .midi-keyboard .header > *, .midi-keyboard .header > div > * {
       margin: 0px;
       padding: 0px;
@@ -4135,8 +4465,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 38px;
-      line-height: 38px;
+      height: 34px;
+      line-height: 34px;
       margin: 0px 7px;
       font-size: 14px;
       display: inline-block;
@@ -4149,8 +4479,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 38px;
-        line-height: 38px; }
+        height: 34px;
+        line-height: 34px; }
     .midi-keyboard .header > div {
       margin: 0px; }
     .midi-keyboard .header input, .midi-keyboard .header button {
@@ -4158,8 +4488,8 @@ input, label, body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 30px;
-      line-height: 30px;
+      height: 26px;
+      line-height: 26px;
       margin: 4px 3px;
       outline: none;
       text-align: center;
@@ -4191,8 +4521,8 @@ input, label, body {
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 30px;
-        line-height: 30px;
+        height: 26px;
+        line-height: 26px;
         margin: 4px 0px;
         font-size: 14px; }
       .midi-keyboard .header .cipher button {
@@ -4208,7 +4538,7 @@ input, label, body {
       .midi-keyboard .header .cipher button:hover {
         opacity: 0.7; }
     .midi-keyboard .header button {
-      width: 28px;
+      width: 24px;
       text-align: center;
       cursor: pointer;
       outline: none; }
@@ -4225,7 +4555,7 @@ input, label, body {
   .midi-keyboard .body {
     margin: 0px;
     padding: 0px;
-    padding: 2px;
+    padding: 10px 4px;
     font-size: 14px; }
     .midi-keyboard .body fieldset {
       position: relative;

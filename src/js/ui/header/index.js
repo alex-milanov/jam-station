@@ -30,8 +30,8 @@ module.exports = ({state, actions, tapTempo}) => header([
 		}, [i('.fa.fa-book')])]),
 		// li([a({class: {on: state.ui.patches}, on: {click: ev => actions.toggleUI('patches')}}, 'Patches')]),
 		li([a({
-			class: {on: state.layout.instrument.visible},
-			on: {click: ev => actions.toggle(['layout', 'instrument', 'visible'])}
+			class: {on: state.layout.rack.visible},
+			on: {click: ev => actions.toggle(['layout', 'rack', 'visible'])}
 		}, [i('.fa.fa-tasks')])]),
 		li([a({
 			class: {on: state.layout.sequencer.visible},

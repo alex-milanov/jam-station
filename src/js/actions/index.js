@@ -7,7 +7,7 @@ const {Subject} = Rx;
 const viewport = require('./viewport');
 const layout = require('./layout');
 const studio = require('./studio');
-const instrument = require('./instrument');
+const rack = require('./rack');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const mediaLibrary = require('./media-library');
@@ -24,20 +24,12 @@ const toggleUI = editor => state => obj.patch(state, ['ui', editor], !state.ui[e
 
 const ping = () => state => state;
 
-const initial = Object.assign({
-	ui: {
-		mediaLibrary: true,
-		patches: true,
-		instrument: true,
-		sequencer: true,
-		midiMap: true
-	}
-});
+const initial = {};
 
 const changesMap = {
 	studio: [[['tick', 'index'], ['tickIndex']]],
 	sequencer: [],
-	instrument
+	rack
 };
 
 // todo merge loaded state
@@ -61,7 +53,7 @@ module.exports = {
 	viewport,
 	layout,
 	studio,
-	instrument,
+	rack,
 	mediaLibrary,
 	sequencer,
 	midiMap,

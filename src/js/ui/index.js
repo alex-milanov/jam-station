@@ -3,14 +3,14 @@
 const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
 const mediaLibrary = require('./media-library');
-const instrument = require('./instrument');
+const rack = require('./rack');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
 
 const panels = {
 	mediaLibrary,
-	instrument,
+	rack,
 	sequencer,
 	midiMap,
 	midiKeyboard

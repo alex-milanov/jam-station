@@ -93,19 +93,19 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	note = note || this.note || 'C';
 	velocity = velocity || 1;
 
-	console.log(time, state.instrument, velocity);
+	console.log(time, state.rack, velocity);
 
 	// this.setup(note);
-	if (state.instrument.vco1.type)
-		this.vco1.type = state.instrument.vco1.type;
-	if (state.instrument.vco1.detune)
-		this.vco1.detune.value = state.instrument.vco1.detune;
-	if (state.instrument.vco2.type)
-		this.vco2.type = state.instrument.vco2.type;
-	if (state.instrument.vco2.detune)
-		this.vco2.detune.value = state.instrument.vco2.detune;
-	if (state.instrument.lfo.type)
-		this.lfo.type = state.instrument.lfo.type;
+	if (state.rack.vco1.type)
+		this.vco1.type = state.rack.vco1.type;
+	if (state.rack.vco1.detune)
+		this.vco1.detune.value = state.rack.vco1.detune;
+	if (state.rack.vco2.type)
+		this.vco2.type = state.rack.vco2.type;
+	if (state.rack.vco2.detune)
+		this.vco2.detune.value = state.rack.vco2.detune;
+	if (state.rack.lfo.type)
+		this.lfo.type = state.rack.lfo.type;
 	if (state.studio.volume)
 		this.volume.gain.value = state.studio.volume;
 
@@ -119,35 +119,35 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 	this.vco1.frequency.setValueAtTime(frequency, now);
 	this.vco2.frequency.setValueAtTime(frequency, now);
 
-	if (state.instrument.lfo.on) {
-		this.lfo.frequency.value = state.instrument.lfo.frequency || 0;
-		this.lfoGain.gain.value = state.instrument.lfo.gain || 0;
+	if (state.rack.lfo.on) {
+		this.lfo.frequency.value = state.rack.lfo.frequency || 0;
+		this.lfoGain.gain.value = state.rack.lfo.gain || 0;
 		this.lfoGain.connect(this.vco1.detune);
 		this.lfoGain.connect(this.vco2.detune);
 	}
 
-	if (state.instrument.vcf.on) {
-		if (state.instrument.vco1.on) this.vco1.connect(this.vcf);
-		if (state.instrument.vco2.on) this.vco2.connect(this.vcf);
+	if (state.rack.vcf.on) {
+		if (state.rack.vco1.on) this.vco1.connect(this.vcf);
+		if (state.rack.vco2.on) this.vco2.connect(this.vcf);
 		this.vcf.connect(this.vca);
-		filterSetFreq(this.vcf, state.instrument.vcf.cutoff, this.context);
-		filterSetQ(this.vcf, state.instrument.vcf.resonance, this.context);
-		// this.vcf.gain.setValueAtTime(state.instrument.vcf.gain, now);
+		filterSetFreq(this.vcf, state.rack.vcf.cutoff, this.context);
+		filterSetQ(this.vcf, state.rack.vcf.resonance, this.context);
+		// this.vcf.gain.setValueAtTime(state.rack.vcf.gain, now);
 	} else {
-		if (state.instrument.vco1.on) this.vco1.connect(this.vca);
-		if (state.instrument.vco2.on) this.vco2.connect(this.vca);
+		if (state.rack.vco1.on) this.vco1.connect(this.vca);
+		if (state.rack.vco2.on) this.vco2.connect(this.vca);
 	}
 
 	// attack
-	if (state.instrument.eg.attack > 0)
-		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.instrument.eg.attack);
+	if (state.rack.eg.attack > 0)
+		this.vca.gain.setValueCurveAtTime(new Float32Array([0, velocity]), time, state.rack.eg.attack);
 	else
 		this.vca.gain.setValueAtTime(velocity, now);
 
 	// decay
-	if (state.instrument.eg.decay > 0)
-		this.vca.gain.setValueCurveAtTime(new Float32Array([velocity, state.instrument.eg.sustain * velocity]),
-			time + state.instrument.eg.attack, state.instrument.eg.decay);
+	if (state.rack.eg.decay > 0)
+		this.vca.gain.setValueCurveAtTime(new Float32Array([velocity, state.rack.eg.sustain * velocity]),
+			time + state.rack.eg.attack, state.rack.eg.decay);
 	// sustain
 	// relase
 
@@ -165,20 +165,20 @@ BasicSynth.prototype.noteon = function(state, note, velocity) {
 BasicSynth.prototype.noteoff = function(state, note) {
 	const time = this.context.currentTime + 0.00001;
 	var frequency = this.noteToFrequency(note);
-	console.log(state.instrument.eg);
+	console.log(state.rack.eg);
 
 	this.vca.gain.cancelScheduledValues(0);
 	this.vca.gain.setValueCurveAtTime(new Float32Array([this.vca.gain.value, 0]),
-		time, state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001);
+		time, state.rack.eg.release > 0 && state.rack.eg.release || 0.00001);
 
-	this.vco1.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
-	this.vco2.stop(time + (state.instrument.eg.release > 0 && state.instrument.eg.release || 0.00001));
+	this.vco1.stop(time + (state.rack.eg.release > 0 && state.rack.eg.release || 0.00001));
+	this.vco2.stop(time + (state.rack.eg.release > 0 && state.rack.eg.release || 0.00001));
 };
 
 BasicSynth.prototype.play = function(state, note) {
 	// note = note || this.note || 'C';
 	var now = this.context.currentTime;
-	this.trigger(now, state.instrument, note);
+	this.trigger(now, state.rack, note);
 };
 
 BasicSynth.prototype.clone = function(note) {

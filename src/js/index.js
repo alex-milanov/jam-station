@@ -57,7 +57,7 @@ if (module.hot) {
 actions$
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
-	.map(state => (console.log(state), state))
+	// .map(state => (console.log(state), state))
 	.subscribe(state => state$.onNext(state));
 
 // map state to ui
@@ -74,7 +74,7 @@ vdom.patchStream(ui$, '#ui');
 // state$.map(state => services.refresh({state, actions})).subscribe();
 
 // tap tempo
-tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo));
+tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo.toPrecision(5)));
 
 // state$.connect();
 

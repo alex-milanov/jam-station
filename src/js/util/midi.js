@@ -120,10 +120,12 @@ const init = () => {
 	);
 
 	return {
-		parseMidiMsg,
 		access$,
 		msg$
 	};
 };
 
-module.exports = init;
+module.exports = {
+	init,
+	parseMidiMsg
+};

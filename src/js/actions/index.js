@@ -11,6 +11,7 @@ const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const mediaLibrary = require('./media-library');
+const pianoRoll = require('./piano-roll');
 
 // util
 const {obj} = require('iblokz-data');
@@ -64,6 +65,7 @@ module.exports = {
 	instrument,
 	mediaLibrary,
 	sequencer,
+	pianoRoll,
 	midiMap,
 	// actions
 	set,

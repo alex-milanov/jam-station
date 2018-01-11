@@ -12,7 +12,7 @@ const initial = {
 	vcaOn: 1,
 	vca1: {
 		volume: 0.41,
-		attack: 0.31,
+		attack: 0,
 		decay: 0.16,
 		sustain: 0.8,
 		release: 0.21
@@ -50,29 +50,33 @@ const initial = {
 	},
 	lfo: {
 		on: false,
+		expanded: true,
 		type: 'sawtooth',
 		frequency: 5,
 		gain: 0.15
 	},
 	vcf: {
 		on: true,
+		expanded: true,
 		cutoff: 0.64,
 		resonance: 0,
 		gain: 0
 	},
 	delay: {
 		on: false,
+		expanded: true,
 		time: 1,
 		dry: 1,
 		wet: 0
 	},
 	reverb: {
-		on: false,
+		on: true,
+		expanded: true,
 		seconds: 3,
 		decay: 2,
 		reverse: false,
-		dry: 1,
-		wet: 0
+		dry: 0.8,
+		wet: 0.7
 	}
 };
 

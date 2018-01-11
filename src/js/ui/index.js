@@ -7,13 +7,15 @@ const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
+const pianoRoll = require('./piano-roll');
 
 const panels = {
 	mediaLibrary,
 	instrument,
 	sequencer,
 	midiMap,
-	midiKeyboard
+	midiKeyboard,
+	pianoRoll
 };
 
 module.exports = ({state, actions, tapTempo}) => div('#ui', [

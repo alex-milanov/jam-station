@@ -29,7 +29,7 @@ const vcas = ['vca1', 'vca2', 'vca3', 'vca4'];
 
 module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 	div('.header', [
-		h2([i('.fa.fa-tasks'), ' Instrument']),
+		h2([i('.fa.fa-sliders'), ' Instrument']),
 		div('.right', [
 			button('.fa.fa-eraser', {on: {
 				click: () => actions.instrument.applyPatch(
@@ -45,7 +45,7 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 			// VCO1
 			vco({state, actions, name: 'vco1'}),
 			vco({state, actions, name: 'vco2'}),
-			fieldset([
+			fieldset([].concat(
 				legend(vcas.map((name, i) =>
 					span({
 						class: {on: state.instrument.vcaOn === i},
@@ -53,7 +53,7 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 					}, name.toUpperCase())
 				)),
 				vca({state, actions, name: vcas[state.instrument.vcaOn]})
-			]),
+			)),
 			// VCF
 			vcf({state, actions, name: 'vcf'}),
 			// LFO

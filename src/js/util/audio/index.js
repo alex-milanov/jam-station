@@ -9,13 +9,15 @@ const {
 } = require('./core');
 
 const reverb = require('./effects/reverb');
+const adsr = require('./controls/adsr');
 
-const create = (type, ctx = context) => Object.assign({},
+const create = (type, prefs = {}, ctx = context) => Object.assign({},
 	obj.switch(type, {
 		vco: () => ({output: _create('oscillator')}),
 		vca: () => ({through: _create('gain')}),
 		vcf: () => ({through: _create('biquadFilter')}),
-		reverb: () => reverb.create()
+		reverb: () => reverb.create(prefs),
+		adsr: () => adsr.create(prefs)
 	})(),
 	{type, out: []}
 );
@@ -36,19 +38,20 @@ const update = (node, prefs) => obj.switch(node.type, {
 		isSet(prefs.type) && set(node.output, 'type', prefs.type),
 		isSet(prefs.freq) && set(node.output.frequency, 'value', prefs.freq),
 		isSet(prefs.detune) && set(node.output.detune, 'value', prefs.detune),
-		node
+		Object.assign(node, {prefs})
 	),
 	vca: () => (
 		isSet(prefs.gain) && set(node.through.gain, 'value', prefs.gain),
-		node
+		Object.assign(node, {prefs})
 	),
 	vcf: () => (
 		isSet(prefs.type) && set(node.through, 'type', prefs.type),
 		isSet(prefs.cutoff) && set(node.through.frequency, 'value', cutoffToFreq(prefs.cutoff)),
 		isSet(prefs.resonance) && set(node.through.Q, 'value', prefs.resonance * 30),
-		node
+		Object.assign(node, {prefs})
 	),
-	reverb: () => reverb.update(node, prefs)
+	reverb: () => reverb.update(node, prefs),
+	adsr: () => adsr.update(node, prefs)
 })();
 
 const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
@@ -67,7 +70,7 @@ const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 		}))
 	: node1;
 
-const disconnect = (node1, node2) => (console.log(node1, node2), (node1.out.indexOf(node2) > -1)
+const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
 	? (_disconnect(
 			// input
 			isGet(node1.output)
@@ -86,7 +89,7 @@ const disconnect = (node1, node2) => (console.log(node1, node2), (node1.out.inde
 		}))
 	: (typeof node2 === 'undefined')
 		&& node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
-		|| node1);
+		|| node1;
 
 const reroute = (node1, node2) => (node1.out && node1.out.indexOf(node2) === -1)
 	? connect(disconnect(node1), node2)
@@ -147,8 +150,11 @@ module.exports = {
 	noteToFrequency,
 	start,
 	stop,
-	vco: prefs => update(create('vco', context), prefs),
-	vcf: prefs => update(create('vcf', context), prefs),
-	lfo: prefs => update(create('lfo', context), prefs),
-	vca: prefs => update(create('vca', context), prefs)
+	vco: prefs => update(create('vco', {}, context), prefs),
+	vcf: prefs => update(create('vcf', {}, context), prefs),
+	lfo: prefs => update(create('lfo', {}, context), prefs),
+	vca: prefs => update(create('vca', {}, context), prefs),
+	adsr: prefs => create('adsr', prefs, context),
+	noteOn: adsr.noteOn,
+	noteOff: adsr.noteOff
 };

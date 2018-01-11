@@ -11,7 +11,7 @@ const hook = ({state$, actions, studio}) => {
 		let opmSamples = Object.keys(opm);
 		// console.log(opmSamples);
 		$.concat(opmSamples.map(key =>
-			$.fromCallback(studio.context.decodeAudioData, studio.context)(opm[key])
+			$.fromCallback(audio.context.decodeAudioData, audio.context)(opm[key])
 			.map(buffer => ({key, buffer})))
 		)
 			.subscribe(({key, buffer}) =>

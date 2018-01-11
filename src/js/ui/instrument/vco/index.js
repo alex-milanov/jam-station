@@ -23,6 +23,17 @@ module.exports = ({name, state, actions}) => fieldset([
 				class: {on: (state.instrument[name].type === type)}
 			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
 		]), [])),
+		div('.on-switch.fa', {
+			on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+			class: {
+				'fa-circle-thin': !state.instrument[name].on,
+				'on': state.instrument[name].on,
+				'fa-circle': state.instrument[name].on
+			}
+		})
+	])
+	/*
+	div('.horizontal', [
 		img('[src="assets/tuning-fork.png"]'),
 		div('.knob', {
 			style: {
@@ -39,13 +50,6 @@ module.exports = ({name, state, actions}) => fieldset([
 			props: {value: state.instrument[name].detune},
 			on: {input: ev => actions.instrument.updateProp(name, 'detune', ev.target.value)}
 		})
-	]),
-	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
-		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
-		}
-	})
+	])
+	*/
 ]);

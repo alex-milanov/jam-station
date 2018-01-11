@@ -16,18 +16,19 @@ const initial = {
 		in: false,
 		out: false
 	},
-	map: {
-		controller: {
-			20: ['instrument', ['vcf', 'cutoff']],
-			21: ['instrument', ['vcf', 'resonance']],
-			22: ['studio', ['bpm'], 60, 200, 0],
-			23: ['studio', ['volume']],
-			24: ['instrument', ['eg', 'attack']],
-			25: ['instrument', ['eg', 'decay']],
-			26: ['instrument', ['eg', 'sustain']],
-			27: ['instrument', ['eg', 'release']]
-		}
-	}
+	pitch: 0,
+	channels: {
+	},
+	map: [
+		['controller', 20, ['instrument', 'vcf', 'cutoff']],
+		['controller', 21, ['instrument', 'vcf', 'resonance']],
+		['controller', 22, ['studio', 'bpm'], 60, 200, 0],
+		['controller', 23, ['studio', 'volume']],
+		['controller', 24, ['instrument', 'eg', 'attack']],
+		['controller', 25, ['instrument', 'eg', 'decay']],
+		['controller', 26, ['instrument', 'eg', 'sustain']],
+		['controller', 27, ['instrument', 'eg', 'release']]
+	]
 };
 
 const connect = devices =>
@@ -39,8 +40,24 @@ const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clo
 	obj.sub(state, ['midiMap', 'clock'])[inOut] === index ? false : index
 );
 
+const noteOn = (channel, note, velocity = 0) => state => (
+	// console.log(channel, note, velocity),
+	velocity !== 0
+		? obj.patch(state, ['midiMap', 'channels', channel, note], velocity)
+		: obj.patch(state, ['midiMap', 'channels'], {
+			[channel]: obj.filter(
+				obj.sub(state, ['midiMap', 'channels', channel]),
+				(key, value) => key !== note)
+		})
+	);
+
+const panic = () => state =>
+	obj.patch(state, ['midiMap', 'channels'], {});
+
 module.exports = {
 	initial,
 	connect,
-	toggleClock
+	toggleClock,
+	noteOn,
+	panic
 };

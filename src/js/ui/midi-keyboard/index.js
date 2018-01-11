@@ -1,7 +1,7 @@
 'use strict';
 
 const {
-	div, h2, span, p, input, fieldset, legend, label, hr, button, i
+	div, h2, span, p, input, fieldset, legend, label, hr, button, i, img
 } = require('iblokz-snabbdom-helpers');
 
 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -33,13 +33,24 @@ const generateKeys = (start, end) => [{start: parseKey(start), end: parseKey(end
 
 module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params, [
 	div('.header', [
-		h2([i('.fa.fa-keyboard-o'), ' MIDI Keyboard'])
+		// h2([img('[src="/assets/midi-keyboard.svg"]'), span('MIDI Keyboard')])
 	]),
 	div('.body', [
-		div('.keys', generateKeys('C1', 'C4').map(parseKey).map(key =>
-			div(((key.isSharp || key.isFlat) ? '.black' : '.white'),
-				(key.note === 'C') ? [span(key.key)] : []
-			)
+		div('.keys', generateKeys('C3', 'C6').map(parseKey).map(key =>
+			div(((key.isSharp || key.isFlat) ? '.black' : '.white'), {
+				on: {
+					mousedown: () => actions.midiMap.noteOn(1, key.key, 0.7),
+					mouseup: () => actions.midiMap.noteOn(1, key.key, 0),
+					mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0.7),
+					mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0)
+				},
+				class: {
+					on: Object.keys(state.midiMap.channels).reduce(
+						(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
+						{}
+					)[key.key]
+				}
+			}, (key.note === 'C') ? [span(key.key)] : [])
 		))
 	])
 ]);

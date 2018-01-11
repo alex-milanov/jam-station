@@ -30,7 +30,11 @@ const create = (type, ...args) => (
 
 const update = (node, prefs) => apply(node, prefs);
 
-const connect = (n1, n2) => (n1.connect(n2), n1);
+const connect = (n1, n2) => (
+	// console.log(n1, n2),
+	n1.connect(n2),
+	n1
+);
 const disconnect = (n1, n2) => (n1.disconnect(n2), n1);
 
 const chain = (...nodes) => (
@@ -46,9 +50,14 @@ const unchain = (...nodes) => (
 
 const duration = seconds => context.sampleRate * seconds;
 const chData = (node, ...args) => (
-	console.log(node, args),
+	// console.log(node, args),
 	node.getChannelData(...args)
 );
+
+const schedule = (node, pref, values, times) => (values.length === 1)
+	? node[pref].setValueAtTime(values[0], times[0])
+	: (node[pref].setValueCurveAtTime(new Float32Array(values.slice(0, 2)), times[0], times[1]),
+		(values.length > 2) && schedule(node, pref, values.slice(1), [times[0] + times[1]].concat(times.slice(2))));
 
 module.exports = {
 	context,
@@ -63,5 +72,6 @@ module.exports = {
 	unchain,
 	// util
 	duration,
-	chData
+	chData,
+	schedule
 };

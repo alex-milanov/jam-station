@@ -1,17 +1,21 @@
 .midi-keyboard
-	+editor(560px, 334px)
-	min-width: 550px
+	+editor(400px, 334px)
+	min-width: 400px
+	.header
+		+header-height(10px)
+		display: block
 	.body
+		padding: 0px
 		.keys
 			+user-select(none)
-			height: 100px
+			height: 90px
 			vertical-align: top
 			> *
 				display: inline-block
 				vertical-align: top
-				border: 1px solid #777
 				border-top: 0px
 				box-sizing: border-box
+				box-shadow: 0 0 1px #aaa
 				float: left
 				position: relative
 				cursor: pointer
@@ -25,21 +29,22 @@
 			.white
 				width: 3.57%
 				height: 100%
-				background: #fff
-				color: #000
+				background: #e5e5e5
+				color: #333
 				z-index: 0
-				&:hover
-					background: #f5f5f5
+				box-shadow: 0 0 1px #777, inset 0px -1px 1px 1px #ddd
+				&:hover, &.on
+					background: #d5d5d5
 			.black
 				width: 2%
-				height: 65%
-				background: #000
-				color: white
+				height: 67%
+				background: #555
+				color: #eee
 				margin: 0px
 				&:not(:first-child)
 					margin-left: -1%
 				z-index: 99
-				&:hover
-					background: #111
+				&:hover, &.on
+					background: #444
 				& + .white
 					margin-left: -1%

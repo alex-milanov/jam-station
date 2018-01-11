@@ -53,7 +53,7 @@ const create = prefs => [{
 ).pop();
 
 const update = (n, prefs) => (
-	console.log(prefs, n.prefs),
+//	console.log(prefs, n.prefs),
 	(n.prefs.seconds !== prefs.seconds || n.prefs.decay !== prefs.decay)
 		&& set(n.effect, 'buffer', buildImpulse(n.prefs)),
 	(n.prefs.dry !== prefs.dry)

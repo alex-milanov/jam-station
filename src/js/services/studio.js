@@ -4,9 +4,10 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const {context} = require('../util/audio');
-const Sampler = require('../instr/sampler');
+const audio = require('../util/audio');
+const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
+const {obj} = require('iblokz-data');
 
 const stream = new Subject();
 
@@ -30,18 +31,29 @@ let kit = [
 	'samples/clap04.ogg',
 	'samples/shaker01.ogg',
 	'samples/shaker02.ogg'
-].map(url => new Sampler(context, url));
+].map(url => sampler.create(url));
 
 const addSample = (key, buffer) => (
-	kit.push(new Sampler(context, key, buffer))
+	kit.push(sampler.create(key, buffer))
 );
+
+const reverb = audio.create('reverb', {
+	on: true,
+	wet: 0.3,
+	dry: 0.7
+});
+
+audio.connect(reverb, audio.context.destination);
 
 const hook = ({state$, actions, tick$}) => {
 	let buffer = [];
 
 	const clearBuffer = () => {
 		// console.log(buffer);
-		buffer.forEach(inst => inst.stop());
+		buffer.forEach(inst => {
+			inst.output.disconnect(reverb.input);
+			audio.stop(inst);
+		});
 		buffer = [];
 	};
 
@@ -53,30 +65,28 @@ const hook = ({state$, actions, tick$}) => {
 		.filter(state => state.studio.playing)
 		.subscribe(() => clearBuffer());
 
-	tick$
-		// .filter(({time, i}) => i % 24 === 0)
-		.withLatestFrom(state$, ({time}, state) => ({time, state}))
-		.filter(({state}) => state.studio.playing)
-		.subscribe(({time}) => actions.studio.tick(time));
-
 	state$
 		.distinctUntilChanged(state => state.studio.tick)
 		.filter(state => state.studio.playing)
 		.subscribe(({studio, sequencer}) => {
 			if (studio.tick.index === studio.beatLength - 1 || buffer.length === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
+				// let start = studio.tick.index;
 				let offset = buffer.length === 0 ? 0 : 1;
 
 				for (let i = start; i < studio.beatLength; i++) {
 					let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
+					// console.log({timepos, start, offset, i});
 					sequencer.pattern[
 						(studio.tick.index === studio.beatLength - 1)
 							? (studio.tick.bar < studio.barsLength - 1) ? studio.tick.bar + 1 : 0
 							: studio.tick.bar
 					].forEach((row, k) => {
 						if (row[i]) {
-							let inst = kit[sequencer.channels[k]].clone();
-							inst.trigger({studio}, timepos);
+							let inst = sampler.clone(kit[sequencer.channels[k]]);
+							audio.connect(inst, reverb);
+							audio.start(inst, timepos);
+							// inst.trigger({studio}, timepos);
 							buffer.push(inst);
 						}
 					});
@@ -102,10 +112,48 @@ const hook = ({state$, actions, tick$}) => {
 			}
 			*/
 		});
+
+	let voices = {};
+	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+	state$.distinctUntilChanged(state => state.midiMap.channels)
+		.map(state => ({
+			state,
+			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) === 10).reduce(
+				(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
+				{}
+			)
+		}))
+		.subscribe(({state, pressed}) => {
+			// console.log(pressed);
+			Object.keys(pressed).filter(note => !voices[note])
+				.forEach(
+					note => {
+						const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
+						if (index > -1 && state.sequencer.channels[index]) {
+							let inst = sampler.clone(kit[state.sequencer.channels[index]]);
+							audio.connect(inst, reverb);
+							setTimeout(() => audio.start(inst));
+							voices[note] = inst;
+						}
+					}
+				);
+			Object.keys(voices).filter(note => !pressed[note])
+				.forEach(
+					note => {
+						if (voices[note]) {
+							setTimeout(() => {
+								voices[note].output.disconnect(reverb.input);
+								audio.stop(voices[note]);
+								voices = obj.filter(voices, key => key !== note);
+							});
+						}
+					}
+				);
+		});
 };
 
 module.exports = {
-	context,
 	kit,
 	addSample,
 	hook

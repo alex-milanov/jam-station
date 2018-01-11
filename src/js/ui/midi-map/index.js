@@ -2,14 +2,14 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
-	ul, li, table, thead, tbody, tr, td, th, h
+	ul, li, table, thead, tbody, tr, td, th, h, img
 } = require('iblokz-snabbdom-helpers');
 
 const actionMaps = [];
 
 module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
-		h2([i('.fa.fa-sitemap'), ' MIDI Map'])
+		h2([img('[src="/assets/midi.svg"]'), span('MIDI Map')])
 	]),
 	div('.body', [
 		fieldset([
@@ -20,6 +20,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					h('dd', ul(state.midiMap.devices.inputs.map((inp, index) =>
 						li([
 							inp.name,
+							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {
 									checked: state.midiMap.clock.in === index
@@ -36,6 +37,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					h('dd', ul(state.midiMap.devices.outputs.map((outp, index) =>
 						li([
 							outp.name,
+							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {
 									checked: state.midiMap.clock.out === index
@@ -51,33 +53,33 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 		]),
 		fieldset([
 			legend('Map'),
-			table(
-				thead(tr(
+			table([
+				thead(tr([
 					th('status'),
-					th('type'),
+					th('key'),
 					th('section'),
 					th('prop'),
 					th('min'),
 					th('max'),
-					th('digits')
-				)),
-				tbody(Object.keys(state.midiMap.map).map(status => Object.keys(state.midiMap.map[status]).map(type =>
+					th('dg')
+				])),
+				tbody(state.midiMap.map.map(mapping =>
 					tr([
-						td(status),
-						td(type),
+						td(mapping[0]),
+						td(mapping[1]),
 						// section
-						td(state.midiMap.map[status][type][0]),
+						td(mapping[2][0]),
 						// prop
-						td(state.midiMap.map[status][type][1].join(', ')),
+						td(mapping[2].slice(1).join(', ')),
 						// min
-						td(state.midiMap.map[status][type][2] || 0),
+						td(mapping[3] || 0),
 						// max
-						td(state.midiMap.map[status][type][3] || 1),
+						td(mapping[4] || 1),
 						// digits
-						td(state.midiMap.map[status][type][4])
+						td(mapping[5])
 					])
-				)).reduce((a, a1) => a.concat(a1), []))
-			)
+				))
+			])
 		])
 	])
 ]);

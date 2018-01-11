@@ -1,25 +1,23 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
-
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 const {context} = require('../../util/audio');
 
 const initial = {
-	bpm: '120',
+	bpm: 120,
 	measure: '4/4',
 	beatLength: 16,
 	barsLength: 1,
+	startAudioTime: false,
 	playing: false,
 	recording: false,
 	tick: {
 		index: -1,
 		time: 0,
-		bar: 0
+		bar: 0,
+		elapsed: 0
 	},
 	volume: 0.4,
 	channels: [
@@ -56,10 +54,14 @@ const tick = (time = context.currentTime) =>
 		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
 		bar: (state.studio.tick.index < state.studio.beatLength - 1)
 			? state.studio.tick.bar
-			: (state.studio.tick.bar < state.studio.barsLength - 1) && (state.studio.tick.bar + 1) || 0
+			: (state.studio.tick.bar < state.studio.barsLength - 1) && (state.studio.tick.bar + 1) || 0,
+		elapsed: state.studio.tick.elapsed + 1
 	});
 
-const play = () => state => obj.patch(state, 'studio', {playing: !state.studio.playing});
+const play = () => state => obj.patch(state, 'studio', {
+	playing: !state.studio.playing,
+	tick: Object.assign({}, state.studio.tick, state.studio.playing ? {elapsed: 0} : {})
+});
 
 const record = () => state => obj.patch(state, 'studio', {recording: !state.studio.recording});
 
@@ -67,7 +69,8 @@ const stop = () => state => obj.patch(state, 'studio', {
 	tick: {
 		index: -1,
 		time: 0,
-		bar: 0
+		bar: 0,
+		elapsed: 0
 	},
 	playing: false,
 	recording: false

@@ -1,0 +1,32 @@
+.piano-roll
+	+editor(400px, 334px)
+	min-width: 400px
+	height: 210px
+	.body
+		padding: 0px
+		user-select: none
+		background: #333
+		margin-top: 0px
+		position: absolute
+		top: $jam-st-edior-header-height
+		bottom: 0px
+		width: 100%
+		> canvas
+			position: absolute
+			top: 0px
+			bottom: 0px
+			left: 0px
+			right: 0px
+			width: 100%
+			height: 100%
+			background: none
+			&.grid
+				z-index: 100
+			&.events
+				z-index: 101
+			&.selection
+				z-index: 102
+			&.indicators
+				z-index: 103
+			&.interaction
+				z-index: 104

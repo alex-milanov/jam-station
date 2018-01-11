@@ -10,6 +10,14 @@ const {measureToBeatLength, bpmToTime} = require('../util/math');
 
 // util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
+const objFilter = (o, f) => (
+	// console.log(o, f),
+	Object.keys(o)
+		.filter((key, index) => f(key, o[key], index))
+		.reduce((o2, key) =>
+			obj.patch(o2, key, o[key]),
+		{})
+);
 
 let changes$ = new Subject();
 
@@ -19,13 +27,13 @@ const initial = {
 	voice: {
 		vco1
 		vco2
-		vca1
-		vca2
+		adsr1
+		adsr2
 	}
 	*/
 	voices: {}, // a.start(a.vco({type: 'square'})),
-	// vca1: a.vca({gain: 0}),
-	vcf: a.vcf({}),
+	// adsr1: a.adsr({gain: 0}),
+	vcf: a.vcf({cutoff: 0.64}),
 	reverb: a.create('reverb'),
 	// lfo: a.lfo({}),
 	volume: a.vca({gain: 0.3}),
@@ -34,24 +42,24 @@ const initial = {
 
 const updatePrefs = instr => changes$.onNext(nodes =>
 	obj.map(nodes,
-		(node, key) => (instr[key])
+		(key, node) => (instr[key])
 			? a.update(node, instr[key])
 			: (key === 'voices')
-				? obj.map(node, voice => obj.map(voice, (n, key) => (instr[key])
+				? obj.map(node, (k, voice) => obj.map(voice, (key, n) => (instr[key])
 					? a.update(n, instr[key])
 					: n))
 				: node));
 
 const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, nodes, {
-	voices: obj.map(nodes.voices, voice => ({
-		vco1: a.connect(voice.vco1, voice.vca1),
-		vco2: a.connect(voice.vco2, voice.vca2),
-		vca1: (!instr.vco1.on)
-			? a.disconnect(voice.vca1)
-			: a.reroute(voice.vca1, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume),
-		vca2: (!instr.vco2.on)
-			? a.disconnect(voice.vca2)
-			: a.reroute(voice.vca2, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume)
+	voices: obj.map(nodes.voices, (k, voice) => ({
+		vco1: a.connect(voice.vco1, voice.adsr1),
+		vco2: a.connect(voice.vco2, voice.adsr2),
+		adsr1: (!instr.vco1.on)
+			? a.disconnect(voice.adsr1)
+			: a.reroute(voice.adsr1, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume),
+		adsr2: (!instr.vco2.on)
+			? a.disconnect(voice.adsr2)
+			: a.reroute(voice.adsr2, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume)
 	})),
 	reverb: (instr.reverb.on)
 		? a.reroute(nodes.reverb, (instr.vcf.on) ? nodes.vcf : nodes.volume)
@@ -62,33 +70,30 @@ const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, no
 	volume: a.connect(nodes.volume, nodes.context.destination)
 }));
 
-const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
+const noteOn = (instr, note, velocity, time) => changes$.onNext(nodes => {
 	let {voices, vcf, volume, context, reverb} = nodes;
 
-	const now = context.currentTime;
-	const time = now + 0.0001;
-
-	const freq = a.noteToFrequency(note.key + note.octave);
+	const freq = a.noteToFrequency(note);
 
 	// console.log(instr, note, velocity);
 
-	let voice = voices[note.number] || false;
+	let voice = voices[note] || false;
 
 	if (voice.vco1) a.stop(voice.vco1);
-	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})));
-	let vca1 = voice ? voice.vca1 : a.vca({});
-	vco1 = a.connect(vco1, vca1);
-	vca1 = !(instr.vco1.on)
-		? a.disconnect(vca1)
-		: a.reroute(vca1, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
+	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})), time);
+	let adsr1 = voice ? voice.adsr1 : a.adsr(instr.vca1);
+	vco1 = a.connect(vco1, adsr1);
+	adsr1 = !(instr.vco1.on)
+		? a.disconnect(adsr1)
+		: a.reroute(adsr1, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
 	if (voice.vco2) a.stop(voice.vco2);
-	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})));
-	let vca2 = voice ? voice.vca2 : a.vca({});
-	vco2 = a.connect(vco2, vca2);
-	vca2 = !(instr.vco2.on)
-		? a.disconnect(vca2)
-		: a.reroute(vca2, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
+	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})), time);
+	let adsr2 = voice ? voice.adsr2 : a.adsr(instr.vca2);
+	vco2 = a.connect(vco2, adsr2);
+	adsr2 = !(instr.vco2.on)
+		? a.disconnect(adsr2)
+		: a.reroute(adsr2, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
 	if (instr.reverb.on) a.reroute(reverb, (instr.vcf.on) ? vcf : volume);
 	else a.disconnect(reverb);
@@ -96,182 +101,101 @@ const noteOn = (instr, note, velocity) => changes$.onNext(nodes => {
 	// vcf
 	vcf = (instr.vcf.on) ? a.reroute(vcf, volume) : a.disconnect(vcf);
 
-	vca1.through.gain.cancelScheduledValues(0);
-	vca2.through.gain.cancelScheduledValues(0);
-
-	const vca1Changes = [].concat(
-		// attack
-		(instr.vca1.attack > 0)
-			? [[0, time], [velocity * instr.vca1.volume, instr.vca1.attack]] : [[velocity * instr.vca1.volume, now]],
-		// decay
-		(instr.vca1.decay > 0)
-			? [[instr.vca1.sustain * velocity * instr.vca1.volume, instr.vca1.decay]] : []
-	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
-
-	a.schedule(vca1, 'gain', vca1Changes[0], vca1Changes[1]);
-
-	const vca2Changes = [].concat(
-		// attack
-		(instr.vca2.attack > 0)
-			? [[0, time], [velocity * instr.vca2.volume, instr.vca2.attack]] : [[velocity * instr.vca2.volume, now]],
-		// decay
-		(instr.vca2.decay > 0)
-			? [[instr.vca2.sustain * velocity * instr.vca2.volume, instr.vca2.decay]] : []
-	).reduce((a, c) => [[].concat(a[0], c[0]), [].concat(a[1], c[1])], [[], []]);
-
-	a.schedule(vca2, 'gain', vca2Changes[0], vca2Changes[1]);
+	a.noteOn(adsr1, velocity, time);
+	a.noteOn(adsr2, velocity, time);
 
 	return Object.assign({}, nodes, {
-		voices: obj.patch(voices, note.number, {
+		voices: obj.patch(voices, note, {
 			vco1,
 			vco2,
-			vca1,
-			vca2
+			adsr1,
+			adsr2
 		}),
 		vcf,
 		context});
 });
 
-const noteOff = (instr, note) => changes$.onNext(nodes => {
+const noteOff = (instr, note, time) => changes$.onNext(nodes => {
 	const {voices, context} = nodes;
 	const now = context.currentTime;
-	const time = now + 0.0001;
+	time = time || now + 0.0001;
 
-	let voice = voices[note.number] || false;
+	let voice = voices[note] || false;
+
 	if (voice) {
-		let {vco1, vca1, vco2, vca2} = voice;
+		let {vco1, adsr1, vco2, adsr2} = voice;
 
-		vca1.through.gain.cancelScheduledValues(0);
-		vca2.through.gain.cancelScheduledValues(0);
-		vca1.through.gain.setValueCurveAtTime(new Float32Array([vca1.through.gain.value, 0]),
-			time, instr.vca1.release > 0 && instr.vca1.release || 0.00001);
-		vca2.through.gain.setValueCurveAtTime(new Float32Array([vca2.through.gain.value, 0]),
-			time, instr.vca2.release > 0 && instr.vca2.release || 0.00001);
+		a.noteOff(adsr1, time);
+		a.noteOff(adsr2, time);
 
 		a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
 		a.stop(vco2, time + (instr.vca2.release > 0 && instr.vca2.release || 0.00001));
 
-		return Object.assign({}, nodes, {voices: obj.patch(voices, note.number, {
-			vco1, vco2, vca1, vca2
-		}), context});
+		setTimeout(() => {
+			a.disconnect(vco1);
+			a.disconnect(adsr1);
+			a.disconnect(vco2);
+			a.disconnect(adsr2);
+		}, (time - now + instr.vca1.release) * 1000);
+
+		return Object.assign({}, nodes, {voices: objFilter(voices, key => key !== note), context});
 	}
 
 	return nodes;
 });
 
 const pitchBend = (instr, pitchValue) => changes$.onNext(nodes =>
-	obj.patch(nodes, 'voices', obj.map(nodes.voices, voice => Object.assign({}, voice, {
-		vco1: a.apply(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
-		vco2: a.apply(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
+	obj.patch(nodes, 'voices', obj.map(nodes.voices, (key, voice) => Object.assign({}, voice, {
+		vco1: a.update(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
+		vco2: a.update(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
 	})))
 );
 
-const engine$ = changes$
-	.startWith(() => initial)
-	.scan((state, change) => change(state), {})
-	.subscribe(state => console.log(state));
+const engine$ = new Rx.BehaviorSubject();
 
-const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
+changes$
+	.startWith(() => initial)
+	.scan((engine, change) => change(engine), {})
+	// .map(engine => (console.log(engine), engine))
+	.subscribe(engine => engine$.onNext(engine));
+
+const hook = ({state$, actions, studio, tapTempo}) => {
 	// hook state changes
-	const instrUpdates$ = state$.distinctUntilChanged(state => state.instrument).map(state => state.instrument).share();
+	const instrUpdates$ = state$
+		.distinctUntilChanged(state => state.instrument)
+		.map(state => state.instrument).share();
 	// update connections
 	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
 		.subscribe(updateConnections);
 	// update prefs
 	instrUpdates$.subscribe(updatePrefs);
 
-	const prepVal = (min = 0, max = 1, digits = 3) => val =>
-		[(min + val * max - val * min).toFixed(digits)]
-			.map(val =>
-				(digits === 0) ? parseInt(val, 10) : parseFloat(val)
+	state$.distinctUntilChanged(state => state.midiMap.channels)
+		.map(state => ({
+			state,
+			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
+				(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
+				{}
 			)
-			.pop();
-
-	// hook midi signals
-	midi.access$
-		.subscribe(data => {
-			actions.midiMap.connect(data);
-
-			const clockMsg = [248];    // note on, middle C, full velocity
-			tick$
-				.filter(({time, i}) => i % 2 === 0)
-				.withLatestFrom(state$, (time, state) => ({time, state}))
-				.filter(({state}) => state.midiMap.clock.out !== false && data.outputs[state.midiMap.clock.out])
-				.subscribe(({time, state}) => {
-					console.log(state.midiMap.clock.out, clockMsg);
-					data.outputs[state.midiMap.clock.out].send(clockMsg);
-					// output.send(clockMsg);
-				});
+		}))
+		.withLatestFrom(engine$, ({state, pressed}, engine) => ({state, pressed, engine}))
+		.subscribe(({state, pressed, engine: {voices}}) => {
+			// console.log(pressed);
+			Object.keys(pressed).filter(note => !voices[note])
+				.forEach(
+					note => noteOn(state.instrument, note, pressed[note])
+				);
+			Object.keys(voices).filter(note => !pressed[note])
+				.forEach(
+					note => noteOff(state.instrument, note)
+				);
 		});
 
-	// output clock
-	// const clockMsg = [248];    // note on, middle C, full velocity
-	// tick$
-	// 	.filter(({time, i}) => i % 2 === 0)
-	// 	.withLatestFrom(state$, midi.access$, (time, state, midiAccess) => ({time, state, midiAccess}))
-	// 	.filter(({state, midiAccess}) => state.midiMap.clock.out !== false && midiAccess.outputs[state.midiMap.clock.out])
-	// 	.subscribe(({time, state, midiAccess}) => {
-	// 		const output = midiAccess.outputs[state.midiMap.clock.out];
-	// 		output.send(clockMsg);
-	// 		console.log(state.midiMap.clock.out, clockMsg, output);
-	// 	});
+	// pitch bend
+	state$.distinctUntilChanged(state => state.midiMap.pitch)
+		.subscribe(state => pitchBend(state.instrument, state.midiMap.pitch));
 
-	const midiState$ = midi.msg$
-		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		// .filter(data => data.msg.binary !== '11111000') // ignore midi clock for now
-		// .map(data => (console.log(`midi: ${data.msg.binary}`, data.msg), data))
-		.withLatestFrom(state$, (data, state) => ({data, state}))
-		.share();
-
-	// clock ticks
-	midiState$
-		.filter(({data}) => data.msg.binary === '11111000')
-		.filter(({data, state}) =>
-			state.midiMap.clock.in === indexAt(state.midiMap.devices.inputs, 'name', data.raw.input.name)
-		)
-		.bufferWithCount(1, 24)
-		.subscribe(() => tapTempo.tap());
-
-	midiState$
-		.filter(({data}) => data.msg.state === 'controller')
-		.distinctUntilChanged(({data}) => data.msg.value)
-		.debounce(50)
-		.subscribe(({data, state}) => {
-			let mmap = obj.sub(state.midiMap.map, [data.msg.state, data.msg.controller]);
-			if (mmap) {
-				let [section, prop] = mmap;
-				// vca
-				if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
-				// value
-				let valMods = mmap.slice(2);
-				let val = prepVal.apply(null, valMods)(data.msg.value);
-				actions.change(section, prop, val);
-			}
-		});
-
-	// studio controls
-	midiState$
-		.filter(({data}) =>
-			data.msg.state === 'controller'
-			&& [41, 42, 45].indexOf(data.msg.controller) > -1
-			&& data.msg.value === 1
-		)
-		.subscribe(({data}) => {
-			switch (data.msg.controller) {
-				case 41:
-					actions.studio.play();
-					break;
-				case 42:
-					actions.studio.stop();
-					break;
-				case 45:
-					actions.studio.record();
-					break;
-				default:
-
-			}
-		});
-
+	/*
 	midiState$
 		.filter(({data}) => data.msg.binary !== '11111000')
 		.map(({state, data}) => (console.log(`midi: ${data.msg.binary}`, data.msg), ({state, data})))
@@ -300,8 +224,8 @@ const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 					if (state.midiMap.map.controller[data.msg.controller]) {
 						let mmap = state.midiMap.map.controller[data.msg.controller];
 						let [section, prop] = mmap;
-						// vca
-						if (section === 'instrument' && prop[0] === 'eg') prop = [`vca${state.instrument.vcaOn + 1}`, prop[1]];
+						// adsr
+						if (section === 'instrument' && prop[0] === 'eg') prop = [`adsr${state.instrument.adsrOn + 1}`, prop[1]];
 						// value
 						let valMods = mmap.slice(2);
 						let val = prepVal.apply(null, valMods)(data.msg.value);
@@ -312,6 +236,24 @@ const hook = ({state$, midi, actions, studio, tapTempo, tick$}) => {
 					break;
 				default:
 					break;
+			}
+		});
+		*/
+	state$
+		.distinctUntilChanged(state => state.studio.tick)
+		.filter(state => state.studio.playing)
+		.subscribe(({studio, instrument, pianoRoll}) => {
+			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 1) {
+				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
+				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
+				// let start = studio.tick.index;
+				pianoRoll.events
+					.filter(event => event.start >= start && event.duration > 0)
+					.forEach(event => {
+						let timepos = studio.tick.time + ((event.start - start + offset) * bpmToTime(studio.bpm));
+						noteOn(instrument, event.note, event.velocity || 0.7, timepos);
+						noteOff(instrument, event.note, timepos + event.duration * bpmToTime(studio.bpm));
+					});
 			}
 		});
 };

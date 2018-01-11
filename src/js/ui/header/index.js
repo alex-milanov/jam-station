@@ -32,20 +32,28 @@ module.exports = ({state, actions, tapTempo}) => header([
 		li([a({
 			class: {on: state.layout.instrument.visible},
 			on: {click: ev => actions.toggle(['layout', 'instrument', 'visible'])}
-		}, [i('.fa.fa-tasks')])]),
+		}, [i('.fa.fa-sliders')])]),
 		li([a({
 			class: {on: state.layout.sequencer.visible},
 			on: {click: ev => actions.toggle(['layout', 'sequencer', 'visible'])}
 		}, [i('.fa.fa-braille')])]),
 		li([a({
+			class: {on: state.layout.pianoRoll.visible},
+			on: {click: ev => actions.toggle(['layout', 'pianoRoll', 'visible'])}
+		}, [
+			img('[src="/assets/piano-roll.svg"][height="34px"]')
+		])]),
+		li([a({
+			class: {on: state.layout.midiKeyboard.visible},
+			on: {click: ev => actions.toggle(['layout', 'midiKeyboard', 'visible'])}}, [
+				img('[src="/assets/midi-keyboard.svg"]')
+			])]),
+		li([a({
 			class: {on: state.layout.midiMap.visible},
 			on: {click: ev => actions.toggle(['layout', 'midiMap', 'visible'])}
-		}, [i('.fa.fa-sitemap')])])
-		/*
-		li([a({
-			class: {on: state.ui.midiKeyboard},
-			on: {click: ev => actions.toggleUI('midiKeyboard')}}, [i('.fa.fa-keyboard-o')])])
-		*/
+		}, [
+			img('[src="/assets/midi.svg"][height="38px"]')
+		])])
 	]),
 	ul('.center', [
 		li([img('[src="assets/logo2.png"]')]),

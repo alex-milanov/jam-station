@@ -1,7 +1,8 @@
 
 .sequencer
-	+editor(560px, 17px)
+	+editor(560px, 0px)
 	.body
+		padding-top: 4px
 		.head
 			margin: 2px
 			padding: 0px
@@ -22,18 +23,17 @@
 				background: #dfe
 		.row
 			padding: 0px
-			height: 32px
-			line-height: 32px
+			height: 34px
+			line-height: 34px
 			clear: both
 			> .bar
 				+no-margin-padding
 				+header-height(30px)
-				margin: 1px
-				border: 1px solid #ccc
-				box-shadow: inset 0px 0px 10px rgba(33, 33, 33, 0.1)
+				margin: 2px
+				box-shadow: inset 0px 0px 1px #777, inset 0px -1px 1px 1px #ccc
 				display: inline-block
 				cursor: pointer
-				background: #eee
+				background: #dfdfdf
 				transition: box-shadow .3s, font-size .3s, background .3s
 				box-sizing: border-box
 				float: left
@@ -51,28 +51,24 @@
 			.channel
 				+user-select(none)
 				+header-height(30px)
-				margin: 1px
+				margin: 2px
 				padding: 0px 7px
 				display: inline-block
 				font-size: 12px
 				width: 140px
 				float: left
 				cursor: pointer
-				background: #eee
+				background: #dfdfdf
 				box-sizing: border-box
-				border: 1px solid #ccc
-				box-shadow: inset 0px 0px 15px #ccc
+				box-shadow: inset 0px 0px 1px #777, inset 0px -1px 1px 1px #ccc
 				transition: background .3s, box-shadow .3s
 				&:hover
 					// background: #eafaf5
-					box-shadow: inset 0px 0px 15px #ccc
 					background: $jam-station-color-light
 				&.on
-					background: darken($jam-station-color-light, 1%)
-					box-shadow: inset 0px 0px 15px #ccc
+					background: $jam-station-color-light
 				&:active
-					background: darken($jam-station-color-light, 1%)
-					box-shadow: inset 0px 0px 10px #bbb
+					background: $jam-station-color-light
 					padding-top: 2px
 					line-height: 28px
 			.add-channel
@@ -98,10 +94,11 @@
 				&:hover, &.tick
 					+header-height(32px)
 					width: 22px
-					margin: 0px
+					margin: 1px
 				&:nth-child(2n-1)
-					background: #f5f5f5
+					background: #e5e5e5
 				&.on
-					background: #d0dadf
+					background: #c5cfd5
+					box-shadow: inset 0px 0px 1px #777, inset 0px -1px 1px 1px #b5bfb5
 				&.tick
 					background: #dfe

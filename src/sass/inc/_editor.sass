@@ -1,5 +1,4 @@
 
-$jam-st-edior-header-height: 38px
 
 @mixin editor($x, $y)
 	position: absolute
@@ -7,16 +6,15 @@ $jam-st-edior-header-height: 38px
 	top: $y
 	display: block
 	//background: linear-gradient(-30deg, rgba(255,255,255,0.9) 0%,rgba(243,243,243,0.9) 50%,rgba(237,237,237,0.9) 51%,rgba(255,255,255,0.9) 100%)
-	background: #e0e0e0
-	box-shadow: 0px 0px 3px #777
+	background: $jam-st-edior-bg
+	box-shadow: 0px 0px 1px #777
 	.header
 		+header-height($jam-st-edior-header-height)
 		display: block
 		cursor: pointer
 		margin: 0px
-		box-sizing: content-box
-		// border-bottom: 1px solid #aaa
-		background: #eaeaea
+		background: $jam-st-edior-header-bg
+		border-bottom: 1px solid #ccc
 		> *, > div > *
 			+no-margin-padding
 			+header-height($jam-st-edior-header-height)
@@ -40,14 +38,14 @@ $jam-st-edior-header-height: 38px
 			border-radius: 2px
 			transition: box-shadow .5s, text-shadow .5s, background .5s
 		input
-			box-shadow: inset 0px 0px 15px rgba(128, 128, 128, 0.1)
+			box-shadow: inset 0px 0px 1px rgba(128, 128, 128, 0.3)
 			color: #333
 			// text-shadow: 0px 0px 5px rgba(128, 128, 128, 0.5)
 			// background: #cff5da
 			// background: #dfe
 			&:focus
-				background: #dfe
-				box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3)
+				background: $jam-station-color-light
+				box-shadow: inset 0px 0px 1px rgba(33, 77, 55, 0.7)
 			&[type=number]
 				-moz-appearance: textfield
 				-webkit-appearance: textfield
@@ -85,8 +83,8 @@ $jam-st-edior-header-height: 38px
 			cursor: pointer
 			outline: none
 			&.on
-				box-shadow: inset 0px 0px 7px rgba(33, 77, 55, 0.3)
-				background: #dfe
+				box-shadow: inset 0px 0px 1px rgba(33, 77, 55, 0.7)
+				background: $jam-station-color-light
 			&:hover
 				text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1)
 				outline: none
@@ -94,6 +92,20 @@ $jam-st-edior-header-height: 38px
 				outline: none
 				border-image: none
 				border: 0px
+		h2
+			width: 140px
+			display: inline-block
+			> *
+				float: left
+			.fa
+				margin-right: 4px
+			> img
+				vertical-align: middle
+				line-height: $jam-st-edior-header-height
+				max-height: $jam-st-edior-header-height
+				max-width: $jam-st-edior-header-height
+				margin-right: 4px
+
 	.body
 		+no-margin-padding
 		// border-top: 1px solid #eee
@@ -102,7 +114,7 @@ $jam-st-edior-header-height: 38px
 		fieldset
 			position: relative
 			padding: 0px 10px
-			border: 0px solid #aaa
+			border: 0px solid #777
 			border-top-width: 1px
 			.on-switch
 				position: absolute
@@ -113,12 +125,12 @@ $jam-st-edior-header-height: 38px
 				width: 16px
 				cursor: pointer
 				outline: none
-				background: #e0e0e0
-				color: #aaa
+				background: $jam-st-edior-bg
+				color: #333
 				text-align: center
 				transition: color .3s, text-shadow .3s
 				&.on
-					color: #dfe
+					color: $jam-station-color-light
 					font-size: 12px
 					text-shadow: 0px 0px 1px rgba(33, 33, 33, 0.7)
 			div
@@ -131,7 +143,7 @@ $jam-st-edior-header-height: 38px
 				padding: 0px 5px
 				> :not(:last-child):not(.knob)::after
 					content: ''
-					border-top: 1px solid #999
+					border-top: 1px solid #777
 					display: inline-block
 					height: 1px
 					width: 7px
@@ -140,7 +152,7 @@ $jam-st-edior-header-height: 38px
 					vertical-align: middle
 				span
 					+user-select(none)
-					color: #999
+					color: #777
 					height: 16px
 					line-height: 16px
 					cursor: pointer

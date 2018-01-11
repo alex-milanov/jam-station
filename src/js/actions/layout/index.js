@@ -19,14 +19,20 @@ const initial = {
 			width: 560
 		}
 	},
-	midiMap: {
+	pianoRoll: {
 		visible: true,
+		dim: {
+			width: 560
+		}
+	},
+	midiMap: {
+		visible: false,
 		dim: {
 			width: 600
 		}
 	},
 	midiKeyboard: {
-		visible: false,
+		visible: true,
 		dim: {
 			width: 600
 		}

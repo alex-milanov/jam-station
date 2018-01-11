@@ -9,7 +9,7 @@ const actionMaps = [];
 
 module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
-		h2([img('[src="/assets/midi.svg"]'), span('MIDI Map')])
+		h2([img('[src="assets/midi.svg"]'), span('MIDI Map')])
 	]),
 	div('.body', [
 		fieldset([

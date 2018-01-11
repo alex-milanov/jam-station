@@ -9,7 +9,7 @@ const actionMaps = [];
 
 module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 	div('.header', [
-		h2([img('[src="/assets/piano-roll.svg"]'), span('Piano Roll')]),
+		h2([img('[src="assets/piano-roll.svg"]'), span('Piano Roll')]),
 		div('.right', [
 			button('.fa.fa-eraser', {on: {
 				click: () => actions.pianoRoll.clear()

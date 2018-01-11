@@ -41,18 +41,18 @@ module.exports = ({state, actions, tapTempo}) => header([
 			class: {on: state.layout.pianoRoll.visible},
 			on: {click: ev => actions.toggle(['layout', 'pianoRoll', 'visible'])}
 		}, [
-			img('[src="/assets/piano-roll.svg"][height="34px"]')
+			img('[src="assets/piano-roll.svg"][height="34px"]')
 		])]),
 		li([a({
 			class: {on: state.layout.midiKeyboard.visible},
 			on: {click: ev => actions.toggle(['layout', 'midiKeyboard', 'visible'])}}, [
-				img('[src="/assets/midi-keyboard.svg"]')
+				img('[src="assets/midi-keyboard.svg"]')
 			])]),
 		li([a({
 			class: {on: state.layout.midiMap.visible},
 			on: {click: ev => actions.toggle(['layout', 'midiMap', 'visible'])}
 		}, [
-			img('[src="/assets/midi.svg"][height="38px"]')
+			img('[src="assets/midi.svg"][height="38px"]')
 		])])
 	]),
 	ul('.center', [

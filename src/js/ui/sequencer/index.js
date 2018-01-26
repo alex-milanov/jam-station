@@ -18,6 +18,11 @@ module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 			on: {click: () => actions.studio.record()}
 		}),
 		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
+		label('LN'),
+		input('.bars-length', {
+			props: {value: state.sequencer.barsLength || 4, size: 3},
+			on: {input: ev => actions.set(['sequencer', 'barsLength'], ev.target.value)}
+		}),
 		label('BAR'),
 		span('.cipher', [
 			button('.left.fa.fa-caret-left', {on: {click: () => actions.studio.prev()}}),

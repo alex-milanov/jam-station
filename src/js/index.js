@@ -55,6 +55,13 @@ if (module.hot) {
 }
 // reduce actions to state
 actions$
+	/*
+	.map(action => (
+		action.path && console.log(action.path.join('.'), action.payload),
+		console.log(action),
+		action)a
+	)
+	*/
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
 	// .map(state => (console.log(state), state))

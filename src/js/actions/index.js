@@ -7,6 +7,7 @@ const {Subject} = Rx;
 const viewport = require('./viewport');
 const layout = require('./layout');
 const studio = require('./studio');
+const session = require('./session');
 const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
@@ -64,6 +65,7 @@ module.exports = {
 	studio,
 	instrument,
 	mediaLibrary,
+	session,
 	sequencer,
 	pianoRoll,
 	midiMap,

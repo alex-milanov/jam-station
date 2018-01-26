@@ -79,7 +79,7 @@ const hook = ({state$, actions, tick$}) => {
 					// console.log({timepos, start, offset, i});
 					sequencer.pattern[
 						(studio.tick.index === studio.beatLength - 1)
-							? (studio.tick.bar < studio.barsLength - 1) ? studio.tick.bar + 1 : 0
+							? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
 							: studio.tick.bar
 					].forEach((row, k) => {
 						if (row[i]) {

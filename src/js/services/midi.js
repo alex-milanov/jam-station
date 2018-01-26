@@ -17,7 +17,7 @@ let unhook = () => {};
 
 const clockMsg = [248];    // note on, middle C, full velocity
 
-const hook = ({state$, actions, tapTempo}) => {
+const hook = ({state$, actions, tapTempo, tick$}) => {
 	let subs = [];
 
 	const {access$, msg$} = midi.init();
@@ -70,26 +70,30 @@ const hook = ({state$, actions, tapTempo}) => {
 					let [msgType, msgVal, propPath, ...valMods] = mmap;
 					// vca
 					if (propPath[0] === 'instrument' && propPath[1] === 'eg')
-						propPath = ['instrument', `vca${state.instrument.vcaOn + 1}`, propPath[1]];
+						propPath = ['instrument', `vca${state.instrument.vcaOn + 1}`, propPath[2]];
 					// value
-					let val = prepVal.apply(null, valMods)(data.msg.value);
+					let val = prepVal(...valMods)(data.msg.value);
+					// console.log(propPath, val);
 					actions.change(propPath[0], propPath.slice(1), val);
 				}
 			})
 		);
 
-	/*
 	// on access sync clocks
 	subs.push(
-		access$
-			.flatMap(access => tick$
-				.filter(({time, i}) => i % 2 === 0)
-				.withLatestFrom(state$, (time, state, access) => ({time, state, access}))
-				.filter(({state, access}) => state.midiMap.clock.out !== false && access.outputs[state.midiMap.clock.out])
+			tick$
+			// .filter(({time, i}) => i % 2 === 0)
+			.withLatestFrom(state$, (time, state) => ({time, state}))
+			.filter(({state}) => state.midiMap.clock.out.length > 0
+				&& state.midiMap.clock.out.filter(out =>
+					state.midiMap.devices.outputs[out]
+				).length > 0
 			)
-			.subscribe(({time, state, access}) => {
-				console.log(state.midiMap.clock.out, clockMsg);
-				access.outputs[state.midiMap.clock.out].send(clockMsg);
+			.subscribe(({time, state}) => {
+				// console.log(state.midiMap.clock.out, clockMsg);
+				state.midiMap.clock.out.forEach(out =>
+					state.midiMap.devices.outputs[out].send(clockMsg)
+				);
 				// output.send(clockMsg);
 			})
 	);
@@ -105,6 +109,7 @@ const hook = ({state$, actions, tapTempo}) => {
 			.subscribe(() => tapTempo.tap())
 	);
 
+/*
 	// studio controls
 	subs.push(
 		midiState$
@@ -129,8 +134,7 @@ const hook = ({state$, actions, tapTempo}) => {
 				}
 			})
 		);
-	*/
-
+*/
 	unhook = () => subs.forEach(sub => sub.unsubscribe());
 };
 

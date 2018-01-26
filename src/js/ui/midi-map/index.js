@@ -23,7 +23,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {
-									checked: state.midiMap.clock.in === index
+									checked: state.midiMap.clock.in.indexOf(index) > -1
 								},
 								on: {
 									click: () => actions.midiMap.toggleClock('in', index)
@@ -40,7 +40,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {
-									checked: state.midiMap.clock.out === index
+									checked: state.midiMap.clock.out.indexOf(index) > -1
 								},
 								on: {
 									click: () => actions.midiMap.toggleClock('out', index)

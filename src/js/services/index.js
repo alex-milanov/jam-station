@@ -16,7 +16,7 @@ const hook = ({state$, actions, tapTempo}) => {
 	layout.hook({state$, actions});
 	clock.hook({state$, actions});
 	studio.hook({state$, actions});
-	midi.hook({state$, actions, tapTempo});
+	midi.hook({state$, actions, tapTempo, tick$: clock.tick$});
 	audio.hook({state$, actions, studio, tapTempo});
 	assets.hook({state$, actions, studio});
 	controls.hook({state$, actions});

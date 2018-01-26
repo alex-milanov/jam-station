@@ -9,7 +9,7 @@ const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 
 const initial = {
-	barsLength: 0,
+	barsLength: 1,
 	bar: 0,
 	channel: -1,
 	channels: [

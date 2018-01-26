@@ -4,6 +4,7 @@ const {div} = require('iblokz-snabbdom-helpers');
 const header = require('./header');
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');
+const session = require('./session');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const midiKeyboard = require('./midi-keyboard');
@@ -12,6 +13,7 @@ const pianoRoll = require('./piano-roll');
 const panels = {
 	mediaLibrary,
 	instrument,
+	session,
 	sequencer,
 	midiMap,
 	midiKeyboard,

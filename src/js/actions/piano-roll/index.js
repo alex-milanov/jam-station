@@ -6,6 +6,7 @@ const {measureToBeatLength, bpmToTime} = require('../../util/math');
 
 const initial = {
 	events: [
+		/*
 		{
 			note: 'C2',
 			// tick index
@@ -48,6 +49,7 @@ const initial = {
 			// in relation to ticks / tick = 1/16
 			duration: 1
 		}
+		*/
 	]
 };
 

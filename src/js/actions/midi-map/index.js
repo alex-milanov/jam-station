@@ -5,7 +5,7 @@ const {Subject} = Rx;
 
 // util
 const {measureToBeatLength} = require('../../util/math');
-const {obj} = require('iblokz-data');
+const {obj, arr} = require('iblokz-data');
 
 const initial = {
 	devices: {
@@ -13,8 +13,8 @@ const initial = {
 		outputs: []
 	},
 	clock: {
-		in: false,
-		out: false
+		in: [],
+		out: []
 	},
 	pitch: 0,
 	channels: {
@@ -37,7 +37,7 @@ const connect = devices =>
 	});
 
 const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clock', inOut],
-	obj.sub(state, ['midiMap', 'clock'])[inOut] === index ? false : index
+	arr.toggle(obj.sub(state, ['midiMap', 'clock'])[inOut], index)
 );
 
 const noteOn = (channel, note, velocity = 0) => state => (

@@ -10,8 +10,14 @@ const {measureToBeatLength, bpmToTime} = require('../util/math');
 const tick$ = new Rx.Subject();
 let i = 0;
 let time = context.currentTime;
-let length = bpmToTime(140);
+let length;
+let modifier = 6;
 let playing = false;
+
+const setLength = time => {
+	length = time / modifier;
+};
+setLength(bpmToTime(140));
 
 const tick = () => {
 	tick$.onNext({time, i});
@@ -22,12 +28,12 @@ const tick = () => {
 };
 
 const setTempo = bpm => {
-	length = bpmToTime(bpm);
+	setLength(bpmToTime(bpm));
 };
 
 const play = bpm => {
 	time = context.currentTime;
-	length = bpmToTime(bpm);
+	setLength(bpmToTime(bpm));
 	console.log({time});
 	tick();
 };
@@ -58,6 +64,7 @@ const hook = ({state$, actions}) => {
 
 	subs.push(
 		tick$
+			.filter(({time, i}) => i % modifier === 0)
 			.subscribe(({time}) => (playing) && actions.studio.tick(time))
 	);
 
@@ -66,5 +73,6 @@ const hook = ({state$, actions}) => {
 
 module.exports = {
 	hook,
+	tick$,
 	unhook
 };

@@ -2,7 +2,7 @@
 
 const initial = {
 	mediaLibrary: {
-		visible: true,
+		visible: false,
 		dim: {
 			width: 280
 		}
@@ -11,6 +11,12 @@ const initial = {
 		visible: true,
 		dim: {
 			width: 310
+		}
+	},
+	session: {
+		visible: false,
+		dim: {
+			width: 560
 		}
 	},
 	sequencer: {
@@ -26,7 +32,7 @@ const initial = {
 		}
 	},
 	midiMap: {
-		visible: false,
+		visible: true,
 		dim: {
 			width: 600
 		}

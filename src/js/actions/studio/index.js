@@ -54,7 +54,7 @@ const tick = (time = context.currentTime) =>
 		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
 		bar: (state.studio.tick.index < state.studio.beatLength - 1)
 			? state.studio.tick.bar
-			: (state.studio.tick.bar < state.studio.barsLength - 1) && (state.studio.tick.bar + 1) || 0,
+			: (state.studio.tick.bar < state.sequencer.barsLength - 1) && (state.studio.tick.bar + 1) || 0,
 		elapsed: state.studio.tick.elapsed + 1
 	});
 
@@ -84,11 +84,11 @@ const change = (prop, val) =>
 		).pop();
 
 const next = () => state => obj.patch(state, ['studio', 'tick'], {
-	bar: (state.studio.tick.bar < state.studio.barsLength - 1) ? state.studio.tick.bar + 1 : 0
+	bar: (state.studio.tick.bar < state.sequencer.barsLength - 1) ? state.studio.tick.bar + 1 : 0
 });
 
 const prev = () => state => obj.patch(state, ['studio', 'tick'], {
-	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.studio.barsLength - 1
+	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.sequencer.barsLength - 1
 });
 
 module.exports = {

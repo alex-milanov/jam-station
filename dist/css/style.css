@@ -3645,6 +3645,226 @@ input, label, body {
         box-sizing: border-box;
         border: 0px; }
 
+.session {
+  position: absolute;
+  left: 560px;
+  top: 0px;
+  display: block;
+  background: #d5d5d5;
+  box-shadow: 0px 0px 1px #777;
+  bottom: 44px; }
+  .session .header {
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    box-sizing: border-box;
+    height: 36px;
+    line-height: 36px;
+    display: block;
+    cursor: pointer;
+    margin: 0px;
+    background: #e0e0e0;
+    border-bottom: 1px solid #ccc; }
+    .session .header > *, .session .header > div > * {
+      margin: 0px;
+      padding: 0px;
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      height: 36px;
+      line-height: 36px;
+      margin: 0px 7px;
+      font-size: 14px;
+      display: inline-block;
+      box-sizing: border-box;
+      float: left; }
+      .session .header > * > i.fa, .session .header > div > * > i.fa {
+        margin: 0px;
+        padding: 0px;
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 36px;
+        line-height: 36px; }
+    .session .header > div {
+      margin: 0px; }
+    .session .header input, .session .header button {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      height: 28px;
+      line-height: 28px;
+      margin: 4px 3px;
+      outline: none;
+      text-align: center;
+      border: 0px solid #333;
+      background: inherit;
+      border-radius: 2px;
+      transition: box-shadow .5s, text-shadow .5s, background .5s; }
+    .session .header input {
+      box-shadow: inset 0px 0px 1px rgba(128, 128, 128, 0.3);
+      color: #333; }
+      .session .header input:focus {
+        background: #cfefdf;
+        box-shadow: inset 0px 0px 1px rgba(33, 77, 55, 0.7); }
+      .session .header input[type=number] {
+        -moz-appearance: textfield;
+        -webkit-appearance: textfield;
+        appearance: textfield;
+        position: relative;
+        width: 58px; }
+        .session .header input[type=number]::-webkit-inner-spin-button, .session .header input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0; }
+    .session .header .cipher {
+      position: relative; }
+      .session .header .cipher input {
+        float: left; }
+      .session .header .cipher input, .session .header .cipher button {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 28px;
+        line-height: 28px;
+        margin: 4px 0px;
+        font-size: 14px; }
+      .session .header .cipher button {
+        position: absolute;
+        opacity: 0.1;
+        z-index: 99; }
+      .session .header .cipher .left, .session .header .cipher .right {
+        float: none; }
+      .session .header .cipher .left {
+        left: 0px; }
+      .session .header .cipher .right {
+        right: 0px; }
+      .session .header .cipher button:hover {
+        opacity: 0.7; }
+    .session .header button {
+      width: 26px;
+      text-align: center;
+      cursor: pointer;
+      outline: none; }
+      .session .header button.on {
+        box-shadow: inset 0px 0px 1px rgba(33, 77, 55, 0.7);
+        background: #cfefdf; }
+      .session .header button:hover {
+        text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1);
+        outline: none; }
+      .session .header button:active, .session .header button:focus, .session .header button::-moz-focus-inner {
+        outline: none;
+        border-image: none;
+        border: 0px; }
+    .session .header h2 {
+      width: 140px;
+      display: inline-block; }
+      .session .header h2 > * {
+        float: left; }
+      .session .header h2 .fa {
+        margin-right: 4px; }
+      .session .header h2 > img {
+        vertical-align: middle;
+        line-height: 36px;
+        max-height: 36px;
+        max-width: 36px;
+        margin-right: 4px; }
+  .session .body {
+    margin: 0px;
+    padding: 0px;
+    padding: 2px;
+    font-size: 14px; }
+    .session .body fieldset {
+      position: relative;
+      padding: 0px 10px;
+      border: 0px solid #777;
+      border-top-width: 1px; }
+      .session .body fieldset .on-switch {
+        position: absolute;
+        top: 0px;
+        right: 8px;
+        height: 32px;
+        line-height: 32px;
+        width: 16px;
+        cursor: pointer;
+        outline: none;
+        background: #d5d5d5;
+        color: #333;
+        text-align: center;
+        transition: color .3s, text-shadow .3s; }
+        .session .body fieldset .on-switch.on {
+          color: #cfefdf;
+          font-size: 12px;
+          text-shadow: 0px 0px 1px rgba(33, 33, 33, 0.7); }
+      .session .body fieldset div {
+        margin: 0px 0px 10px 0px; }
+      .session .body fieldset legend {
+        font-weight: bold;
+        font-size: 14px;
+        line-height: 32px;
+        height: 32px;
+        padding: 0px 5px; }
+        .session .body fieldset legend > :not(:last-child):not(.knob)::after {
+          content: '';
+          border-top: 1px solid #777;
+          display: inline-block;
+          height: 1px;
+          width: 7px;
+          margin: 0px 3px;
+          margin-top: -2px;
+          vertical-align: middle; }
+        .session .body fieldset legend span {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          color: #777;
+          height: 16px;
+          line-height: 16px;
+          cursor: pointer; }
+          .session .body fieldset legend span.on {
+            color: #333; }
+  .session .body ul.track {
+    margin: 0px;
+    padding: 0px;
+    margin: 1px;
+    display: inline-block;
+    height: 100%;
+    width: 140px;
+    list-style: none;
+    vertical-align: top; }
+    .session .body ul.track li {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      height: 48px;
+      line-height: 48px;
+      user-select: none;
+      margin: 2px 0px;
+      width: 100%;
+      list-style: none;
+      background: #bbb;
+      text-align: center;
+      border: 1px solid #999; }
+      .session .body ul.track li:first-child {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 24px;
+        line-height: 24px;
+        background: #aaa; }
+      .session .body ul.track li.selected {
+        border-color: #eee; }
+      .session .body ul.track li.empty {
+        background: #aaa; }
+        .session .body ul.track li.empty:hover {
+          background: #bbb; }
+
 .sequencer {
   position: absolute;
   left: 560px;

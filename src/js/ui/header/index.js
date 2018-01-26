@@ -34,6 +34,12 @@ module.exports = ({state, actions, tapTempo}) => header([
 			on: {click: ev => actions.toggle(['layout', 'instrument', 'visible'])}
 		}, [i('.fa.fa-sliders')])]),
 		li([a({
+			class: {on: state.layout.session.visible},
+			on: {click: ev => actions.toggle(['layout', 'session', 'visible'])}
+		}, [
+			img('[src="assets/session.svg"][height="20px"]', {style: {margin: '9px 0px'}})
+		])]),
+		li([a({
 			class: {on: state.layout.sequencer.visible},
 			on: {click: ev => actions.toggle(['layout', 'sequencer', 'visible'])}
 		}, [i('.fa.fa-braille')])]),
@@ -67,11 +73,13 @@ module.exports = ({state, actions, tapTempo}) => header([
 				props: {value: state.studio.bpm || 120, size: 3},
 				on: {input: ev => actions.studio.change('bpm', ev.target.value)}
 			}),
+			/*
 			label('LN'),
 			input('.bars-length', {
 				props: {value: state.studio.barsLength || 4, size: 3},
 				on: {input: ev => actions.studio.change('barsLength', ev.target.value)}
 			}),
+			*/
 			label('SIG'),
 			input('.measure', {
 				props: {value: state.studio.measure || '4/4', size: 6},

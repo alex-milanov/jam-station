@@ -2,6 +2,12 @@
 
 const {obj} = require('iblokz-data');
 
+const defValues = {
+	pianoRoll: require('../piano-roll').initial,
+	sequencer: require('../sequencer').initial,
+	instrument: require('../instrument').initial
+};
+
 const initial = {
 	title: 'Untitled Piece',
 	author: 'Anonymous Author',
@@ -21,8 +27,8 @@ const initial = {
 			name: 'Drums',
 			type: 'seq',
 			inst: {},
-			measures: {
-				0: {
+			measures: [
+				{
 					name: 'Sample Beat',
 					row: 0,
 					barLength: 1,
@@ -35,11 +41,12 @@ const initial = {
 						]
 					]
 				}
-			}
+			]
 		},
 		{
 			name: 'Baseline',
-			inst: {},
+			inst: {
+			},
 			type: 'piano',
 			measures: [
 				{
@@ -95,14 +102,12 @@ const initial = {
 		{
 			name: 'Comp 1',
 			type: 'piano',
-			inst: {},
-			measures: {}
+			measures: []
 		},
 		{
 			name: 'Lead 1',
 			type: 'piano',
-			inst: {},
-			measures: {}
+			measures: []
 		}
 	],
 	arrangement: [
@@ -110,8 +115,23 @@ const initial = {
 	]
 };
 
-const select = (type, trackIndex, rowIndex) => state =>
-	obj.patch(state, ['session', 'selection', type], [trackIndex, rowIndex]
+const select = (type, trackNumber, measureRow) => state =>
+	Object.assign(
+		obj.patch(state, ['session', 'selection', type], [trackNumber, measureRow]),
+		(type === 'seq')
+			? {
+				sequencer: Object.assign(
+					{}, state.session.tracks[trackNumber].measures[measureRow] || defValues.sequencer
+				)
+			}
+			: {
+				pianoRoll: Object.assign(
+					{}, state.session.tracks[trackNumber].measures[measureRow] || defValues.pianoRoll
+				),
+				instrument: Object.assign(
+					{}, state.session.tracks[trackNumber].inst || defValues.instrument
+				)
+			}
 	/*
 		(obj.sub(state, ['session', 'selection', type]).join('.') === [trackIndex, rowIndex].join('.'))
 			? []

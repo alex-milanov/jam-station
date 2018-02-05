@@ -5,6 +5,8 @@ const {obj, fn} = require('iblokz-data');
 const {measureToBeatLength, bpmToTime} = require('../../util/math');
 
 const initial = {
+	barsLength: 1,
+	bar: 0,
 	events: [
 		/*
 		{

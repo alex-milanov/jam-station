@@ -14,7 +14,7 @@ const initial = {
 		}
 	},
 	session: {
-		visible: false,
+		visible: true,
 		dim: {
 			width: 560
 		}

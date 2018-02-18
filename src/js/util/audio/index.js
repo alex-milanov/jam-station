@@ -70,7 +70,9 @@ const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 		}))
 	: node1;
 
-const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
+const disconnect = (node1, node2) => (
+	// (console.log('dissconnecting', node1, node2)),
+	(node1.out.indexOf(node2) > -1)
 	? (_disconnect(
 			// input
 			isGet(node1.output)
@@ -89,7 +91,8 @@ const disconnect = (node1, node2) => (node1.out.indexOf(node2) > -1)
 		}))
 	: (typeof node2 === 'undefined')
 		&& node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
-		|| node1;
+		|| node1
+);
 
 const reroute = (node1, node2) => (node1.out && node1.out.indexOf(node2) === -1)
 	? connect(disconnect(node1), node2)

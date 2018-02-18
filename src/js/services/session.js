@@ -3,7 +3,7 @@
 const {obj, fn} = require('iblokz-data');
 
 const arrPatchAt = (arr, index, patch) => (
-	console.log(arr, index, patch),
+	// console.log(arr, index, patch),
 	[].concat(
 		arr.slice(0, index) || [],
 		((arr.length - 1) < index)

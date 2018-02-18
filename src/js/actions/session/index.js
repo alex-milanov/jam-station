@@ -22,6 +22,9 @@ const initial = {
 		{},
 		{}
 	],
+	active: [
+		0, 0, 0, 0
+	],
 	tracks: [
 		{
 			name: 'Drums',

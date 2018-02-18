@@ -22,56 +22,101 @@ const objFilter = (o, f) => (
 let changes$ = new Subject();
 
 const initial = {
-	// an dictionary midikey : vco
-	/*
-	voice: {
-		vco1
-		vco2
-		adsr1
-		adsr2
+	1: {
+		// an dictionary midikey : vco
+		/*
+		voice: {
+			vco1
+			vco2
+			adsr1
+			adsr2
+		}
+		*/
+		voices: {}, // a.start(a.vco({type: 'square'})),
+		// adsr1: a.adsr({gain: 0}),
+		vcf: a.vcf({cutoff: 0.64}),
+		reverb: a.create('reverb'),
+		// lfo: a.lfo({}),
+		volume: a.vca({gain: 0.3}),
+		context: a.context
+	},
+	2: {
+		// an dictionary midikey : vco
+		/*
+		voice: {
+			vco1
+			vco2
+			adsr1
+			adsr2
+		}
+		*/
+		voices: {}, // a.start(a.vco({type: 'square'})),
+		// adsr1: a.adsr({gain: 0}),
+		vcf: a.vcf({cutoff: 0.64}),
+		reverb: a.create('reverb'),
+		// lfo: a.lfo({}),
+		volume: a.vca({gain: 0.3}),
+		context: a.context
+	},
+	3: {
+		// an dictionary midikey : vco
+		/*
+		voice: {
+			vco1
+			vco2
+			adsr1
+			adsr2
+		}
+		*/
+		voices: {}, // a.start(a.vco({type: 'square'})),
+		// adsr1: a.adsr({gain: 0}),
+		vcf: a.vcf({cutoff: 0.64}),
+		reverb: a.create('reverb'),
+		// lfo: a.lfo({}),
+		volume: a.vca({gain: 0.3}),
+		context: a.context
 	}
-	*/
-	voices: {}, // a.start(a.vco({type: 'square'})),
-	// adsr1: a.adsr({gain: 0}),
-	vcf: a.vcf({cutoff: 0.64}),
-	reverb: a.create('reverb'),
-	// lfo: a.lfo({}),
-	volume: a.vca({gain: 0.3}),
-	context: a.context
 };
 
-const updatePrefs = instr => changes$.onNext(nodes =>
-	obj.map(nodes,
-		(key, node) => (instr[key])
-			? a.update(node, instr[key])
-			: (key === 'voices')
-				? obj.map(node, (k, voice) => obj.map(voice, (key, n) => (instr[key])
-					? a.update(n, instr[key])
-					: n))
-				: node));
+const updatePrefs = (instr, ch = 1) => changes$.onNext(engine =>
+	obj.patch(engine, ch,
+		obj.map(engine[ch],
+			(key, node) => (instr[key])
+				? a.update(node, instr[key])
+				: (key === 'voices')
+					? obj.map(node, (k, voice) => obj.map(voice, (key, n) => (instr[key])
+						? a.update(n, instr[key])
+						: n))
+					: node)
+		)
+	);
 
-const updateConnections = instr => changes$.onNext(nodes => Object.assign({}, nodes, {
-	voices: obj.map(nodes.voices, (k, voice) => ({
+const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch(engine, ch, {
+	voices: obj.map(engine[ch].voices, (k, voice) => ({
 		vco1: a.connect(voice.vco1, voice.adsr1),
 		vco2: a.connect(voice.vco2, voice.adsr2),
 		adsr1: (!instr.vco1.on)
 			? a.disconnect(voice.adsr1)
-			: a.reroute(voice.adsr1, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume),
+			: a.reroute(voice.adsr1, (instr.reverb.on)
+				? engine[ch].reverb : (instr.vcf.on)
+					? engine[ch].vcf : engine[ch].volume),
 		adsr2: (!instr.vco2.on)
 			? a.disconnect(voice.adsr2)
-			: a.reroute(voice.adsr2, (instr.reverb.on) ? nodes.reverb : (instr.vcf.on) ? nodes.vcf : nodes.volume)
+			: a.reroute(voice.adsr2, (instr.reverb.on)
+				? engine[ch].reverb : (instr.vcf.on)
+					? engine[ch].vcf : engine[ch].volume)
 	})),
 	reverb: (instr.reverb.on)
-		? a.reroute(nodes.reverb, (instr.vcf.on) ? nodes.vcf : nodes.volume)
-		: a.disconnect(nodes.reverb),
+		? a.reroute(engine[ch].reverb, (instr.vcf.on) ? engine[ch].vcf : engine[ch].volume)
+		: a.disconnect(engine[ch].reverb),
 	vcf: (instr.vcf.on)
-		? a.reroute(nodes.vcf, nodes.volume)
-		: a.disconnect(nodes.vcf),
-	volume: a.connect(nodes.volume, nodes.context.destination)
+		? a.reroute(engine[ch].vcf, engine[ch].volume)
+		: a.disconnect(engine[ch].vcf),
+	volume: a.connect(engine[ch].volume, engine[ch].context.destination)
 }));
 
-const noteOn = (instr, note, velocity, time) => changes$.onNext(nodes => {
-	let {voices, vcf, volume, context, reverb} = nodes;
+const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine => {
+	let {voices, vcf, volume, context, reverb} = engine[ch];
 
 	const freq = a.noteToFrequency(note);
 
@@ -95,16 +140,16 @@ const noteOn = (instr, note, velocity, time) => changes$.onNext(nodes => {
 		? a.disconnect(adsr2)
 		: a.reroute(adsr2, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
-	if (instr.reverb.on) a.reroute(reverb, (instr.vcf.on) ? vcf : volume);
-	else a.disconnect(reverb);
+	// if (instr.reverb.on) a.reroute(reverb, (instr.vcf.on) ? vcf : volume);
+	// else a.disconnect(reverb);
 
 	// vcf
-	vcf = (instr.vcf.on) ? a.reroute(vcf, volume) : a.disconnect(vcf);
+	// vcf = (instr.vcf.on) ? a.reroute(vcf, volume) : a.disconnect(vcf);
 
 	a.noteOn(adsr1, velocity, time);
 	a.noteOn(adsr2, velocity, time);
 
-	return Object.assign({}, nodes, {
+	return obj.patch(engine, ch, {
 		voices: obj.patch(voices, note, {
 			vco1,
 			vco2,
@@ -112,11 +157,12 @@ const noteOn = (instr, note, velocity, time) => changes$.onNext(nodes => {
 			adsr2
 		}),
 		vcf,
+		reverb,
 		context});
 });
 
-const noteOff = (instr, note, time) => changes$.onNext(nodes => {
-	const {voices, context} = nodes;
+const noteOff = (instr, ch = 1, note, time) => changes$.onNext(engine => {
+	const {voices, context} = engine[ch];
 	const now = context.currentTime;
 	time = time || now + 0.0001;
 
@@ -138,14 +184,14 @@ const noteOff = (instr, note, time) => changes$.onNext(nodes => {
 			a.disconnect(adsr2);
 		}, (time - now + instr.vca1.release) * 1000);
 
-		return Object.assign({}, nodes, {voices: objFilter(voices, key => key !== note), context});
+		return obj.patch(engine, ch, {voices: objFilter(voices, key => key !== note), context});
 	}
 
-	return nodes;
+	return engine;
 });
 
-const pitchBend = (instr, pitchValue) => changes$.onNext(nodes =>
-	obj.patch(nodes, 'voices', obj.map(nodes.voices, (key, voice) => Object.assign({}, voice, {
+const pitchBend = (instr, pitchValue, ch = 1) => changes$.onNext(engine =>
+	obj.patch(engine, [ch, 'voices'], obj.map(engine[ch].voices, (key, voice) => Object.assign({}, voice, {
 		vco1: a.update(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
 		vco2: a.update(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
 	})))
@@ -161,16 +207,33 @@ changes$
 
 const hook = ({state$, actions, studio, tapTempo}) => {
 	// hook state changes
-	const instrUpdates$ = state$
-		.distinctUntilChanged(state => state.instrument)
-		.map(state => state.instrument).share();
+	// const instrUpdates$ = state$
+	// 	.distinctUntilChanged(state => state.instrument)
+	// 	.map(state => state.instrument).share();
 	// update connections
-	instrUpdates$.distinctUntilChanged(instr => instr.vco1.on + instr.vco2.on + instr.vcf.on + instr.lfo.on)
-		.subscribe(updateConnections);
+	state$
+		.distinctUntilChanged(
+			({instrument}) => instrument.vco1.on + instrument.vco2.on + instrument.vcf.on + instrument.lfo.on
+		)
+		.subscribe(({instrument, session}) => updateConnections(instrument, session.selection.piano[0]));
 	// update prefs
-	instrUpdates$.subscribe(updatePrefs);
+	state$
+		.distinctUntilChanged(state => state.instrument)
+		.subscribe(({instrument, session}) => updatePrefs(instrument, session.selection.piano[0]));
 
-	state$.distinctUntilChanged(state => state.midiMap.channels)
+	// set up once
+	state$.take(1)
+		.subscribe(({instrument, session}) => session.tracks
+			.map((track, ch) => ({track, ch}))
+			.filter(({track}) => track.type === 'piano')
+			.forEach(({track, ch}) => (
+				updateConnections(Object.assign({}, instrument, track.inst), ch),
+				updatePrefs(Object.assign({}, instrument, track.inst), ch)
+			))
+		);
+
+	state$
+		.distinctUntilChanged(state => state.midiMap.channels)
 		.map(state => ({
 			state,
 			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
@@ -179,21 +242,25 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			)
 		}))
 		.withLatestFrom(engine$, ({state, pressed}, engine) => ({state, pressed, engine}))
-		.subscribe(({state, pressed, engine: {voices}}) => {
+		.subscribe(({state, pressed, engine: {[state.session.selection.piano[0]]: {voices}}}) => {
 			// console.log(pressed);
 			Object.keys(pressed).filter(note => !voices[note])
 				.forEach(
-					note => noteOn(state.instrument, note, pressed[note])
+					note => noteOn(state.instrument, state.session.selection.piano[0], note, pressed[note])
 				);
 			Object.keys(voices).filter(note => !pressed[note])
 				.forEach(
-					note => noteOff(state.instrument, note)
+					note => noteOff(state.instrument, state.session.selection.piano[0], note)
 				);
 		});
 
 	// pitch bend
 	state$.distinctUntilChanged(state => state.midiMap.pitch)
-		.subscribe(state => pitchBend(state.instrument, state.midiMap.pitch));
+		.subscribe(state => pitchBend(
+			Object.assign({}, state.instrument, state.session.tracks[
+				state.session.selection.piano[0]
+			].inst), state.midiMap.pitch, state.session.selection.piano[0])
+		);
 
 	/*
 	midiState$
@@ -242,18 +309,29 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 	state$
 		.distinctUntilChanged(state => state.studio.tick)
 		.filter(state => state.studio.playing)
-		.subscribe(({studio, instrument, pianoRoll}) => {
+		.subscribe(({studio, session, instrument}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 1) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
 				// let start = studio.tick.index;
-				pianoRoll.events
-					.filter(event => event.start >= start && event.duration > 0)
-					.forEach(event => {
-						let timepos = studio.tick.time + ((event.start - start + offset) * bpmToTime(studio.bpm));
-						noteOn(instrument, event.note, event.velocity || 0.7, timepos);
-						noteOff(instrument, event.note, timepos + event.duration * bpmToTime(studio.bpm));
-					});
+				session.tracks
+					.map((track, ch) => ({track, ch}))
+					.filter(({track}) => track.type === 'piano')
+					.forEach(({track, ch}) =>
+						track.measures[0] && track.measures[0].events && track.measures[0].events
+							.filter(event => event.start >= start && event.duration > 0)
+							.forEach(event => {
+								let timepos = studio.tick.time + ((event.start - start + offset) * bpmToTime(studio.bpm));
+								noteOn(
+									Object.assign({}, instrument, track.inst),
+									ch, event.note, event.velocity || 0.7, timepos
+								);
+								noteOff(
+									Object.assign({}, instrument, track.inst),
+									ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
+								);
+							})
+					);
 			}
 		});
 };

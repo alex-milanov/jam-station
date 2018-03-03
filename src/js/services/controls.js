@@ -25,7 +25,7 @@ const hook = ({state$, actions}) => {
 
 	// keyboard
 	document.addEventListener('keydown', e => {
-		console.log(e);
+		// console.log(e);
 		if (e.code === 'Space') actions.studio.play();
 		if (e.key === 'r') actions.studio.record();
 		if (e.key === 't') actions.studio.stop();

@@ -39,8 +39,8 @@ const addSample = (key, buffer) => (
 
 const reverb = audio.create('reverb', {
 	on: true,
-	wet: 0.3,
-	dry: 0.7
+	wet: 0.1,
+	dry: 0.9
 });
 
 audio.connect(reverb, audio.context.destination);

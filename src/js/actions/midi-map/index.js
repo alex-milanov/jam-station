@@ -16,6 +16,10 @@ const initial = {
 		in: [],
 		out: []
 	},
+	data: {
+		in: [],
+		out: []
+	},
 	pitch: 0,
 	channels: {
 	},
@@ -40,7 +44,11 @@ const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clo
 	arr.toggle(obj.sub(state, ['midiMap', 'clock'])[inOut], index)
 );
 
-const noteOn = (channel, note, velocity = 0) => state => (
+const toggleData = (inOut, index) => state => obj.patch(state, ['midiMap', 'data', inOut],
+	arr.toggle(obj.sub(state, ['midiMap', 'data'])[inOut], index)
+);
+
+const noteOn = (channel, note, velocity = 0) => state => channel !== undefined ? (
 	// console.log(channel, note, velocity),
 	velocity !== 0
 		? obj.patch(state, ['midiMap', 'channels', channel, note], velocity)
@@ -49,7 +57,7 @@ const noteOn = (channel, note, velocity = 0) => state => (
 				obj.sub(state, ['midiMap', 'channels', channel]),
 				(key, value) => key !== note)
 		})
-	);
+	) : state;
 
 const panic = () => state =>
 	obj.patch(state, ['midiMap', 'channels'], {});
@@ -58,6 +66,7 @@ module.exports = {
 	initial,
 	connect,
 	toggleClock,
+	toggleData,
 	noteOn,
 	panic
 };

@@ -20,6 +20,15 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					h('dd', ul(state.midiMap.devices.inputs.map((inp, index) =>
 						li([
 							inp.name,
+							span('.right', 'R'),
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.data.in.indexOf(index) > -1
+								},
+								on: {
+									click: () => actions.midiMap.toggleData('in', index)
+								}
+							}),
 							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {

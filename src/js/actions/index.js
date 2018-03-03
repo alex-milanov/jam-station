@@ -39,7 +39,10 @@ const initial = Object.assign({
 const changesMap = {
 	studio: [[['tick', 'index'], ['tickIndex']]],
 	sequencer: [],
-	instrument
+	instrument: [],
+	session: [],
+	pianoRoll: [],
+	layout: []
 };
 
 // todo merge loaded state

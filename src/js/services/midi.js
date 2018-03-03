@@ -35,11 +35,19 @@ const hook = ({state$, actions, tapTempo, tick$}) => {
 		.withLatestFrom(state$, (data, state) => ({data, state}))
 		.share();
 
+	const getIds = (inputs, indexes) => inputs
+		.map(inp => inp.id)
+		.filter((id, i) => indexes.indexOf(i) > -1);
+
 	// midi messages
 	subs.push(
 		parsedMidiMsg$
 			// .map(midiData => (console.log({midiData}), midiData))
 			.filter(({msg}) => ['noteOn', 'noteOff'].indexOf(msg.state) > -1)
+			.withLatestFrom(state$, (midiData, state) => (Object.assign({}, midiData, {state})))
+			.filter(({raw, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
+				raw.input.id
+			) > -1)
 			.subscribe(({msg}) => actions.midiMap.noteOn(
 				msg.channel,
 				msg.note.key + msg.note.octave,

@@ -62,32 +62,40 @@ const clear = () => state => obj.patch(state, ['pianoRoll', 'events'], []);
 
 const record = (pressed, tick, currentTime) => state =>
 	fn.pipe(
-		() => prepTime(tick.time, currentTime, bpmToTime(state.studio.bpm)),
-		timeOffset => obj.patch(state, 'pianoRoll', {
+		() => console.log(pressed, tick, currentTime),
+		() => ({
+			timeOffset: prepTime(tick.time, currentTime, bpmToTime(state.studio.bpm)),
+			barStart: tick.tracks[state.session.selection.piano[0]]
+				&& (tick.tracks[state.session.selection.piano[0]].bar * state.studio.beatLength) || 0,
+			beatIndex: tick.tracks[state.session.selection.piano[0]]
+				&& tick.tracks[state.session.selection.piano[0]].index || 0
+		}),
+		data => (console.log(data), data),
+		({timeOffset, barStart, beatIndex}) => obj.patch(state, 'pianoRoll', {
 			events: [].concat(
 				// already recorded events
 				state.pianoRoll.events.filter(ev => ev.duration > 0),
 				// still pressed
 				state.pianoRoll.events.filter(ev => ev.duration === 0
-						&& (ev.start <= (tick.index + timeOffset) && pressed[ev.note])),
+						&& (ev.start <= (barStart + beatIndex + timeOffset) && pressed[ev.note])),
 				// unpressed
 				state.pianoRoll.events.filter(ev => ev.duration === 0
-					&& (ev.start <= (tick.index + timeOffset) && !pressed[ev.note])
+					&& (ev.start <= (barStart + beatIndex + timeOffset) && !pressed[ev.note])
 					// || (tick.index < ev.start && ev.start >= state.studio.beatLength - 1)))
 				).map(ev => Object.assign(ev, {
-					duration: tick.index - ev.start + timeOffset
+					duration: barStart + beatIndex - ev.start + timeOffset
 				})),
 				// new
 				Object.keys(pressed)
 					.filter(key => state.pianoRoll.events
 						.filter(ev => ev.note === key
-								&& (ev.start <= tick.index + timeOffset) && ev.duration === 0)
+								&& (ev.start <= barStart + beatIndex + timeOffset) && ev.duration === 0)
 						.length === 0
 					)
 					.map(note => ({note,
-						start: (tick.index === state.studio.beatLength - 1 && timeOffset > 0.5)
-							? 0
-							: tick.index + timeOffset,
+						start: (beatIndex === state.studio.beatLength - 1 && timeOffset > 0.5)
+							? barStart
+							: barStart + beatIndex + timeOffset,
 						velocity: pressed[note], duration: 0
 					}))
 			)

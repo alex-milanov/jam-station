@@ -42,7 +42,7 @@ if (module.hot) {
 	// ui
 	module.hot.accept("./ui", function() {
 		ui = require('./ui');
-		actions.ping();
+		// actions.ping();
 	});
 	// services
 	module.hot.accept("./services", function() {
@@ -79,6 +79,12 @@ vdom.patchStream(ui$, '#ui');
 // services
 // services.init({actions});
 // state$.map(state => services.refresh({state, actions})).subscribe();
+
+// debug
+/*
+state$.distinctUntilChanged(state => state.pianoRoll.events)
+	.subscribe(state => console.log(state.pianoRoll.events));
+	*/
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo.toPrecision(5)));

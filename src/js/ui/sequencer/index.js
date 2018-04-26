@@ -21,7 +21,7 @@ module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 		label('LN'),
 		input('.bars-length', {
 			props: {value: state.sequencer.barsLength || 4, size: 3},
-			on: {input: ev => actions.set(['sequencer', 'barsLength'], ev.target.value)}
+			on: {input: ev => actions.sequencer.setBarsLength(ev.target.value)}
 		}),
 		label('BAR'),
 		span('.cipher', [

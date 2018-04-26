@@ -34,7 +34,7 @@ const initial = {
 				{
 					name: 'Sample Beat',
 					row: 0,
-					barLength: 1,
+					barsLength: 1,
 					loop: true,
 					pattern: [
 						[
@@ -55,6 +55,7 @@ const initial = {
 				{
 					name: 'Sample Baseline',
 					row: 0,
+					barsLength: 1,
 					events: [
 						{
 							note: 'C2',

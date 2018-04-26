@@ -20,7 +20,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					h('dd', ul(state.midiMap.devices.inputs.map((inp, index) =>
 						li([
 							inp.name,
-							span('.right', 'R'),
+							span('.right.fa.fa-code-fork'),
 							input('.right[type="checkbox"]', {
 								props: {
 									checked: state.midiMap.data.in.indexOf(index) > -1
@@ -46,6 +46,15 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					h('dd', ul(state.midiMap.devices.outputs.map((outp, index) =>
 						li([
 							outp.name,
+							span('.right.fa.fa-code-fork'),
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.data.out.indexOf(index) > -1
+								},
+								on: {
+									click: () => actions.midiMap.toggleData('out', index)
+								}
+							}),
 							span('.right.fa.fa-clock-o'),
 							input('.right[type="checkbox"]', {
 								props: {

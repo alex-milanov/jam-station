@@ -311,6 +311,23 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.filter(state => state.studio.playing)
 		.subscribe(({studio, session, instrument}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 1) {
+				let b = (studio.tick.tracks[session.selection.piano[0]]
+					&& studio.tick.tracks[session.selection.piano[0]].bar) || 0;
+
+				const barsLength =
+					session.tracks[session.selection.piano[0]]
+					&& session.tracks[session.selection.piano[0]].measures[0]
+					&& session.tracks[session.selection.piano[0]].measures[0].barsLength || 1;
+
+				if (studio.tick.index === studio.beatLength - 1)
+					b = (b < barsLength - 1) ? b + 1 : 0;
+
+				const bar = {
+					start: studio.beatLength * b,
+					end: studio.beatLength * (b + 1)
+				};
+				console.log(bar);
+
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
 				// let start = studio.tick.index;
@@ -319,9 +336,9 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 					.filter(({track}) => track.type === 'piano')
 					.forEach(({track, ch}) =>
 						track.measures[0] && track.measures[0].events && track.measures[0].events
-							.filter(event => event.start >= start && event.duration > 0)
+							.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
 							.forEach(event => {
-								let timepos = studio.tick.time + ((event.start - start + offset) * bpmToTime(studio.bpm));
+								let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
 								noteOn(
 									Object.assign({}, instrument, track.inst),
 									ch, event.note, event.velocity || 0.7, timepos

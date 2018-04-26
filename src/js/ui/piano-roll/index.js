@@ -18,7 +18,11 @@ module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 		label('BAR'),
 		span('.cipher', [
 			button('.left.fa.fa-caret-left', {on: {click: () => actions.pianoRoll.prev()}}),
-			input('.bar[type="number"]', {props: {value: state.pianoRoll.bar, size: 6}}),
+			input('.bar[type="number"]', {props: {
+				value: state.studio.tick.tracks[state.session.selection.piano[0]]
+					&& state.studio.tick.tracks[state.session.selection.piano[0]].bar || 0,
+				size: 6
+			}}),
 			button('.right.fa.fa-caret-right', {on: {click: () => actions.pianoRoll.next()}})
 		]),
 		div('.right', [

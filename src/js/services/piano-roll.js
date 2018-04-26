@@ -30,10 +30,10 @@ const drawGrid = (ctx, dim = [42, 14], pos = []) => {
 	}
 };
 
-const drawEvents = (ctx, events, dim = [42, 14], pos = []) => (prepCanvas(ctx), events.forEach(event => {
+const drawEvents = (ctx, events, dim = [42, 14], bar) => (prepCanvas(ctx), events.forEach(event => {
 	const yPos = notesPattern.slice().reverse().indexOf(event.note.replace(/[0-9]+/, ''));
 	gfxCanvas.rect(ctx, {
-		x: (event.start + 1) * dim[0], y: yPos * dim[1],
+		x: (event.start - bar.start + 1) * dim[0], y: yPos * dim[1],
 		width: event.duration * dim[0], height: dim[1]
 	}, '#eee', '#555');
 }));
@@ -52,13 +52,29 @@ const hook = ({state$, actions}) => {
 				events: el.querySelector('.piano-roll .events')
 			}))
 			.withLatestFrom(state$, (el, state) => ({el, state}))
+			.distinctUntilChanged(({state}) => JSON.stringify(state.pianoRoll) + JSON.stringify(state.studio))
 			.subscribe(({el, state}) => {
 				const gridCtx = el.grid.getContext('2d');
 				const eventsCtx = el.events.getContext('2d');
 				const dim = [30, 12];
 				// ctx.translate(0.5, 0.5);
+				const bar = {
+					start: state.studio.beatLength *
+						((state.studio.tick.tracks[state.session.selection.piano[0]]
+						&& state.studio.tick.tracks[state.session.selection.piano[0]].bar) || 0),
+					end: state.studio.beatLength *
+						(state.studio.tick.tracks[state.session.selection.piano[0]]
+						&& (state.studio.tick.tracks[state.session.selection.piano[0]].bar + 1) || 1)
+				};
+
+				// console.log(bar);
+
+				const events = state.pianoRoll.events
+					.filter(event => event.start >= bar.start && event.start < bar.end);
+
+				// console.log(events);
 				drawGrid(gridCtx, dim);
-				drawEvents(eventsCtx, state.pianoRoll.events, dim);
+				drawEvents(eventsCtx, events, dim, bar);
 			})
 		);
 

@@ -94,6 +94,18 @@ const setSample = (channel, sample) => state =>
 		: [].concat(state.sequencer.channels, [sample])
 	});
 
+const loop = (times, index = 0) => index < times
+	? [index].concat(loop(times, index + 1))
+	: [];
+
+const setBarsLength = barsLength => state =>
+	obj.patch(state, 'sequencer', {
+		barsLength,
+		pattern: loop(barsLength).map(index =>
+			state.sequencer.pattern[index] || state.sequencer.pattern[0]
+		)
+	});
+
 module.exports = {
 	initial,
 	toggle,
@@ -103,5 +115,6 @@ module.exports = {
 	next,
 	add,
 	remove,
-	setSample
+	setSample,
+	setBarsLength
 };

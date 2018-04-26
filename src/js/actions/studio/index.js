@@ -17,7 +17,8 @@ const initial = {
 		index: -1,
 		time: 0,
 		bar: 0,
-		elapsed: 0
+		elapsed: 0,
+		tracks: [{index: -1}, {index: -1}, {index: -1}, {index: -1}]
 	},
 	volume: 0.4,
 	channels: [
@@ -48,15 +49,27 @@ const initial = {
 	]
 };
 
+const progress = ({beatLength, barsLength, index, bar}) => ({
+	index: (index < beatLength - 1) ? index + 1 : 0,
+	bar: (index < beatLength - 1) ? bar : (bar < barsLength - 1) ? bar + 1 : 0
+});
+
 const tick = (time = context.currentTime) =>
-	state => obj.patch(state, ['studio', 'tick'], {
+	state => obj.patch(state, ['studio', 'tick'], Object.assign({
 		time,
-		index: (state.studio.tick.index < state.studio.beatLength - 1) && (state.studio.tick.index + 1) || 0,
-		bar: (state.studio.tick.index < state.studio.beatLength - 1)
-			? state.studio.tick.bar
-			: (state.studio.tick.bar < state.sequencer.barsLength - 1) && (state.studio.tick.bar + 1) || 0,
-		elapsed: state.studio.tick.elapsed + 1
-	});
+		elapsed: state.studio.tick.elapsed + 1,
+		tracks: state.session.tracks.map((track, _i) =>
+			progress({
+				index: state.studio.tick.tracks[_i] && state.studio.tick.tracks[_i].index || 0,
+				bar: state.studio.tick.tracks[_i] && state.studio.tick.tracks[_i].bar || 0,
+				beatLength: state.studio.beatLength,
+				barsLength: track.measures[state.session.active[_i]] && track.measures[state.session.active[_i]].barsLength || 1
+			})
+		)
+	}, progress({
+		index: state.studio.tick.index, bar: state.studio.tick.bar,
+		beatLength: state.studio.beatLength, barsLength: state.sequencer.barsLength
+	})));
 
 const play = () => state => obj.patch(state, 'studio', {
 	playing: !state.studio.playing,
@@ -70,7 +83,8 @@ const stop = () => state => obj.patch(state, 'studio', {
 		index: -1,
 		time: 0,
 		bar: 0,
-		elapsed: 0
+		elapsed: 0,
+		tracks: [{index: -1}, {index: -1}, {index: -1}, {index: -1}]
 	},
 	playing: false,
 	recording: false

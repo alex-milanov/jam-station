@@ -68,42 +68,53 @@ const record = (pressed, tick, currentTime) => state =>
 			barStart: tick.tracks[state.session.selection.piano[0]]
 				&& (tick.tracks[state.session.selection.piano[0]].bar * state.studio.beatLength) || 0,
 			beatIndex: tick.tracks[state.session.selection.piano[0]]
-				&& tick.tracks[state.session.selection.piano[0]].index || 0
+				&& tick.tracks[state.session.selection.piano[0]].index || 0,
+			bar: tick.tracks[state.session.selection.piano[0]]
+				&& (tick.tracks[state.session.selection.piano[0]].bar) || 0,
+			barsLength: state.pianoRoll.barsLength
 		}),
 		data => (console.log(data), data),
-		({timeOffset, barStart, beatIndex}) => obj.patch(state, 'pianoRoll', {
+		({timeOffset, barStart, beatIndex, barsLength, bar}) => obj.patch(state, 'pianoRoll', {
 			events: [].concat(
 				// already recorded events
 				state.pianoRoll.events.filter(ev => ev.duration > 0),
 				// still pressed
 				state.pianoRoll.events.filter(ev => ev.duration === 0
-						&& (ev.start <= (barStart + beatIndex + timeOffset) && pressed[ev.note])),
+						&& ev.startTime <= currentTime
+						// && ev.start <= (barStart + beatIndex + timeOffset)
+						&& pressed[ev.note]),
 				// unpressed
 				state.pianoRoll.events.filter(ev => ev.duration === 0
-					&& (ev.start <= (barStart + beatIndex + timeOffset) && !pressed[ev.note])
+					&& ev.startTime <= currentTime
+					&& !pressed[ev.note]
 					// || (tick.index < ev.start && ev.start >= state.studio.beatLength - 1)))
 				).map(ev => Object.assign(ev, {
-					duration: barStart + beatIndex - ev.start + timeOffset
+					duration: prepTime(ev.startTime, currentTime, bpmToTime(state.studio.bpm))
 				})),
 				// new
 				Object.keys(pressed)
 					.filter(key => state.pianoRoll.events
 						.filter(ev => ev.note === key
-								&& (ev.start <= barStart + beatIndex + timeOffset) && ev.duration === 0)
+								&& ev.startTime <= currentTime
+								// && (ev.start <= barStart + beatIndex + timeOffset)
+								&& ev.duration === 0)
 						.length === 0
 					)
 					.map(note => ({note,
-						start: (beatIndex === state.studio.beatLength - 1 && timeOffset > 0.5)
-							? barStart
+						start: (beatIndex === state.studio.beatLength - 1 && timeOffset > 0.95)
+							? bar < barsLength - 1 ? barStart + state.studio.beatLength : 0
 							: barStart + beatIndex + timeOffset,
-						velocity: pressed[note], duration: 0
+						velocity: pressed[note],
+						duration: 0,
+						startTime: currentTime
 					}))
 			)
 		})
 	)();
 
 const clean = () => state => obj.patch(state, 'pianoRoll', {
-	events: state.pianoRoll.events.filter(ev => ev.duration > 0 || ev.start === 0)
+	// events: state.pianoRoll.events.filter(ev => ev.duration > 0 || ev.start === 0)
+	events: state.pianoRoll.events // .filter(ev => ev.duration > 0 || ev.start === 0)
 });
 
 module.exports = {

@@ -4,7 +4,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const {obj} = require('iblokz-data');
+const {obj, fn} = require('iblokz-data');
 const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 
@@ -311,22 +311,22 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.filter(state => state.studio.playing)
 		.subscribe(({studio, session, instrument}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 1) {
-				let b = (studio.tick.tracks[session.selection.piano[0]]
-					&& studio.tick.tracks[session.selection.piano[0]].bar) || 0;
-
-				const barsLength =
-					session.tracks[session.selection.piano[0]]
-					&& session.tracks[session.selection.piano[0]].measures[0]
-					&& session.tracks[session.selection.piano[0]].measures[0].barsLength || 1;
-
-				if (studio.tick.index === studio.beatLength - 1)
-					b = (b < barsLength - 1) ? b + 1 : 0;
-
-				const bar = {
-					start: studio.beatLength * b,
-					end: studio.beatLength * (b + 1)
-				};
-				console.log(bar);
+				// let b = (studio.tick.tracks[session.selection.piano[0]]
+				// 	&& studio.tick.tracks[session.selection.piano[0]].bar) || 0;
+				//
+				// const barsLength =
+				// 	session.tracks[session.selection.piano[0]]
+				// 	&& session.tracks[session.selection.piano[0]].measures[0]
+				// 	&& session.tracks[session.selection.piano[0]].measures[0].barsLength || 1;
+				//
+				// if (studio.tick.index === studio.beatLength - 1)
+				// 	b = (b < barsLength - 1) ? b + 1 : 0;
+				//
+				// const bar = {
+				// 	start: studio.beatLength * b,
+				// 	end: studio.beatLength * (b + 1)
+				// };
+				// console.log(bar);
 
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
@@ -335,19 +335,38 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 					.map((track, ch) => ({track, ch}))
 					.filter(({track}) => track.type === 'piano')
 					.forEach(({track, ch}) =>
-						track.measures[0] && track.measures[0].events && track.measures[0].events
-							.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
-							.forEach(event => {
-								let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
-								noteOn(
-									Object.assign({}, instrument, track.inst),
-									ch, event.note, event.velocity || 0.7, timepos
-								);
-								noteOff(
-									Object.assign({}, instrument, track.inst),
-									ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
-								);
-							})
+						fn.pipe(
+							() => ({
+								barIndex: studio.tick.tracks[ch].bar,
+								barsLength: parseInt(track.measures[0] && track.measures[0].barsLength || 1, 10)
+							}),
+							({barIndex, barsLength}) => ({
+								barIndex: (barIndex < barsLength - 1 && studio.tick.elapsed > 1) ? barIndex + 1 : 0,
+								barsLength
+							}),
+							({barIndex, barsLength}) => ({
+								barIndex,
+								barsLength,
+								bar: {
+									start: studio.beatLength * barIndex,
+									end: studio.beatLength * (barIndex + 1)
+								}
+							}),
+							data => (console.log(studio.tick.tracks[ch], data), data),
+							({bar}) => track.measures[0] && track.measures[0].events && track.measures[0].events
+								.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
+								.forEach(event => {
+									let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
+									noteOn(
+										Object.assign({}, instrument, track.inst),
+										ch, event.note, event.velocity || 0.7, timepos
+									);
+									noteOff(
+										Object.assign({}, instrument, track.inst),
+										ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
+									);
+								})
+							)()
 					);
 			}
 		});

@@ -338,7 +338,8 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 						fn.pipe(
 							() => ({
 								barIndex: studio.tick.tracks[ch].bar,
-								barsLength: parseInt(track.measures[0] && track.measures[0].barsLength || 1, 10)
+								barsLength: parseInt(track.measures[session.active[ch]]
+									&& track.measures[session.active[ch]].barsLength || 1, 10)
 							}),
 							({barIndex, barsLength}) => ({
 								barIndex: (barIndex < barsLength - 1 && studio.tick.elapsed > 1) ? barIndex + 1 : 0,
@@ -353,19 +354,20 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 								}
 							}),
 							data => (console.log(studio.tick.tracks[ch], data), data),
-							({bar}) => track.measures[0] && track.measures[0].events && track.measures[0].events
-								.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
-								.forEach(event => {
-									let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
-									noteOn(
-										Object.assign({}, instrument, track.inst),
-										ch, event.note, event.velocity || 0.7, timepos
-									);
-									noteOff(
-										Object.assign({}, instrument, track.inst),
-										ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
-									);
-								})
+							({bar}) => track.measures[session.active[ch]] && track.measures[session.active[ch]].events
+								&& track.measures[session.active[ch]].events
+									.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
+									.forEach(event => {
+										let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
+										noteOn(
+											Object.assign({}, instrument, track.inst),
+											ch, event.note, event.velocity || 0.7, timepos
+										);
+										noteOff(
+											Object.assign({}, instrument, track.inst),
+											ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
+										);
+									})
 							)()
 					);
 			}

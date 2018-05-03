@@ -143,7 +143,12 @@ const select = (type, trackNumber, measureRow) => state =>
 	*/
 	);
 
+const activate = (track, ch) => state => obj.patch(state, ['session', 'active'],
+	state.session.active.map((c, i) => i === track ? ch : c)
+);
+
 module.exports = {
 	select,
+	activate,
 	initial
 };

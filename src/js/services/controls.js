@@ -36,6 +36,8 @@ const hook = ({state$, actions}) => {
 
 		if (e.key === 'ArrowUp') actions.sequencer.prev();
 		if (e.key === 'ArrowDown') actions.sequencer.next();
+
+		if (e.key === 'c') actions.pianoRoll.clear();
 	});
 };
 

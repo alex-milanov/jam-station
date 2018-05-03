@@ -22,7 +22,8 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 								selected: state.session.selection[track.type].join('.') === [trackIndex, rowIndex].join('.')
 							},
 							on: {
-								click: () => actions.session.select(track.type, trackIndex, rowIndex)
+								click: () => actions.session.select(track.type, trackIndex, rowIndex),
+								dblclick: () => actions.session.activate(trackIndex, rowIndex)
 							}
 						}, span(
 							(track.measures[rowIndex])

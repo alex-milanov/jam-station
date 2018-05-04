@@ -98,11 +98,25 @@ const change = (prop, val) =>
 		).pop();
 
 const next = () => state => obj.patch(state, ['studio', 'tick'], {
-	bar: (state.studio.tick.bar < state.sequencer.barsLength - 1) ? state.studio.tick.bar + 1 : 0
+	bar: (state.studio.tick.bar < state.sequencer.barsLength - 1) ? state.studio.tick.bar + 1 : 0,
+	tracks: state.session.tracks.map((track, _i) =>
+		Object.assign({}, state.studio.tick.tracks[_i] || {}, {
+			bar: state.studio.tick.tracks[_i].bar < track.measures[state.session.active[_i]].barsLength - 1
+				? state.studio.tick.tracks[_i].bar + 1
+				: 0
+		})
+	)
 });
 
 const prev = () => state => obj.patch(state, ['studio', 'tick'], {
-	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.sequencer.barsLength - 1
+	bar: (state.studio.tick.bar > 0) ? state.studio.tick.bar - 1 : state.sequencer.barsLength - 1,
+	tracks: state.session.tracks.map((track, _i) =>
+		Object.assign({}, state.studio.tick.tracks[_i] || {}, {
+			bar: state.studio.tick.tracks[_i].bar > 0
+				? state.studio.tick.tracks[_i].bar - 1
+				: track.measures[state.session.active[_i]].barsLength - 1
+		})
+	)
 });
 
 module.exports = {

@@ -3850,6 +3850,8 @@ input, label, body {
       background: #bbb;
       text-align: center;
       border: 1px solid #999; }
+      .session .body ul.track li:hover {
+        background: #c5c5c5; }
       .session .body ul.track li:first-child {
         margin: 0px;
         padding: 0px;
@@ -3859,11 +3861,12 @@ input, label, body {
         line-height: 24px;
         background: #aaa; }
       .session .body ul.track li.selected {
-        border-color: #eee; }
-      .session .body ul.track li.empty {
-        background: #aaa; }
-        .session .body ul.track li.empty:hover {
-          background: #bbb; }
+        border-color: #555;
+        border-style: dashed; }
+      .session .body ul.track li.active {
+        background: #b5bfc5; }
+        .session .body ul.track li.active:hover {
+          background: #c5cfd5; }
 
 .sequencer {
   position: absolute;

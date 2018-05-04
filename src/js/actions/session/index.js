@@ -20,6 +20,7 @@ const initial = {
 	rows: [
 		{},
 		{},
+		{},
 		{}
 	],
 	active: [
@@ -47,7 +48,7 @@ const initial = {
 			]
 		},
 		{
-			name: 'Baseline',
+			name: 'Bassline',
 			inst: {
 			},
 			type: 'piano',
@@ -119,10 +120,10 @@ const initial = {
 	]
 };
 
-const select = (type, trackNumber, measureRow) => state =>
+const select = (trackNumber, measureRow) => state =>
 	Object.assign(
-		obj.patch(state, ['session', 'selection', type], [trackNumber, measureRow]),
-		(type === 'seq')
+		obj.patch(state, ['session', 'selection', state.session.tracks[trackNumber].type], [trackNumber, measureRow]),
+		(state.session.tracks[trackNumber].type === 'seq')
 			? {
 				sequencer: Object.assign(
 					{}, state.session.tracks[trackNumber].measures[measureRow] || defValues.sequencer

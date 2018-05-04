@@ -53,6 +53,12 @@ const parseMidiMsg = event => {
 				value: parseFloat((event.data[2] / 127).toFixed(2))
 			};
 			break;
+		case "1100":
+			msg = {
+				state: "bankSelect",
+				bank: event.data[1]
+			};
+			break;
 		default:
 			msg = {
 				state: false

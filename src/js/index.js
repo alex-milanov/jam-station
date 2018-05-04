@@ -68,7 +68,7 @@ actions$
 	.subscribe(state => state$.onNext(state));
 
 // map state to ui
-const ui$ = state$.map(state => ui({state, actions, tapTempo}));
+const ui$ = state$.map(state => ui({state, actions, tapTempo, context: a.context}));
 
 // services
 services.hook({state$, actions, tapTempo});

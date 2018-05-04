@@ -1,6 +1,6 @@
 'use strict';
 
-const {obj} = require('iblokz-data');
+const {obj, fn} = require('iblokz-data');
 
 const midi = require('../util/midi');
 
@@ -61,6 +61,30 @@ const hook = ({state$, actions, tapTempo, tick$}) => {
 			.filter(({msg}) => ['pitchBend'].indexOf(msg.state) > -1)
 			.throttle(1)
 			.subscribe(({msg}) => actions.set(['midiMap', 'pitch'], msg.pitchValue))
+	);
+
+	subs.push(
+		parsedMidiMsg$
+			.filter(({msg}) => msg.state === 'bankSelect')
+			.filter(({msg}) => msg.bank >= 0 && msg.bank < 16)
+			.subscribe(({msg}) =>
+				fn.pipe(
+					() => ({
+						track: msg.bank % 4,
+						row: parseInt(
+							(msg.bank >= 4 && msg.bank < 8
+							|| msg.bank >= 12 && msg.bank < 16
+								? msg.bank - 4
+								: msg.bank + 4) / 4,
+							10
+						)
+					}),
+					({track, row}) => (
+						actions.session.activate(track, row),
+						actions.session.select(track, row)
+					)
+				)()
+			)
 	);
 
 	subs.push(

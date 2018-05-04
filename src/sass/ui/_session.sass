@@ -19,12 +19,16 @@
 				background: #bbb
 				text-align: center
 				border: 1px solid #999
+				&:hover
+					background: #c5c5c5
 				&:first-child
 					+header-height(24px)
 					background: #aaa
 				&.selected
-					border-color: #eee
-				&.empty
-					background: #aaa
+					border-color: #555
+					border-style: dashed
+				&.active
+					// background: #a5afaa
+					background: #b5bfc5
 					&:hover
-						background: #bbb
+						background: #c5cfd5

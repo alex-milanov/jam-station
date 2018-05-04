@@ -2,8 +2,10 @@
 
 const {
 	div, img, h2, i, span, p, input, label, hr, button,
-	ul, li
+	ul, li, form
 } = require('iblokz-snabbdom-helpers');
+
+const loop = (times, fn = i => i) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 module.exports = ({state, actions, params = {}}) => div('.session', params, [
 	div('.header', [
@@ -14,22 +16,26 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 			.map((track, trackIndex) =>
 				ul('.track', [].concat(
 					li(span(track.name)),
-					state.session.rows.map((row, rowIndex) =>
+					loop(4).map(rowIndex =>
 						li({
 							class: {
 								measure: (track.measures[rowIndex]),
 								empty: !(track.measures[rowIndex]),
-								selected: state.session.selection[track.type].join('.') === [trackIndex, rowIndex].join('.')
+								selected: state.session.selection[track.type].join('.') === [trackIndex, rowIndex].join('.'),
+								active: state.session.active[trackIndex] === rowIndex
 							},
 							on: {
-								click: () => actions.session.select(track.type, trackIndex, rowIndex),
+								click: () => actions.session.select(trackIndex, rowIndex),
 								dblclick: () => actions.session.activate(trackIndex, rowIndex)
 							}
-						}, span(
+						}, span([
 							(track.measures[rowIndex])
 								? span(track.measures[rowIndex].name || 'untitled')
-								: span('+')
-						))
+								: span('+'),
+							state.session.active[trackIndex] === rowIndex
+								? span(` [ ${state.studio.tick.tracks[trackIndex].bar || 0} ]`)
+								: ''
+						]))
 					)
 			))
 		)

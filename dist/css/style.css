@@ -3007,7 +3007,7 @@ body {
   background: #c5c5c5;
   overflow: hidden; }
 
-input, label, body {
+input, label, body, select {
   color: #333;
   font-family: "Play", Helvetica, Arial, sans-serif; }
 
@@ -3463,10 +3463,11 @@ input, label, body {
       border-top-width: 1px; }
       .instrument .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -3644,6 +3645,26 @@ input, label, body {
         padding: 0px;
         box-sizing: border-box;
         border: 0px; }
+    .instrument .body form div {
+      clear: both; }
+    .instrument .body form select {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      height: 20px;
+      line-height: 20px;
+      padding: 0px 2px;
+      display: block;
+      width: 60%;
+      float: right;
+      border: 0px;
+      border-radius: 0px;
+      outline: none;
+      box-shadow: inset 0px 0px 1px #333;
+      background: #ccc; }
+    .instrument .body form label {
+      clear: both; }
 
 .session {
   position: absolute;
@@ -3784,10 +3805,11 @@ input, label, body {
       border-top-width: 1px; }
       .session .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -4006,10 +4028,11 @@ input, label, body {
       border-top-width: 1px; }
       .sequencer .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -4313,10 +4336,11 @@ input, label, body {
       border-top-width: 1px; }
       .midi-map .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -4535,10 +4559,11 @@ input, label, body {
       border-top-width: 1px; }
       .midi-keyboard .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;
@@ -4773,10 +4798,11 @@ input, label, body {
       border-top-width: 1px; }
       .piano-roll .body fieldset .on-switch {
         position: absolute;
-        top: 0px;
+        top: 1px;
         right: 8px;
-        height: 32px;
-        line-height: 32px;
+        height: 30px;
+        line-height: 30px;
+        margin: 0px;
         width: 16px;
         cursor: pointer;
         outline: none;

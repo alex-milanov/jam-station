@@ -2,7 +2,8 @@
 
 const {
 	div, h2, span, p, ul, li, hr, button, br, a,
-	form, label, input, fieldset, legend, i, img
+	form, label, input, fieldset, legend, i, img,
+	select, option
 } = require('iblokz-snabbdom-helpers');
 
 module.exports = ({name, state, actions}) => fieldset([
@@ -26,13 +27,33 @@ module.exports = ({name, state, actions}) => fieldset([
 		}
 	}),
 	state.instrument.vcf.expanded ? div([
-		label(`Cutoff`),
-		span('.right', `${state.instrument[name].cutoff}`),
-		input('[type="range"]', {
-			attrs: {min: 0, max: 1, step: 0.01},
-			props: {value: state.instrument[name].cutoff},
-			on: {change: ev => actions.instrument.updateProp(name, 'cutoff', parseFloat(ev.target.value))}
-		}),
+		div([
+			label(`Type`),
+			select({
+				on: {change: ev => actions.instrument.updateProp(name, 'type', ev.target.value)}
+			}, [
+				'lowpass', 'highpass'
+				// 'bandpass', 'lowshelf', 'highshelf', 'peaking', 'notch', 'allpass'
+			].map(type =>
+				option({
+					attrs: {
+						value: type
+					},
+					props: {
+						selected: state.instrument.vcf.type === type
+					}
+				}, type)
+			))
+		]),
+		div([
+			label(`Cutoff`),
+			span('.right', `${state.instrument[name].cutoff}`),
+			input('[type="range"]', {
+				attrs: {min: 0, max: 1, step: 0.01},
+				props: {value: state.instrument[name].cutoff},
+				on: {change: ev => actions.instrument.updateProp(name, 'cutoff', parseFloat(ev.target.value))}
+			})
+		]),
 		label(`Resonance`),
 		span('.right', `${state.instrument[name].resonance}`),
 		input('[type="range"]', {

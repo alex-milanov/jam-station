@@ -36,7 +36,7 @@ const initial = {
 		// adsr1: a.adsr({gain: 0}),
 		vcf: a.vcf({cutoff: 0.64}),
 		reverb: a.create('reverb'),
-		// lfo: a.lfo({}),
+		lfo: a.start(a.lfo({})),
 		volume: a.vca({gain: 0.3}),
 		context: a.context
 	},
@@ -54,7 +54,7 @@ const initial = {
 		// adsr1: a.adsr({gain: 0}),
 		vcf: a.vcf({cutoff: 0.64}),
 		reverb: a.create('reverb'),
-		// lfo: a.lfo({}),
+		lfo: a.start(a.lfo({})),
 		volume: a.vca({gain: 0.3}),
 		context: a.context
 	},
@@ -72,7 +72,7 @@ const initial = {
 		// adsr1: a.adsr({gain: 0}),
 		vcf: a.vcf({cutoff: 0.64}),
 		reverb: a.create('reverb'),
-		// lfo: a.lfo({}),
+		lfo: a.start(a.lfo({})),
 		volume: a.vca({gain: 0.3}),
 		context: a.context
 	}
@@ -113,10 +113,13 @@ const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch
 		? a.reroute(engine[ch].vcf, engine[ch].volume)
 		: a.disconnect(engine[ch].vcf),
 	volume: a.connect(engine[ch].volume, engine[ch].context.destination)
+	// lfo: (instr.lfo.on)
+	// 	? a.reroute(engine[ch].lfo, engine[ch].volume.through.gain)
+	// 	: a.disconnect(engine[ch].lfo)
 }));
 
 const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine => {
-	let {voices, vcf, volume, context, reverb} = engine[ch];
+	let {voices, vcf, lfo, volume, context, reverb} = engine[ch];
 
 	const freq = a.noteToFrequency(note);
 
@@ -139,6 +142,16 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 	adsr2 = !(instr.vco2.on)
 		? a.disconnect(adsr2)
 		: a.reroute(adsr2, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
+
+	if (instr.lfo.on) {
+		if (instr.lfo.target === 'pitch') {
+			lfo.output.connect(vco1.output.detune);
+			lfo.output.connect(vco2.output.detune);
+		} else {
+			lfo.effect.connect(adsr1.through.gain);
+			lfo.effect.connect(adsr2.through.gain);
+		}
+	}
 
 	// if (instr.reverb.on) a.reroute(reverb, (instr.vcf.on) ? vcf : volume);
 	// else a.disconnect(reverb);

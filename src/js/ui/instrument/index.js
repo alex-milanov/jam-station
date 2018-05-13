@@ -57,7 +57,7 @@ module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 			// VCF
 			vcf({state, actions, name: 'vcf'}),
 			// LFO
-			// lfo({state, actions, name: 'lfo'})
+			lfo({state, actions, name: 'lfo'}),
 			// Reverb
 			reverb({state, actions, name: 'reverb'})
 		])

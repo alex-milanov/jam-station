@@ -9,6 +9,7 @@ const {
 } = require('./core');
 
 const reverb = require('./effects/reverb');
+const lfo = require('./effects/lfo');
 const adsr = require('./controls/adsr');
 
 const create = (type, prefs = {}, ctx = context) => Object.assign({},
@@ -16,6 +17,7 @@ const create = (type, prefs = {}, ctx = context) => Object.assign({},
 		vco: () => ({output: _create('oscillator')}),
 		vca: () => ({through: _create('gain')}),
 		vcf: () => ({through: _create('biquadFilter')}),
+		lfo: () => lfo.create(prefs),
 		reverb: () => reverb.create(prefs),
 		adsr: () => adsr.create(prefs)
 	})(),
@@ -51,7 +53,8 @@ const update = (node, prefs) => obj.switch(node.type, {
 		Object.assign(node, {prefs})
 	),
 	reverb: () => reverb.update(node, prefs),
-	adsr: () => adsr.update(node, prefs)
+	adsr: () => adsr.update(node, prefs),
+	lfo: () => lfo.update(node, prefs)
 })();
 
 const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
@@ -61,7 +64,8 @@ const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 			|| isGet(node1.through)
 			|| isSet(node1.connect) && node1,
 			// output
-			isGet(node2.input)
+			(node2 instanceof AudioParam) && node2
+			|| isGet(node2.input)
 			|| isGet(node2.through)
 			|| node2
 		),
@@ -79,7 +83,8 @@ const disconnect = (node1, node2) => (
 			|| isGet(node1.through)
 			|| isSet(node1.connect) && node1,
 			// output
-			isGet(node2.input)
+			(node2 instanceof AudioParam) && node2
+			|| isGet(node2.input)
 			|| isGet(node2.through)
 			|| node2
 		),
@@ -109,7 +114,7 @@ const unchain = (...nodes) => (
 	nodes[0]
 );
 
-const start = (node, ...args) => (node.output.start(...args), node);
+const start = (node, ...args) => (node.type === 'lfo' && lfo.start(node, ...args) || node.output.start(...args), node);
 
 const stop = (node, ...args) => (node.output.stop(...args), node);
 

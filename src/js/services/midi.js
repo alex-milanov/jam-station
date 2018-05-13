@@ -31,13 +31,16 @@ const hook = ({state$, actions, tapTempo, tick$}) => {
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
 		.share();
 
-	const midiState$ = parsedMidiMsg$
-		.withLatestFrom(state$, (data, state) => ({data, state}))
-		.share();
-
 	const getIds = (inputs, indexes) => inputs
 		.map(inp => inp.id)
 		.filter((id, i) => indexes.indexOf(i) > -1);
+
+	const midiState$ = parsedMidiMsg$
+		.withLatestFrom(state$, (data, state) => ({data, state}))
+		.filter(({data, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
+			data.raw.input.id
+		) > -1)
+		.share();
 
 	// midi messages
 	subs.push(
@@ -91,7 +94,7 @@ const hook = ({state$, actions, tapTempo, tick$}) => {
 		midiState$
 			.filter(({data}) => data.msg.state === 'controller')
 			.distinctUntilChanged(({data}) => data.msg.value)
-			.throttle(10)
+			.throttle(50)
 			.subscribe(({data, state}) => {
 				let mmap = state.midiMap.map.find(m =>
 					m[0] === data.msg.state

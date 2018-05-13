@@ -58,6 +58,7 @@ const initial = {
 	vcf: {
 		on: true,
 		expanded: true,
+		type: 'lowpass',
 		cutoff: 0.64,
 		resonance: 0,
 		gain: 0

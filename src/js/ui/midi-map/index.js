@@ -2,10 +2,44 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
-	ul, li, table, thead, tbody, tr, td, th, h, img
+	ul, li, table, thead, tbody, tr, td, th, h, img, select, option
 } = require('iblokz-snabbdom-helpers');
 
+const moment = require('moment');
+const fileUtil = require('../../util/file');
+
+const openDialog = cb => {
+	let fileEl = document.createElement('input');
+	fileEl.setAttribute('type', 'file');
+	fileEl.addEventListener('change', ev => {
+		console.log(ev.target.files, this);
+		cb(
+			ev.target.files
+		);
+	});
+	fileEl.dispatchEvent(new MouseEvent('click', {
+		view: window,
+		bubbles: true,
+		cancelable: true
+	}));
+};
+
 const actionMaps = [];
+
+const optionList = (list, value, cb) => select({
+	on: {
+		change: ev => cb(ev)
+	}
+}, list.map(item =>
+	option({
+		attrs: {
+			value: item
+		},
+		props: {
+			selected: item === value
+		}
+	}, item)
+));
 
 module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
@@ -71,6 +105,18 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 		]),
 		fieldset([
 			legend('Map'),
+			button({
+				on: {
+					click: ev => fileUtil.save(moment().format('YYYY-MM-DD-hh-mm[-midiMap.json]'), state.midiMap.map)
+				}
+			}, 'Save Map'),
+			button({
+				on: {
+					click: ev => openDialog(files =>
+						fileUtil.load(files[0], 'json').subscribe(content => actions.set(['midiMap', 'map'], content))
+					)
+				}
+			}, 'Load Map'),
 			table([
 				thead(tr([
 					th('status'),
@@ -81,18 +127,62 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					th('max'),
 					th('dg')
 				])),
-				tbody(state.midiMap.map.map(mapping =>
+				tbody(state.midiMap.map.map((mapping, index) =>
 					tr([
+						// status
 						td(mapping[0]),
-						td(mapping[1]),
+						// key
+						td(
+							input(`[type=number][value=${mapping[1]}][size=3]`, {
+								on: {
+									change: ev => actions.midiMap.modify([index, 1], ev.target.value)
+								},
+								style: {
+									width: '38px'
+								}
+							})
+						),
 						// section
-						td(mapping[2][0]),
+						td(
+							optionList(['instrument', 'studio'], mapping[2][0],
+								ev => actions.midiMap.modify([index, 2, 0], ev.target.value)
+							)
+						),
 						// prop
-						td(mapping[2].slice(1).join(', ')),
+						td(
+							input(`[type=text][value=${mapping[2].slice(1).join(', ')}]`, {
+								on: {
+									change: ev => actions.midiMap.modify([index, 2], [].concat(
+										mapping[2][0],
+										ev.target.value.split(', ')
+									))
+								},
+								style: {
+									// width: '38px'
+								}
+							})),
 						// min
-						td(mapping[3] || 0),
+						td(
+							input(`[type=number][value=${mapping[3] || 0}][size=3]`, {
+								on: {
+									change: ev => actions.midiMap.modify([index, 3], ev.target.value)
+								},
+								style: {
+									width: '38px'
+								}
+							})
+						),
 						// max
-						td(mapping[4] || 1),
+						td(
+							input(`[type=number][value=${mapping[4] || 1}][size=3]`, {
+								on: {
+									change: ev => actions.midiMap.modify([index, 4], ev.target.value)
+								},
+								style: {
+									width: '38px'
+								}
+							})
+						),
 						// digits
 						td(mapping[5])
 					])

@@ -7,6 +7,12 @@ const {Subject} = Rx;
 const {measureToBeatLength} = require('../../util/math');
 const {obj, arr} = require('iblokz-data');
 
+const arrMod = (a, p, v) => [].concat(
+	a.slice(0, p[0]),
+	[p.length === 1 ? v : arrMod(a[p[0]], p.slice(1), v)],
+	a.slice(p[0] + 1)
+);
+
 const initial = {
 	devices: {
 		inputs: [],
@@ -62,11 +68,16 @@ const noteOn = (channel, note, velocity = 0) => state => channel !== undefined ?
 const panic = () => state =>
 	obj.patch(state, ['midiMap', 'channels'], {});
 
+const modify = (p, v) => state => obj.patch(state, ['midiMap'], {
+	map: arrMod(state.midiMap.map, p, v)
+});
+
 module.exports = {
 	initial,
 	connect,
 	toggleClock,
 	toggleData,
 	noteOn,
-	panic
+	panic,
+	modify
 };

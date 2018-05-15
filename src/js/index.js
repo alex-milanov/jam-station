@@ -81,10 +81,9 @@ vdom.patchStream(ui$, '#ui');
 // state$.map(state => services.refresh({state, actions})).subscribe();
 
 // debug
-/*
-state$.distinctUntilChanged(state => state.pianoRoll.events)
-	.subscribe(state => console.log(state.pianoRoll.events));
-	*/
+
+// state$.distinctUntilChanged(state => state.midiMap)
+// 	.subscribe(state => console.log(state.midiMap));
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo.toPrecision(5)));

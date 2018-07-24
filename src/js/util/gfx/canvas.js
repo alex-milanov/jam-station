@@ -32,6 +32,18 @@ const rect = (ctx, rect = {x: 0, y: 0, width: 0, height: 0}, background, stroke,
 	}
 };
 
+const text = (ctx, {
+	font = '10px Arial',
+	fillStyle = 'black',
+	fillText = '',
+	x = 2,
+	y = 8
+}) => {
+	ctx.font = font;
+	ctx.fillStyle = fillStyle;
+	ctx.fillText(fillText, x, y);
+};
+
 const refresh = ctx => Object.assign(ctx.canvas, {
 	width: ctx.canvas.parentNode.offsetWidth,
 	height: ctx.canvas.parentNode.offsetHeight
@@ -41,5 +53,6 @@ module.exports = {
 	clear,
 	line,
 	rect,
+	text,
 	refresh
 };

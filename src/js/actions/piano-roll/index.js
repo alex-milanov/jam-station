@@ -7,6 +7,7 @@ const {measureToBeatLength, bpmToTime} = require('../../util/math');
 const initial = {
 	barsLength: 1,
 	bar: 0,
+	position: [0, 60],
 	events: [
 		/*
 		{

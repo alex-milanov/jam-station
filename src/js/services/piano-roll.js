@@ -6,6 +6,7 @@ const $ = Rx.Observable;
 const time = require('../util/time');
 const audio = require('../util/audio');
 const gfxCanvas = require('../util/gfx/canvas');
+const {numberToNote, noteToNumber} = require('../util/midi');
 
 const prepCanvas = ctx => (
 	gfxCanvas.clear(ctx),
@@ -14,29 +15,42 @@ const prepCanvas = ctx => (
 
 const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-const drawGrid = (ctx, dim = [42, 14], pos = []) => {
+const drawGrid = (ctx, dim = [42, 14], pos = [0, 60]) => {
 	prepCanvas(ctx);
-	const pattern = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0].reverse();
+	const pattern = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
 	const colCount = parseInt(ctx.canvas.width / dim[0], 10) + 1;
 	const rowCount = parseInt(ctx.canvas.height / dim[1], 10);
 	for (let i = 0; i <= rowCount; i++) {
 		gfxCanvas.rect(ctx, {x: 0, y: i * dim[1], width: dim[0], height: dim[1]},
-			pattern[i % pattern.length] ? '#1e1e1e' : '#ccc', '#555');
+			pattern[(pos[1] - i) % 12] ? '#1e1e1e' : '#ccc', '#555');
 		gfxCanvas.line(ctx, {x: dim[0], y: (i + 1) * dim[1]},
 			{x: ctx.canvas.width, y: (i + 1) * dim[1]}, '#555');
+		if ((pos[1] - i) % 12 === 0) gfxCanvas.text(ctx, {
+			x: 2,
+			y: (i + 1) * dim[1] - 2,
+			fillText: (({key, octave}) => `${key}${octave}`)(numberToNote(pos[1] - i)),
+			fill: pattern[(pos[1] - i) % 12] ? '#ccc' : '#1e1e1e'
+		});
 	}
 	for (let i = 0; i < colCount; i++) {
 		gfxCanvas.line(ctx, {x: i * dim[0], y: 0}, {x: i * dim[0], y: ctx.canvas.height}, '#555');
 	}
 };
 
-const drawEvents = (ctx, events, dim = [42, 14], bar) => (prepCanvas(ctx), events.forEach(event => {
-	const yPos = notesPattern.slice().reverse().indexOf(event.note.replace(/[0-9]+/, ''));
-	gfxCanvas.rect(ctx, {
-		x: (event.start - bar.start + 1) * dim[0], y: yPos * dim[1],
-		width: event.duration * dim[0], height: dim[1]
-	}, '#eee', '#555');
-}));
+const drawEvents = (ctx, events, dim = [42, 14], bar, pos = [0, 60]) => {
+	prepCanvas(ctx);
+	const colCount = parseInt(ctx.canvas.width / dim[0], 10) + 1;
+	const rowCount = parseInt(ctx.canvas.height / dim[1], 10);
+	events
+		.filter(event => noteToNumber(event.note) <= pos[1] && noteToNumber(event.note) > (pos[1] - rowCount))
+		.forEach(event => {
+			const yPos = pos[1] - noteToNumber(event.note);
+			gfxCanvas.rect(ctx, {
+				x: (event.start - bar.start + 1) * dim[0], y: yPos * dim[1],
+				width: event.duration * dim[0], height: dim[1]
+			}, '#eee', '#555');
+		});
+};
 
 let unhook = {};
 
@@ -73,8 +87,8 @@ const hook = ({state$, actions}) => {
 					.filter(event => event.start >= bar.start && event.start < bar.end);
 
 				// console.log(events);
-				drawGrid(gridCtx, dim);
-				drawEvents(eventsCtx, events, dim, bar);
+				drawGrid(gridCtx, dim, state.pianoRoll.position);
+				drawEvents(eventsCtx, events, dim, bar, state.pianoRoll.position);
 			})
 		);
 

@@ -3,11 +3,18 @@
 const Rx = require('rx');
 const $ = Rx.Observable;
 
+const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
 const numberToNote = number => ({
-	key: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][number - parseInt(number / 12, 10) * 12],
-	octave: parseInt(number / 12, 10),
+	key: keys[number % 12],
+	octave: parseInt((number - number % 12) / 12, 10) - 1,
 	number
 });
+
+const noteToNumber = note => (
+	keys.indexOf(note.replace(/[0-9]+/, '')) +
+	(parseInt(note.replace(/[A-Z#b]+/, ''), 10) + 1) * 12
+);
 
 const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
@@ -133,5 +140,7 @@ const init = () => {
 
 module.exports = {
 	init,
+	numberToNote,
+	noteToNumber,
 	parseMidiMsg
 };

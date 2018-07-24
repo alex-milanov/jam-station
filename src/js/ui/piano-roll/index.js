@@ -42,7 +42,7 @@ module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 						? actions.set(['pianoRoll', 'position'],
 							[state.pianoRoll.position && state.pianoRoll.position[0] || 0, newPos])
 						: true
-				)((state.pianoRoll.position && state.pianoRoll.position[1] || 60) + Math.ceil(Math.abs(ev.deltaY / 40)) * (ev.deltaY > 0 ? -1 : 1))
+				)((state.pianoRoll.position && state.pianoRoll.position[1] || 60) + Math.ceil(Math.abs(ev.deltaY / 60)) * (ev.deltaY > 0 ? -1 : 1))
 					// console.log(parseInt(ev.target.offsetHeight / 12, 10), Math.ceil(Math.abs(ev.deltaY / 40)) * (ev.deltaY > 0 ? -1 : 1))
 			}
 		})

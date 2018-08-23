@@ -3,6 +3,7 @@
 const {obj, fn} = require('iblokz-data');
 
 const midi = require('../util/midi');
+const pocket = require('../util/pocket');
 
 // util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
@@ -17,8 +18,13 @@ let unhook = () => {};
 
 const clockMsg = [248];    // note on, middle C, full velocity
 
-const hook = ({state$, actions, tapTempo, tick$}) => {
+const hook = ({state$, actions, tapTempo}) => {
 	let subs = [];
+
+	const tick$ = pocket.stream
+		.filter(pocket => pocket.clockTick)
+		.distinctUntilChanged(pocket => pocket.clockTick)
+		.map(pocket => pocket.clockTick);
 
 	const {access$, msg$} = midi.init();
 

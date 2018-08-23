@@ -6,8 +6,9 @@ const Subject = Rx.Subject;
 
 const {context} = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
+const pocket = require('../util/pocket');
 
-const tick$ = new Rx.Subject();
+// const tick$ = new Rx.Subject();
 let i = 0;
 let time = context.currentTime;
 let length;
@@ -20,7 +21,8 @@ const setLength = time => {
 setLength(bpmToTime(140));
 
 const tick = () => {
-	tick$.onNext({time, i});
+	pocket.put('clockTick', {time, i});
+	// tick$.onNext({time, i});
 	time += length;
 	i++;
 	var diff = time - context.currentTime;
@@ -63,7 +65,10 @@ const hook = ({state$, actions}) => {
 	);
 
 	subs.push(
-		tick$
+		pocket.stream
+			.filter(pocket => pocket.clockTick)
+			.distinctUntilChanged(pocket => pocket.clockTick)
+			.map(pocket => pocket.clockTick)
 			.filter(({time, i}) => i % modifier === 0)
 			.subscribe(({time}) => (playing) && actions.studio.tick(time))
 	);
@@ -73,6 +78,6 @@ const hook = ({state$, actions}) => {
 
 module.exports = {
 	hook,
-	tick$,
+	// tick$,
 	unhook
 };

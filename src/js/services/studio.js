@@ -8,34 +8,9 @@ const audio = require('../util/audio');
 const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const {obj} = require('iblokz-data');
+const pocket = require('../util/pocket');
 
 const stream = new Subject();
-
-let kit = [
-	'samples/kick01.ogg',
-	'samples/kick02.ogg',
-	'samples/kick03.ogg',
-	'samples/kick_hiphop01.ogg',
-	'samples/hihat_opened02.ogg',
-	'samples/hihat_opened03.ogg',
-	'samples/ride02.ogg',
-	'samples/rim01.ogg',
-	'samples/snare01.ogg',
-	'samples/snare02.ogg',
-	'samples/snare03.ogg',
-	'samples/snare04.ogg',
-	'samples/snare05.ogg',
-	'samples/clap01.ogg',
-	'samples/clap02.ogg',
-	'samples/clap03.ogg',
-	'samples/clap04.ogg',
-	'samples/shaker01.ogg',
-	'samples/shaker02.ogg'
-].map(url => sampler.create(url));
-
-const addSample = (key, buffer) => (
-	kit.push(sampler.create(key, buffer))
-);
 
 const reverb = audio.create('reverb', {
 	on: true,
@@ -45,7 +20,12 @@ const reverb = audio.create('reverb', {
 
 audio.connect(reverb, audio.context.destination);
 
-const hook = ({state$, actions, tick$}) => {
+const hook = ({state$, actions}) => {
+	const sampleBank$ = pocket.stream
+		.filter(pocket => pocket.sampleBank)
+		.distinctUntilChanged(pocket => pocket.sampleBank)
+		.map(pocket => pocket.sampleBank);
+
 	let buffer = [];
 
 	const clearBuffer = () => {
@@ -68,7 +48,8 @@ const hook = ({state$, actions, tick$}) => {
 	state$
 		.distinctUntilChanged(state => state.studio.tick)
 		.filter(state => state.studio.playing)
-		.subscribe(({studio, sequencer}) => {
+		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
+		.subscribe(({state: {mediaLibrary, studio, sequencer}, sampleBank}) => {
 			if (studio.tick.index === studio.beatLength - 1 || buffer.length === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				// let start = studio.tick.index;
@@ -83,7 +64,12 @@ const hook = ({state$, actions, tick$}) => {
 							: studio.tick.bar
 					].forEach((row, k) => {
 						if (row[i]) {
-							let inst = sampler.clone(kit[sequencer.channels[k]]);
+							console.log(sequencer.channels[k]);
+							let inst = sampler.clone(sampleBank[
+								mediaLibrary.files[
+									sequencer.channels[k]
+								]
+							]);
 							audio.connect(inst, reverb);
 							audio.start(inst, timepos);
 							// inst.trigger({studio}, timepos);
@@ -124,14 +110,19 @@ const hook = ({state$, actions, tick$}) => {
 				{}
 			)
 		}))
-		.subscribe(({state, pressed}) => {
+		.combineLatest(sampleBank$, ({state, pressed}, sampleBank) => ({state, pressed, sampleBank}))
+		.subscribe(({state, pressed, sampleBank}) => {
 			// console.log(pressed);
 			Object.keys(pressed).filter(note => !voices[note])
 				.forEach(
 					note => {
 						const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
 						if (index > -1 && state.sequencer.channels[index]) {
-							let inst = sampler.clone(kit[state.sequencer.channels[index]]);
+							let inst = sampler.clone(sampleBank[
+								state.mediaLibrary.files[
+									state.sequencer.channels[index]
+								]
+							]);
 							audio.connect(inst, reverb);
 							setTimeout(() => audio.start(inst));
 							voices[note] = inst;
@@ -154,7 +145,5 @@ const hook = ({state$, actions, tick$}) => {
 };
 
 module.exports = {
-	kit,
-	addSample,
 	hook
 };

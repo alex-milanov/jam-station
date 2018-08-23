@@ -4,82 +4,84 @@ const $ = Rx.Observable;
 const {Subject} = Rx;
 
 // util
-const {obj, arr} = require('iblokz-data');
+const {obj, arr, fn} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
 
 const stream = new Subject();
 
 const initial = {
 	files: [
-		'kick01.ogg',
-		'kick02.ogg',
-		'kick03.ogg',
-		'kick_hiphop01.ogg',
-		'hihat_opened02.ogg',
-		'hihat_opened03.ogg',
-		'ride02.ogg',
-		'rim01.ogg',
-		'snare01.ogg',
-		'snare02.ogg',
-		'snare03.ogg',
-		'snare04.ogg',
-		'snare05.ogg',
-		'clap01.ogg',
-		'clap02.ogg',
-		'clap03.ogg',
-		'clap04.ogg',
-		'shaker01.ogg',
-		'shaker02.ogg'
+		// 'kick01.ogg',
+		// 'kick02.ogg',
+		// 'kick03.ogg',
+		// 'kick_hiphop01.ogg',
+		// 'hihat_opened02.ogg',
+		// 'hihat_opened03.ogg',
+		// 'ride02.ogg',
+		// 'rim01.ogg',
+		// 'snare01.ogg',
+		// 'snare02.ogg',
+		// 'snare03.ogg',
+		// 'snare04.ogg',
+		// 'snare05.ogg',
+		// 'clap01.ogg',
+		// 'clap02.ogg',
+		// 'clap03.ogg',
+		// 'clap04.ogg',
+		// 'shaker01.ogg',
+		// 'shaker02.ogg'
 	],
-	samples: [{
-		name: 'original bank(will be replaced soon)',
-		expanded: true,
-		items: [
-			{
-				name: 'kick',
-				items: [
-					'kick01.ogg',
-					'kick02.ogg',
-					'kick03.ogg',
-					'kick_hiphop01.ogg'
-				]
-			},
-			{
-				name: 'hihat',
-				items: [
-					'hihat_opened02.ogg',
-					'hihat_opened03.ogg'
-				]
-			},
-			{
-				name: 'snare',
-				items: [
-					'snare01.ogg',
-					'snare02.ogg',
-					'snare03.ogg',
-					'snare04.ogg',
-					'snare05.ogg'
-				]
-			},
-			{
-				name: 'clap',
-				items: [
-					'clap01.ogg',
-					'clap02.ogg',
-					'clap03.ogg',
-					'clap04.ogg'
-				]
-			},
-			{
-				name: 'shaker',
-				items: [
-					'shaker01.ogg',
-					'shaker02.ogg'
-				]
-			},
-			'ride02.ogg',
-			'rim01.ogg'
-		]},
+	samples: [
+		// {
+		// 	name: 'original bank(will be replaced soon)',
+		// 	expanded: true,
+		// 	items: [
+		// 		{
+		// 			name: 'kick',
+		// 			items: [
+		// 				'kick01.ogg',
+		// 				'kick02.ogg',
+		// 				'kick03.ogg',
+		// 				'kick_hiphop01.ogg'
+		// 			]
+		// 		},
+		// 		{
+		// 			name: 'hihat',
+		// 			items: [
+		// 				'hihat_opened02.ogg',
+		// 				'hihat_opened03.ogg'
+		// 			]
+		// 		},
+		// 		{
+		// 			name: 'snare',
+		// 			items: [
+		// 				'snare01.ogg',
+		// 				'snare02.ogg',
+		// 				'snare03.ogg',
+		// 				'snare04.ogg',
+		// 				'snare05.ogg'
+		// 			]
+		// 		},
+		// 		{
+		// 			name: 'clap',
+		// 			items: [
+		// 				'clap01.ogg',
+		// 				'clap02.ogg',
+		// 				'clap03.ogg',
+		// 				'clap04.ogg'
+		// 			]
+		// 		},
+		// 		{
+		// 			name: 'shaker',
+		// 			items: [
+		// 				'shaker01.ogg',
+		// 				'shaker02.ogg'
+		// 			]
+		// 		},
+		// 		'ride02.ogg',
+		// 		'rim01.ogg'
+		// 	]
+		// },
 		{
 			name: 'custom',
 			items: [
@@ -227,7 +229,7 @@ const treePatch = (nodes, path, item) => (
 		).pop());
 
 const loadSamples = list => state => obj.patch(state, 'mediaLibrary', {
-	files: [].concat(state.mediaLibrary.files, list.map(item => item.split('/').pop())),
+	files: [].concat(state.mediaLibrary.files, list),
 	samples: [].concat(state.mediaLibrary.samples, list.reduce(
 		(tree, item) => treePatch(tree, item.split('/'), item.split('/').pop()),
 		[])

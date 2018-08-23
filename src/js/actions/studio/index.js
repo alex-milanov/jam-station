@@ -75,7 +75,7 @@ const tick = (time = context.currentTime) =>
 
 const play = () => state => obj.patch(state, 'studio', {
 	playing: !state.studio.playing,
-	tick: Object.assign({}, state.studio.tick, state.studio.playing ? {elapsed: 0} : {})
+	tick: Object.assign({}, state.studio.tick, state.studio.playing ? {} : {})
 });
 
 const record = () => state => obj.patch(state, 'studio', {recording: !state.studio.recording});
@@ -85,7 +85,7 @@ const stop = () => state => obj.patch(state, 'studio', {
 		index: -1,
 		time: 0,
 		bar: 0,
-		elapsed: 0,
+		elapsed: -1,
 		tracks: [{index: -1}, {index: -1}, {index: -1}, {index: -1}]
 	},
 	playing: false,

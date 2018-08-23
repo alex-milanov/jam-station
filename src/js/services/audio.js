@@ -7,6 +7,7 @@ const Subject = Rx.Subject;
 const {obj, fn} = require('iblokz-data');
 const a = require('../util/audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
+const pocket = require('../util/pocket');
 
 // util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);

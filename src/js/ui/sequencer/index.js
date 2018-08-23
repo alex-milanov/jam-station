@@ -63,7 +63,11 @@ module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 						dragleave: (ev, o) => (ev.preventDefault(), (o.elm.style.borderStyle = 'solid')),
 						dragend: ev => ev.preventDefault()
 					}
-				}, [span(state.mediaLibrary.files[state.sequencer.channels[r]].replace('.ogg', ''))])],
+				}, [span(
+					state.mediaLibrary.files[state.sequencer.channels[r]]
+						? state.mediaLibrary.files[state.sequencer.channels[r]].replace('.ogg', '')
+						: ''
+					)])],
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {

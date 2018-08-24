@@ -8,7 +8,7 @@ const hook = ({state$, actions}) => {
 	gamepad.changes()
 		// .withLatestFrom(pressedKeys$, (pads, keys) => ({pads, keys}))
 		.subscribe(pads => {
-			console.log(pads[0]);
+			// console.log(pads[0]);
 			if (pads[0]) {
 				if (pads[0].buttons[8].pressed === true) actions.studio.play();
 				if (pads[0].buttons[9].pressed === true) actions.studio.record();

@@ -37,67 +37,67 @@ const hook = ({state$, actions}) => {
 		buffer = [];
 	};
 
-	state$.distinctUntilChanged(state => state.studio.playing)
-		.filter(state => !state.studio.playing)
-		.subscribe(() => clearBuffer());
+	// state$.distinctUntilChanged(state => state.studio.playing)
+	// 	.filter(state => !state.studio.playing)
+	// 	.subscribe(() => clearBuffer());
 
-	state$.distinctUntilChanged(state => state.studio.bpm)
-		.filter(state => state.studio.playing)
-		.subscribe(() => clearBuffer());
+	// state$.distinctUntilChanged(state => state.studio.bpm)
+	// 	.filter(state => state.studio.playing)
+	// 	.subscribe(() => clearBuffer());
 
-	state$
-		.distinctUntilChanged(state => state.studio.tick)
-		.filter(state => state.studio.playing)
-		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
-		.subscribe(({state: {mediaLibrary, studio, sequencer}, sampleBank}) => {
-			if (studio.tick.index === studio.beatLength - 1 || buffer.length === 0) {
-				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
-				// let start = studio.tick.index;
-				let offset = buffer.length === 0 ? 0 : 1;
-
-				for (let i = start; i < studio.beatLength; i++) {
-					let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
-					// console.log({timepos, start, offset, i});
-					sequencer.pattern[
-						(studio.tick.index === studio.beatLength - 1)
-							? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
-							: studio.tick.bar
-					].forEach((row, k) => {
-						if (row[i]) {
-							console.log(sequencer.channels[k]);
-							let inst = sampler.clone(sampleBank[
-								mediaLibrary.files[
-									sequencer.channels[k]
-								]
-							]);
-							audio.connect(inst, reverb);
-							audio.start(inst, timepos);
-							// inst.trigger({studio}, timepos);
-							buffer.push(inst);
-						}
-					});
-				}
-				// }
-				// next index
-				/*
-				for (let i = 0; i < state.studio.beatLength; i++) {
-					let timepos = now + ((state.studio.beatLength + i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
-					state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
-						if (row[i]) {
-							let inst = kit[state.sequencer.channels[k]].clone();
-							inst.trigger(state, timepos);
-							buffer.push(inst);
-						}
-					});
-				}
-				*/
-			}
-			/*
-			state.pattern.forEach((row, i) => {
-				(row[state.studio.tickIndex]) && kit[i].play()));
-			}
-			*/
-		});
+	// state$
+	// 	.distinctUntilChanged(state => state.studio.tick)
+	// 	.filter(state => state.studio.playing)
+	// 	.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
+	// 	.subscribe(({state: {mediaLibrary, studio, sequencer}, sampleBank}) => {
+	// 		if (studio.tick.index === studio.beatLength - 1 || buffer.length === 0) {
+	// 			let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
+	// 			// let start = studio.tick.index;
+	// 			let offset = buffer.length === 0 ? 0 : 1;
+	//
+	// 			for (let i = start; i < studio.beatLength; i++) {
+	// 				let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
+	// 				// console.log({timepos, start, offset, i});
+	// 				sequencer.pattern[
+	// 					(studio.tick.index === studio.beatLength - 1)
+	// 						? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
+	// 						: studio.tick.bar
+	// 				].forEach((row, k) => {
+	// 					if (row[i]) {
+	// 						console.log(sequencer.channels[k]);
+	// 						let inst = sampler.clone(sampleBank[
+	// 							mediaLibrary.files[
+	// 								sequencer.channels[k]
+	// 							]
+	// 						]);
+	// 						audio.connect(inst, reverb);
+	// 						audio.start(inst, timepos);
+	// 						// inst.trigger({studio}, timepos);
+	// 						buffer.push(inst);
+	// 					}
+	// 				});
+	// 			}
+	// 			// }
+	// 			// next index
+	// 			/*
+	// 			for (let i = 0; i < state.studio.beatLength; i++) {
+	// 				let timepos = now + ((state.studio.beatLength + i - state.studio.tickIndex) * bpmToTime(state.studio.bpm));
+	// 				state.sequencer.pattern[state.sequencer.bar].forEach((row, k) => {
+	// 					if (row[i]) {
+	// 						let inst = kit[state.sequencer.channels[k]].clone();
+	// 						inst.trigger(state, timepos);
+	// 						buffer.push(inst);
+	// 					}
+	// 				});
+	// 			}
+	// 			*/
+	// 		}
+	// 		/*
+	// 		state.pattern.forEach((row, i) => {
+	// 			(row[state.studio.tickIndex]) && kit[i].play()));
+	// 		}
+	// 		*/
+	// 	});
 
 	let voices = {};
 	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];

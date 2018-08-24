@@ -14,7 +14,7 @@ reducers$
 	.subscribe(pocket => pocket$.onNext(pocket));
 
 pocket$.subscribe(_pocket => {
-	console.log({pocket});
+	// console.log({pocket});
 	pocket = _pocket;
 });
 

@@ -70,7 +70,7 @@ const connect = (node1, node2) => !(node1.out && node1.out.indexOf(node2) > -1)
 			|| node2
 		),
 		Object.assign({}, node1, {
-			out: [].concat(node1.out, [node2])
+			out: [].concat(node1.out || [], [node2])
 		}))
 	: node1;
 
@@ -95,8 +95,8 @@ const disconnect = (node1, node2) => (
 			)
 		}))
 	: (typeof node2 === 'undefined')
-		&& node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
-		|| node1
+		? node1.out.reduce((node1, prevNode) => disconnect(node1, prevNode), node1)
+		: node1
 );
 
 const reroute = (node1, node2) => (node1.out && node1.out.indexOf(node2) === -1)

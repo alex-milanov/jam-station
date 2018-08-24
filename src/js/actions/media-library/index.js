@@ -230,10 +230,9 @@ const treePatch = (nodes, path, item) => (
 
 const loadSamples = list => state => obj.patch(state, 'mediaLibrary', {
 	files: [].concat(state.mediaLibrary.files, list),
-	samples: [].concat(state.mediaLibrary.samples, list.reduce(
+	samples: list.reduce(
 		(tree, item) => treePatch(tree, item.split('/'), item.split('/').pop()),
-		[])
-	)
+		state.mediaLibrary.samples)
 });
 
 const addSample = (sample, bank = 'custom') => state =>

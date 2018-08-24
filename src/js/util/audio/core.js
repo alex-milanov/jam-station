@@ -35,7 +35,15 @@ const connect = (n1, n2) => (
 	n1.connect(n2),
 	n1
 );
-const disconnect = (n1, n2) => (n1.disconnect(n2), n1);
+const disconnect = (n1, n2) => {
+	// since there is no way to determine if they are connected
+	try {
+		n1.disconnect(n2);
+	} catch (err) {
+		console.log(err);
+	}
+	return n1;
+};
 
 const chain = (...nodes) => (
 	nodes.forEach((n, i) => isSet(nodes[i + 1]) && connect(n, nodes[i + 1])),

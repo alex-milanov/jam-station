@@ -82,8 +82,8 @@ vdom.patchStream(ui$, '#ui');
 
 // debug
 
-state$.distinctUntilChanged(state => state.mediaLibrary)
-	.subscribe(state => console.log(state.mediaLibrary));
+// state$.distinctUntilChanged(state => state.mediaLibrary)
+// 	.subscribe(state => console.log(state.mediaLibrary));
 
 // tap tempo
 tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo.toPrecision(5)));

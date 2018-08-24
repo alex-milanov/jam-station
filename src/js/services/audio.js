@@ -4,23 +4,32 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const {obj, fn} = require('iblokz-data');
+const {obj, fn, arr} = require('iblokz-data');
 const a = require('../util/audio');
+const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
 
-// util
-const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
-const objFilter = (o, f) => (
-	// console.log(o, f),
-	Object.keys(o)
-		.filter((key, index) => f(key, o[key], index))
-		.reduce((o2, key) =>
-			obj.patch(o2, key, o[key]),
-		{})
-);
+const reverb = a.create('reverb', {
+	on: true,
+	wet: 0.1,
+	dry: 0.9
+});
+a.connect(reverb, a.context.destination);
 
 let changes$ = new Subject();
+const engine$ = new Rx.BehaviorSubject();
+let buffer = [];
+
+const clearBuffer = () => {
+	// console.log(buffer);
+	buffer.forEach(inst => {
+		// console.log(inst);
+		a.disconnect(inst); // .output.disconnect(reverb.input);
+		a.stop(inst);
+	});
+	buffer = [];
+};
 
 const initial = {
 	1: {
@@ -128,7 +137,10 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 
 	let voice = voices[note] || false;
 
-	if (voice.vco1) a.stop(voice.vco1);
+	if (voice.vco1) {
+		arr.remove(buffer, voice.vco1);
+		a.stop(voice.vco1);
+	}
 	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})), time);
 	let adsr1 = voice ? voice.adsr1 : a.adsr(instr.vca1);
 	vco1 = a.connect(vco1, adsr1);
@@ -136,7 +148,10 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 		? a.disconnect(adsr1)
 		: a.reroute(adsr1, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
-	if (voice.vco2) a.stop(voice.vco2);
+	if (voice.vco2) {
+		arr.remove(buffer, voice.vco2);
+		a.stop(voice.vco2);
+	}
 	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})), time);
 	let adsr2 = voice ? voice.adsr2 : a.adsr(instr.vca2);
 	vco2 = a.connect(vco2, adsr2);
@@ -162,6 +177,9 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 
 	a.noteOn(adsr1, velocity, time);
 	a.noteOn(adsr2, velocity, time);
+
+	buffer.push(vco1);
+	buffer.push(vco2);
 
 	return obj.patch(engine, ch, {
 		voices: obj.patch(voices, note, {
@@ -198,7 +216,7 @@ const noteOff = (instr, ch = 1, note, time) => changes$.onNext(engine => {
 			a.disconnect(adsr2);
 		}, (time - now + instr.vca1.release) * 1000);
 
-		return obj.patch(engine, ch, {voices: objFilter(voices, key => key !== note), context});
+		return obj.patch(engine, ch, {voices: obj.filter(voices, key => key !== note), context});
 	}
 
 	return engine;
@@ -211,8 +229,6 @@ const pitchBend = (instr, pitchValue, ch = 1) => changes$.onNext(engine =>
 	})))
 );
 
-const engine$ = new Rx.BehaviorSubject();
-
 changes$
 	.startWith(() => initial)
 	.scan((engine, change) => change(engine), {})
@@ -220,10 +236,19 @@ changes$
 	.subscribe(engine => engine$.onNext(engine));
 
 const hook = ({state$, actions, studio, tapTempo}) => {
-	// hook state changes
-	// const instrUpdates$ = state$
-	// 	.distinctUntilChanged(state => state.instrument)
-	// 	.map(state => state.instrument).share();
+	const sampleBank$ = pocket.stream
+		.filter(pocket => pocket.sampleBank)
+		.distinctUntilChanged(pocket => pocket.sampleBank)
+		.map(pocket => pocket.sampleBank);
+
+	state$.distinctUntilChanged(state => state.studio.playing)
+		.filter(state => !state.studio.playing)
+		.subscribe(() => clearBuffer());
+
+	state$.distinctUntilChanged(state => state.studio.bpm)
+		.filter(state => state.studio.playing)
+		.subscribe(() => clearBuffer());
+
 	// update connections
 	state$
 		.distinctUntilChanged(
@@ -276,80 +301,44 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			].inst), state.midiMap.pitch, state.session.selection.piano[0])
 		);
 
-	/*
-	midiState$
-		.filter(({data}) => data.msg.binary !== '11111000')
-		.map(({state, data}) => (console.log(`midi: ${data.msg.binary}`, data.msg), ({state, data})))
-		.subscribe(({data, state}) => {
-			switch (data.msg.state) {
-				case 'noteOn':
-					if (data.msg.channel !== 10) {
-						noteOn(state.instrument, data.msg.note, data.msg.velocity);
-					} else {
-						if (state.sequencer.channels[data.msg.note.number - 60])
-							studio.kit[state.sequencer.channels[data.msg.note.number - 60]].clone().trigger({
-								studio: {volume: state.studio.volume * data.msg.velocity}
-							});
-						if (state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
-							actions.sequencer.toggle(state.sequencer.bar, data.msg.note.number - 60, state.studio.tick.index);
-						}
-					}
-					break;
-				case 'noteOff':
-					if (data.msg.channel !== 10) noteOff(state.instrument, data.msg.note);
-					break;
-				case 'pitchBend':
-					pitchBend(state.instrument, data.msg.pitchValue);
-					break;
-				case 'controller':
-					if (state.midiMap.map.controller[data.msg.controller]) {
-						let mmap = state.midiMap.map.controller[data.msg.controller];
-						let [section, prop] = mmap;
-						// adsr
-						if (section === 'instrument' && prop[0] === 'eg') prop = [`adsr${state.instrument.adsrOn + 1}`, prop[1]];
-						// value
-						let valMods = mmap.slice(2);
-						let val = prepVal.apply(null, valMods)(data.msg.value);
-
-						if (section === 'instrument')
-							updatePrefs(obj.patch(state.instrument, prop, val));
-					}
-					break;
-				default:
-					break;
-			}
-		});
-		*/
 	state$
 		.distinctUntilChanged(state => state.studio.tick)
 		.filter(state => state.studio.playing)
-		.subscribe(({studio, session, instrument}) => {
-			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 1) {
-				// let b = (studio.tick.tracks[session.selection.piano[0]]
-				// 	&& studio.tick.tracks[session.selection.piano[0]].bar) || 0;
-				//
-				// const barsLength =
-				// 	session.tracks[session.selection.piano[0]]
-				// 	&& session.tracks[session.selection.piano[0]].measures[0]
-				// 	&& session.tracks[session.selection.piano[0]].measures[0].barsLength || 1;
-				//
-				// if (studio.tick.index === studio.beatLength - 1)
-				// 	b = (b < barsLength - 1) ? b + 1 : 0;
-				//
-				// const bar = {
-				// 	start: studio.beatLength * b,
-				// 	end: studio.beatLength * (b + 1)
-				// };
-				// console.log(bar);
-
+		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
+		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument}, sampleBank}) => {
+			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0 || buffer.length === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
 				// let start = studio.tick.index;
 				session.tracks
 					.map((track, ch) => ({track, ch}))
-					.filter(({track}) => track.type === 'piano')
-					.forEach(({track, ch}) =>
-						fn.pipe(
+					// .filter(({track}) => track.type === 'piano')
+					.forEach(({track, ch}) => obj.switch(track.type, {
+						seq: () => {
+							for (let i = start; i < studio.beatLength; i++) {
+								let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
+								// console.log({timepos, start, offset, i});
+								sequencer.pattern[
+									(studio.tick.index === studio.beatLength - 1)
+										? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
+										: studio.tick.bar
+								].forEach((row, k) => {
+									if (row[i]) {
+										// console.log(sequencer.channels[k]);
+										let inst = sampler.clone(sampleBank[
+											mediaLibrary.files[
+												sequencer.channels[k]
+											]
+										]);
+										inst = a.connect(inst, reverb);
+										a.start(inst, timepos);
+										// inst.trigger({studio}, timepos);
+										buffer.push(inst);
+									}
+								});
+							}
+						},
+						piano: () => fn.pipe(
 							() => ({
 								barIndex: studio.tick.tracks[ch].bar,
 								barsLength: parseInt(track.measures[session.active[ch]]
@@ -367,7 +356,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 									end: studio.beatLength * (barIndex + 1)
 								}
 							}),
-							data => (console.log(studio.tick.tracks[ch], data), data),
+							// data => (console.log(studio.tick.tracks[ch], data), data),
 							({bar}) => track.measures[session.active[ch]] && track.measures[session.active[ch]].events
 								&& track.measures[session.active[ch]].events
 									.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
@@ -383,7 +372,8 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 										);
 									})
 							)()
-					);
+					})()
+				);
 			}
 		});
 };

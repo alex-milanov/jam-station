@@ -36,7 +36,7 @@ const setTempo = bpm => {
 const play = bpm => {
 	time = context.currentTime;
 	setLength(bpmToTime(bpm));
-	console.log({time});
+	// console.log({time});
 	tick();
 };
 

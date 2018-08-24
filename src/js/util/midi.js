@@ -105,7 +105,7 @@ const parseAccess = access => {
 	let inputs = [];
 	let outputs = [];
 
-	console.log(access);
+	// console.log(access);
 
 	access.inputs.forEach(input => inputs.push(input));
 	access.outputs.forEach(output => outputs.push(output));
@@ -118,7 +118,7 @@ const init = () => {
 			access.onstatechange = connection => stream.onNext(connection.currentTarget);
 		}).startWith(access))
 		.map(parseAccess)
-		.map(data => (console.log('midi access', data), data))
+		// .map(data => (console.log('midi access', data), data))
 		.share();
 
 	const msg$ = access$.flatMap(

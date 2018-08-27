@@ -46,14 +46,16 @@ const changesMap = {
 };
 
 // todo merge loaded state
-const load = content => state =>
+const load = content => state => obj.patch(
 	Object.keys(changesMap)
 		.reduce((changes, key) => changes.concat([[key, key]], changesMap[key]), [])
 		.reduce(
 			(state, changes) =>
 				obj.patch(state, changes[0], obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
 				state
-		);
+		),
+	['studio', 'playing'], false
+);
 
 const clear = () => load(initial);
 

@@ -42,7 +42,7 @@ const groupList = list => list.reduce((groups, name) =>
 // 	'ride02.ogg',
 // 	'rim01.ogg']));
 
-const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =>
+const parseTree = (items, state, actions, level = 0, path = []) => ul(items.map((item, k) =>
 	(typeof item === 'object')
 		? li('[draggable="true"]', [
 			input(`[type="checkbox"][id="li-${level}-${k}-${item.name}"]`, {
@@ -54,13 +54,15 @@ const parseTree = (items, state, actions, level = 0) => ul(items.map((item, k) =
 				item.name
 			])
 		].concat(
-			item.items ? parseTree(item.items, state, actions, level + 1) : []
+			item.items ? parseTree(item.items, state, actions, level + 1, [].concat(path, item.name)) : []
 		))
 		: li('[draggable="true"]', {
-			on: {dblclick: () => actions.sequencer.setSample(
+			on: {dblclick: () => (
+				console.log(state.mediaLibrary.files, [].concat(path, item).join('/')),
+				actions.sequencer.setSample(
 				state.sequencer.channel,
-				state.mediaLibrary.files.indexOf(item)
-			)}
+				state.mediaLibrary.files.indexOf([].concat(path, item).join('/'))
+			))}
 		}, [
 			label({
 				style: {paddingLeft: (5 + level * 5) + 'px'}

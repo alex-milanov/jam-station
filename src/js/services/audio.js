@@ -293,6 +293,50 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 				);
 		});
 
+	let voices = {};
+	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+	state$.distinctUntilChanged(state => state.midiMap.channels)
+		.map(state => ({
+			state,
+			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) === 10).reduce(
+				(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
+				{}
+			)
+		}))
+		.combineLatest(sampleBank$, ({state, pressed}, sampleBank) => ({state, pressed, sampleBank}))
+		.subscribe(({state, pressed, sampleBank}) => {
+			// console.log(pressed);
+			Object.keys(pressed).filter(note => !voices[note])
+				.forEach(
+					note => {
+						const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
+						if (index > -1 && state.sequencer.channels[index]) {
+							let inst = sampler.clone(sampleBank[
+								state.mediaLibrary.files[
+									state.sequencer.channels[index]
+								]
+							]);
+							a.connect(inst, reverb);
+							setTimeout(() => a.start(inst));
+							voices[note] = inst;
+						}
+					}
+				);
+			Object.keys(voices).filter(note => !pressed[note])
+				.forEach(
+					note => {
+						if (voices[note]) {
+							setTimeout(() => {
+								voices[note].output.disconnect(reverb.input);
+								a.stop(voices[note]);
+								voices = obj.filter(voices, key => key !== note);
+							});
+						}
+					}
+				);
+		});
+
 	// pitch bend
 	state$.distinctUntilChanged(state => state.midiMap.pitch)
 		.subscribe(state => pitchBend(

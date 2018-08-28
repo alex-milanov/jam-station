@@ -57,11 +57,16 @@ const hook = ({state$, actions, tapTempo}) => {
 			.filter(({raw, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
 				raw.input.id
 			) > -1)
-			.subscribe(({msg}) => actions.midiMap.noteOn(
-				msg.channel,
-				msg.note.key + msg.note.octave,
-				msg.velocity || 0
-			))
+			.subscribe(({msg, state}) => {
+				if (state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
+					actions.sequencer.toggle(state.sequencer.bar, msg.note.number - 60, state.studio.tick.index, true);
+				}
+				actions.midiMap.noteOn(
+					msg.channel,
+					msg.note.key + msg.note.octave,
+					msg.velocity || 0
+				);
+			})
 	);
 
 	subs.push(

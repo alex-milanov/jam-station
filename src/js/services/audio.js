@@ -327,11 +327,12 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 				.forEach(
 					note => {
 						if (voices[note]) {
+							let inst = voices[note];
+							voices = obj.filter(voices, key => key !== note);
 							setTimeout(() => {
-								voices[note].output.disconnect(reverb.input);
-								a.stop(voices[note]);
-								voices = obj.filter(voices, key => key !== note);
-							});
+								a.disconnect(inst, reverb);
+								a.stop(inst);
+							}, 3000);
 						}
 					}
 				);

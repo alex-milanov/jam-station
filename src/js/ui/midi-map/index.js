@@ -45,7 +45,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	div('.header', [
 		h2([img('[src="assets/midi.svg"]'), span('MIDI Map')])
 	]),
-	div('.body', [
+	div('.body', [].concat(
 		fieldset([
 			legend('Devices'),
 			div('.devices', [
@@ -188,6 +188,41 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					])
 				))
 			])
-		])
-	])
+		]),
+		state.osc ? fieldset([
+			legend('OSC'),
+			table([
+				thead([
+					th('[width="30%"]', 'data'),
+					th('[width="17%"]', 'x'),
+					th('[width="17%"]', 'y'),
+					th('[width="17%"]', 'z'),
+					th('[width="17%"]', 'w')
+				]),
+				tbody([
+					tr([
+						td('accelerometer'),
+						td('[align=right]', state.osc.accelerometer[0].toFixed(2)),
+						td('[align=right]', state.osc.accelerometer[1].toFixed(2)),
+						td('[align=right]', state.osc.accelerometer[2].toFixed(2)),
+						td()
+					]),
+					tr([
+						td('gyroscope'),
+						td('[align=right]', state.osc.gyroscope[0].toFixed(2)),
+						td('[align=right]', state.osc.gyroscope[1].toFixed(2)),
+						td('[align=right]', state.osc.gyroscope[2].toFixed(2)),
+						td()
+					]),
+					tr([
+						td('orientation'),
+						td('[align=right]', state.osc.orientation.x.toFixed(2)),
+						td('[align=right]', state.osc.orientation.y.toFixed(2)),
+						td('[align=right]', state.osc.orientation.z.toFixed(2)),
+						td('[align=right]', state.osc.orientation.w.toFixed(2))
+					])
+				])
+			])
+		]) : []
+	))
 ]);

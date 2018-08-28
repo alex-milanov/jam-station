@@ -28,12 +28,12 @@ const initial = {
 	]
 };
 
-const toggle = (bar, r, c) =>
+const toggle = (bar, r, c, forceOn = false) =>
 	state => {
 		let pattern = [].concat(state.sequencer.pattern.slice());
 		pattern[bar] = pattern[bar] && pattern[bar].slice() || [];
 		pattern[bar][r] = pattern[bar][r] && pattern[bar][r].slice() || [];
-		pattern[bar][r][c] = pattern[bar][r][c] ? 0 : 1;
+		pattern[bar][r][c] = pattern[bar][r][c] && !forceOn ? 0 : 1;
 		// console.log(pattern, pattern[bar][r][c]);
 		return obj.patch(state, 'sequencer', {pattern});
 	};

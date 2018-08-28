@@ -43,7 +43,11 @@ const initial = {
 
 const connect = devices =>
 	state => obj.patch(state, 'midiMap', {
-		devices
+		devices,
+		data: {
+			...state.midiMap.data,
+			in: arr.add(state.midiMap.data.in, devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/)))
+		}
 	});
 
 const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clock', inOut],
@@ -55,12 +59,12 @@ const toggleData = (inOut, index) => state => obj.patch(state, ['midiMap', 'data
 );
 
 const noteOn = (channel, note, velocity = 0) => state => channel !== undefined ? (
-	// console.log(channel, note, velocity),
+	// console.log(state.midiMap.channels, obj.sub(state, ['midiMap', 'channels', channel, note]), channel, note, velocity),
 	velocity !== 0
 		? obj.patch(state, ['midiMap', 'channels', channel, note], velocity)
 		: obj.patch(state, ['midiMap', 'channels'], {
 			[channel]: obj.filter(
-				obj.sub(state, ['midiMap', 'channels', channel]),
+				obj.sub(state, ['midiMap', 'channels', channel]) || {},
 				(key, value) => key !== note)
 		})
 	) : state;

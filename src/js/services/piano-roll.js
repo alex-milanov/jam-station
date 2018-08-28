@@ -3,7 +3,7 @@
 const Rx = require('rx');
 const $ = Rx.Observable;
 
-const time = require('../util/time');
+// const time = require('../util/time');
 const audio = require('../util/audio');
 const gfxCanvas = require('../util/gfx/canvas');
 const {numberToNote, noteToNumber} = require('../util/midi');
@@ -57,18 +57,41 @@ let unhook = {};
 const hook = ({state$, actions}) => {
 	let subs = [];
 
-	subs.push(
-		time.frame()
+	const pianoRollEl$ = $.interval(500 /* ms */)
+			.timeInterval()
 			.map(() => document.querySelector('.piano-roll'))
+			.distinctUntilChanged(el => el)
 			.filter(el => el)
 			.map(el => ({
 				grid: el.querySelector('.piano-roll .grid'),
 				events: el.querySelector('.piano-roll .events')
-			}))
-			.withLatestFrom(state$, (el, state) => ({el, state}))
-			.distinctUntilChanged(({state}) => JSON.stringify(state.pianoRoll) + JSON.stringify(state.studio))
+			}));
+
+	// grid changes
+	subs.push(
+		$.combineLatest(
+			state$
+				.distinctUntilChanged(state => state.pianoRoll.position),
+			pianoRollEl$,
+			(state, el) => ({state, el})
+		)
 			.subscribe(({el, state}) => {
 				const gridCtx = el.grid.getContext('2d');
+				const dim = [30, 12];
+				drawGrid(gridCtx, dim, state.pianoRoll.position);
+			})
+	);
+
+	// event changes
+	subs.push(
+		state$
+			.distinctUntilChanged(state =>
+				JSON.stringify(state.pianoRoll.position) +
+				JSON.stringify(state.studio.tick.tracks[state.session.selection.piano[0]].bar) +
+				JSON.stringify(state.pianoRoll.events)
+			)
+			.withLatestFrom(pianoRollEl$, (state, el) => ({state, el}))
+			.subscribe(({el, state}) => {
 				const eventsCtx = el.events.getContext('2d');
 				const dim = [30, 12];
 				// ctx.translate(0.5, 0.5);
@@ -87,7 +110,6 @@ const hook = ({state$, actions}) => {
 					.filter(event => event.start >= bar.start && event.start < bar.end);
 
 				// console.log(events);
-				drawGrid(gridCtx, dim, state.pianoRoll.position);
 				drawEvents(eventsCtx, events, dim, bar, state.pianoRoll.position);
 			})
 		);

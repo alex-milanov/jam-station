@@ -1,6 +1,9 @@
 'use strict';
+// lib
+const Rx = require('rx');
+const $ = Rx.Observable;
 
-const time = require('../util/time');
+// const time = require('../util/time');
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
@@ -65,7 +68,8 @@ const refresh = ({layout, state, actions}) => {
 };
 
 const hook = ({state$, actions}) => {
-	time.frame()
+	$.interval(100 /* ms */)
+    .timeInterval()
 		.map(() => document.querySelector('#layout'))
 		.filter(layout => layout)
 		.withLatestFrom(state$, (layout, state) => ({layout, state, actions}))

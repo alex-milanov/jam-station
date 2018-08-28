@@ -58,14 +58,19 @@ const hook = ({state$, actions, tapTempo}) => {
 				raw.input.id
 			) > -1)
 			.subscribe(({msg, state}) => {
-				if (state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
-					actions.sequencer.toggle(state.sequencer.bar, msg.note.number - 60, state.studio.tick.index, true);
-				}
 				actions.midiMap.noteOn(
 					msg.channel,
 					msg.note.key + msg.note.octave,
 					msg.velocity || 0
 				);
+
+				if (msg.state === 'noteOn' && msg.channel === 10
+					&& state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
+					setTimeout(
+						() => actions.sequencer.toggle(state.sequencer.bar, msg.note.number - 60, state.studio.tick.index + 1, true),
+						100
+					);
+				}
 			})
 	);
 

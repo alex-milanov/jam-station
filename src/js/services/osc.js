@@ -35,8 +35,14 @@ const hook = ({state$, actions}) => {
 	subs.push(
 		dataMsg$
 			.filter(data => data[1].type === 'orientation')
-			.map(data => (console.log(data), data))
-			.subscribe(data => actions.set('osc', data[1]))
+			// .map(data => (console.log(data), data))
+			.sample(100)
+			.subscribe(data => {
+				actions.set('osc', data[1]);
+				// orientation
+				actions.change('instrument', ['vcf', 'cutoff'], (data[1].orientation.y + 1).toFixed(2) / 2);
+				actions.change('instrument', ['vcf', 'resonance'], (data[1].orientation.x + 1).toFixed(2) / 2);
+			})
 	);
 
 	// ws.onmessage = data => console.log(JSON.parse(data.data));

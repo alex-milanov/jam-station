@@ -24,20 +24,34 @@ const hook = ({state$, actions}) => {
 		});
 
 	// keyboard
-	document.addEventListener('keydown', e => {
+	document.addEventListener('keydown', ev => {
+		// console.log(ev.code, ev.target.tagName, ev.target.contentEditable);
+
+		if (ev.code === 'Escape') {
+			ev.target.blur();
+			window
+				.getSelection()
+				.removeAllRanges();
+		}
+
+		if (['INPUT', 'TEXTAREA'].indexOf(ev.target.tagName) > -1 || ev.target.contentEditable === true)
+			return;
+
 		// console.log(e);
-		if (e.code === 'Space') actions.studio.play();
-		if (e.key === 'r') actions.studio.record();
-		if (e.key === 't') actions.studio.stop();
+		if (ev.code === 'Space') {
+			actions.studio.play();
+			ev.preventDefault();
+		}
+		if (ev.key === 'r') actions.studio.record();
+		if (ev.key === 't') actions.studio.stop();
 		// channels
-		if (e.key === 'Enter') actions.sequencer.add();
-		if (e.key === 'Delete') actions.sequencer.clear();
-		if (e.key === 'Backspace') actions.sequencer.remove();
+		if (ev.key === 'Enter') actions.sequencer.add();
+		if (ev.key === 'Delete' || ev.key === 'Backspace') actions.sequencer.clear();
 
-		if (e.key === 'ArrowUp') actions.sequencer.prev();
-		if (e.key === 'ArrowDown') actions.sequencer.next();
+		if (ev.key === 'ArrowUp') actions.sequencer.prev();
+		if (ev.key === 'ArrowDown') actions.sequencer.next();
 
-		if (e.key === 'c') actions.pianoRoll.clear();
+		if (ev.key === 'c') actions.pianoRoll.clear();
 	});
 };
 

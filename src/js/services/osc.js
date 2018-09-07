@@ -34,14 +34,25 @@ const hook = ({state$, actions}) => {
 
 	subs.push(
 		dataMsg$
-			.filter(data => data[1].type === 'orientation')
+			.withLatestFrom(state$, (data, state) => ({data, state}))
+			.filter(({data}) => data[1].type === 'orientation')
 			// .map(data => (console.log(data), data))
 			.sample(100)
-			.subscribe(data => {
-				actions.set('osc', data[1]);
+			.subscribe(({data, state}) => {
+				actions.set(['myo', 'osc'], data[1]);
 				// orientation
-				actions.change('instrument', ['vcf', 'cutoff'], (data[1].orientation.y + 1).toFixed(2) / 2);
-				actions.change('instrument', ['vcf', 'resonance'], (data[1].orientation.x + 1).toFixed(2) / 2);
+				if (state.myo.on) {
+					actions.change('instrument', ['vcf', 'cutoff'],
+						state.myo.reverse
+							? 1 - (data[1].orientation.y + 1).toFixed(2) / 2
+							: (data[1].orientation.y + 1).toFixed(2) / 2
+					);
+					actions.change('instrument', ['vcf', 'resonance'],
+						state.myo.reverse
+							? 1 - (data[1].orientation.x + 1).toFixed(2) / 2
+							: (data[1].orientation.x + 1).toFixed(2) / 2
+					);
+				}
 			})
 	);
 

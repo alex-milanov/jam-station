@@ -2,7 +2,7 @@
 
 const moment = require('moment');
 
-const {div, h1, header, img, i, ul, li, a, button, input, label} = require('iblokz-snabbdom-helpers');
+const {div, h1, header, img, i, ul, li, a, button, input, label, span} = require('iblokz-snabbdom-helpers');
 
 const fileUtil = require('../../util/file');
 
@@ -62,8 +62,20 @@ module.exports = ({state, actions, tapTempo}) => header([
 		])])
 	]),
 	ul('.center', [
-		li([img('[src="assets/logo2.png"]')]),
+		li([
+			img('[src="assets/logo2.png"]')
+		]),
 		li('.right', [
+			button('.fa.fa-play', {
+				class: {on: state.studio.playing},
+				on: {click: () => actions.studio.play()}
+			}),
+			button('.fa.fa-circle', {
+				class: {on: state.studio.recording},
+				on: {click: () => actions.studio.record()}
+			}),
+			button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
+			label(' '),
 			label({
 				on: {
 					click: () => tapTempo.tap()

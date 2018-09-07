@@ -2,7 +2,8 @@
 
 const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i,
-	ul, li, table, thead, tbody, tr, td, th, h, img, select, option
+	ul, li, table, thead, tbody, tr, td, th, h, img, select, option,
+	br
 } = require('iblokz-snabbdom-helpers');
 
 const moment = require('moment');
@@ -189,9 +190,26 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 				))
 			])
 		]),
-		state.osc ? fieldset([
-			legend('OSC'),
-			table([
+		div([].concat(
+			br(),
+			div('.header', [
+				h2([i('.fa.fa-hand-lizard-o'), ' Myo Armband']),
+				button('.fa', {
+					class: {
+						'on': state.myo.on,
+						'fa-toggle-on': state.myo.on,
+						'fa-toggle-off': !state.myo.on
+					},
+					on: {click: () => actions.toggle(['myo', 'on'])}
+				}),
+				button('.fa.fa-arrows-v', {
+					class: {
+						on: state.myo.reverse
+					},
+					on: {click: () => actions.toggle(['myo', 'reverse'])}
+				})
+			]),
+			state.myo.on ? table([
 				thead([
 					th('[width="30%"]', 'data'),
 					th('[width="17%"]', 'x'),
@@ -202,27 +220,27 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 				tbody([
 					tr([
 						td('accelerometer'),
-						td('[align=right]', state.osc.accelerometer[0].toFixed(2)),
-						td('[align=right]', state.osc.accelerometer[1].toFixed(2)),
-						td('[align=right]', state.osc.accelerometer[2].toFixed(2)),
+						td('[align=right]', state.myo.osc.accelerometer && state.myo.osc.accelerometer[0].toFixed(2)),
+						td('[align=right]', state.myo.osc.accelerometer && state.myo.osc.accelerometer[1].toFixed(2)),
+						td('[align=right]', state.myo.osc.accelerometer && state.myo.osc.accelerometer[2].toFixed(2)),
 						td()
 					]),
 					tr([
 						td('gyroscope'),
-						td('[align=right]', state.osc.gyroscope[0].toFixed(2)),
-						td('[align=right]', state.osc.gyroscope[1].toFixed(2)),
-						td('[align=right]', state.osc.gyroscope[2].toFixed(2)),
+						td('[align=right]', state.myo.osc.gyroscope && state.myo.osc.gyroscope[0].toFixed(2)),
+						td('[align=right]', state.myo.osc.gyroscope && state.myo.osc.gyroscope[1].toFixed(2)),
+						td('[align=right]', state.myo.osc.gyroscope && state.myo.osc.gyroscope[2].toFixed(2)),
 						td()
 					]),
 					tr([
 						td('orientation'),
-						td('[align=right]', state.osc.orientation.x.toFixed(2)),
-						td('[align=right]', state.osc.orientation.y.toFixed(2)),
-						td('[align=right]', state.osc.orientation.z.toFixed(2)),
-						td('[align=right]', state.osc.orientation.w.toFixed(2))
+						td('[align=right]', state.myo.osc.orientation && state.myo.osc.orientation.x.toFixed(2)),
+						td('[align=right]', state.myo.osc.orientation && state.myo.osc.orientation.y.toFixed(2)),
+						td('[align=right]', state.myo.osc.orientation && state.myo.osc.orientation.z.toFixed(2)),
+						td('[align=right]', state.myo.osc.orientation && state.myo.osc.orientation.w.toFixed(2))
 					])
 				])
-			])
-		]) : []
+			]) : []
+		))
 	))
 ]);

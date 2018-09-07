@@ -10,12 +10,13 @@ const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
 
-const reverb = a.create('reverb', {
+const globalVolume = a.connect(a.vca({gain: 0.4}), a.context.destination);
+
+const reverb = a.connect(a.create('reverb', {
 	on: true,
 	wet: 0.1,
 	dry: 0.9
-});
-a.connect(reverb, a.context.destination);
+}), globalVolume);
 
 let changes$ = new Subject();
 const engine$ = new Rx.BehaviorSubject();
@@ -122,7 +123,7 @@ const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch
 	vcf: (instr.vcf.on)
 		? a.reroute(engine[ch].vcf, engine[ch].volume)
 		: a.disconnect(engine[ch].vcf),
-	volume: a.connect(engine[ch].volume, engine[ch].context.destination)
+	volume: a.connect(engine[ch].volume, globalVolume)
 	// lfo: (instr.lfo.on)
 	// 	? a.reroute(engine[ch].lfo, engine[ch].volume.through.gain)
 	// 	: a.disconnect(engine[ch].lfo)
@@ -259,6 +260,11 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 	state$
 		.distinctUntilChanged(state => state.instrument)
 		.subscribe(({instrument, session}) => updatePrefs(instrument, session.selection.piano[0]));
+
+	// global volume
+	state$
+		.distinctUntilChanged(state => state.studio.volume)
+		.subscribe(state => a.update(globalVolume, {gain: state.studio.volume}));
 
 	// set up once
 	state$.take(1)

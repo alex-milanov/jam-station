@@ -33,6 +33,13 @@ const initial = Object.assign({
 		instrument: true,
 		sequencer: true,
 		midiMap: true
+	},
+	myo: {
+		on: false,
+		reverse: false,
+		osc: {
+
+		}
 	}
 });
 
@@ -41,8 +48,7 @@ const changesMap = {
 	sequencer: [],
 	instrument: [],
 	session: [],
-	pianoRoll: [],
-	layout: []
+	pianoRoll: []
 };
 
 // todo merge loaded state

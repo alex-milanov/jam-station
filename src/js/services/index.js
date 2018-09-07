@@ -2,7 +2,7 @@
 
 // util
 const viewport = require('./viewport');
-const layout = require('./layout');
+// const layout = require('./layout');
 const clock = require('./clock');
 const session = require('./session');
 const studio = require('./studio');
@@ -16,7 +16,7 @@ const pianoRoll = require('./piano-roll');
 
 const hook = ({state$, actions, tapTempo}) => {
 	viewport.hook({state$, actions});
-	layout.hook({state$, actions});
+	// layout.hook({state$, actions});
 	clock.hook({state$, actions});
 	session.hook({state$, actions});
 	studio.hook({state$, actions});

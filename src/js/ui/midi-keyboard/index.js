@@ -4,6 +4,8 @@ const {
 	div, h2, span, p, input, fieldset, legend, label, hr, button, i, img
 } = require('iblokz-snabbdom-helpers');
 
+const {fn} = require('iblokz-data');
+
 const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const iterate = (value, step, max) => [].concat(
@@ -36,21 +38,35 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 		// h2([img('[src="/assets/midi-keyboard.svg"]'), span('MIDI Keyboard')])
 	]),
 	div('.body', [
-		div('.keys', generateKeys('C3', 'C6').map(parseKey).map(key =>
-			div(((key.isSharp || key.isFlat) ? '.black' : '.white'), {
-				on: {
-					mousedown: () => actions.midiMap.noteOn(1, key.key, 0.7),
-					mouseup: () => actions.midiMap.noteOn(1, key.key, 0),
-					mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0.7),
-					mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0)
-				},
-				class: {
-					on: Object.keys(state.midiMap.channels).reduce(
-						(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
-						{}
-					)[key.key]
-				}
-			}, (key.note === 'C') ? [span(key.key)] : [])
-		))
+		div('.keys', fn.pipe(
+			() => generateKeys('C1', 'C5').map(parseKey),
+			allKeys => ({allKeys, whiteKeysLength: allKeys.filter(key => !key.isSharp && !key.isFlat).length}),
+			({allKeys, whiteKeysLength}) => allKeys.map((key, index) =>
+				div(((key.isSharp || key.isFlat) ? '.black' : '.white'), {
+					style: !(key.isSharp || key.isFlat)
+						? {
+							width: (99.9 / whiteKeysLength) + '%',
+							marginLeft: (index > 0 && allKeys[index - 1] && (allKeys[index - 1].isSharp || allKeys[index - 1].isBlack))
+								? -(70 / whiteKeysLength / 2) + '%' : 0
+						}
+						: {
+							width: (70 / whiteKeysLength) + '%',
+							marginLeft: -(70 / whiteKeysLength / 2) + '%'
+						},
+					on: {
+						mousedown: () => actions.midiMap.noteOn(1, key.key, 0.7),
+						mouseup: () => actions.midiMap.noteOn(1, key.key, 0),
+						mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0.7),
+						mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0)
+					},
+					class: {
+						on: Object.keys(state.midiMap.channels).reduce(
+							(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
+							{}
+						)[key.key]
+					}
+				}, (key.note === 'C') ? [span(key.key)] : [])
+			)
+		)())
 	])
 ]);

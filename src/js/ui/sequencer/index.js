@@ -9,15 +9,6 @@ const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][chann
 module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 	div('.header', [
 		h2([i('.fa.fa-braille'), ' Sequencer']),
-		button('.fa.fa-play', {
-			class: {on: state.studio.playing},
-			on: {click: () => actions.studio.play()}
-		}),
-		button('.fa.fa-circle', {
-			class: {on: state.studio.recording},
-			on: {click: () => actions.studio.record()}
-		}),
-		button('.fa.fa-stop', {on: {click: () => actions.studio.stop()}}),
 		label('LN'),
 		input('.bars-length', {
 			props: {value: state.sequencer.barsLength || 4, size: 3},

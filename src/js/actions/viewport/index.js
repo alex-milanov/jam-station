@@ -3,7 +3,8 @@
 const initial = {
 	screen: {
 		width: 800,
-		height: 600
+		height: 600,
+		size: 'lg'
 	},
 	mouse: {
 		x: 400,

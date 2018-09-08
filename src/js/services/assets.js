@@ -6,19 +6,26 @@ const $ = Rx.Observable;
 const file = require('../util/file');
 const audio = require('../util/audio');
 
+const kits = [
+	'samples/openpathmusic.zip',
+	'samples/junk-drum-kit.zip'
+];
+
 const hook = ({state$, actions, studio}) => {
-	file.loadZip('samples/openpathmusic.zip').subscribe(opm => {
-		let opmSamples = Object.keys(opm);
-		// console.log(opmSamples);
-		$.concat(opmSamples.map(key =>
-			$.fromCallback(audio.context.decodeAudioData, audio.context)(opm[key])
-			.map(buffer => ({key, buffer})))
-		)
-			.subscribe(({key, buffer}) =>
-				studio.addSample(key, buffer)
-			);
-		actions.mediaLibrary.loadSamples(opmSamples);
-	});
+	$.fromArray(kits)
+		.concatMap(file.loadZip)
+		.subscribe(opm => {
+			let opmSamples = Object.keys(opm);
+			// console.log(opmSamples);
+			$.concat(opmSamples.map(key =>
+				$.fromCallback(audio.context.decodeAudioData, audio.context)(opm[key])
+				.map(buffer => ({key, buffer})))
+			)
+				.subscribe(({key, buffer}) =>
+					studio.addSample(key, buffer)
+				);
+			actions.mediaLibrary.loadSamples(opmSamples);
+		});
 };
 
 module.exports = {

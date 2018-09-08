@@ -33,6 +33,11 @@ const baseKit = [
 	'samples/shaker02.ogg'
 ];
 
+const kits = [
+	'samples/openpathmusic.zip',
+	'samples/junk-drum-kit.zip'
+];
+
 let sampleBank$ = new Rx.Subject();
 
 let unhook = () => {};
@@ -50,8 +55,10 @@ const hook = ({state$, actions}) => {
 					node: sampler.create(url, buffer)
 				}))
 			),
-		file.loadZip('samples/openpathmusic.zip')
+		$.fromArray(kits)
+			.concatMap(file.loadZip)
 			.concatMap(opm => $.fromArray(Object.keys(opm))
+				.filter(key => key.match(/.(wav|ogg|opus|mp3|aif)$/))
 				.concatMap(key => $.fromCallback(context.decodeAudioData, context)(opm[key])
 					.map(buffer => ({
 						name: key,

@@ -63,7 +63,7 @@ const clear = () => state => obj.patch(state, ['pianoRoll', 'events'], []);
 
 const record = (pressed, tick, currentTime) => state =>
 	fn.pipe(
-		() => console.log(pressed, tick, currentTime),
+		// () => console.log(pressed, tick, currentTime),
 		() => ({
 			timeOffset: prepTime(tick.time, currentTime, bpmToTime(state.studio.bpm)),
 			barStart: tick.tracks[state.session.selection.piano[0]]
@@ -74,7 +74,7 @@ const record = (pressed, tick, currentTime) => state =>
 				&& (tick.tracks[state.session.selection.piano[0]].bar) || 0,
 			barsLength: state.pianoRoll.barsLength
 		}),
-		data => (console.log(data), data),
+		// data => (console.log(data), data),
 		({timeOffset, barStart, beatIndex, barsLength, bar}) => obj.patch(state, 'pianoRoll', {
 			events: [].concat(
 				// already recorded events

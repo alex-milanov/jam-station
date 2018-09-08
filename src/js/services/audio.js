@@ -131,6 +131,7 @@ const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch
 
 const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine => {
 	let {voices, vcf, lfo, volume, context, reverb} = engine[ch];
+	time = time || context.currentTime;
 
 	const freq = a.noteToFrequency(note);
 

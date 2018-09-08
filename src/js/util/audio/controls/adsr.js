@@ -13,7 +13,7 @@ const create = prefs => [{
 	}, prefs),
 	through: _create('gain')
 }].map(n => (
-	set(n.through.gain, 'value', n.prefs.volume),
+	set(n.through.gain, 'value', 0),
 	n
 )).pop();
 
@@ -24,9 +24,7 @@ const update = (n, prefs) => (
 
 const noteOn = (node, velocity, time) => {
 	const now = context.currentTime;
-	time = time || now + 0.0001;
-
-	// console.log(node, velocity);
+	time = (time || now) + 0.0001;
 
 	node.through.gain.cancelScheduledValues(0);
 
@@ -34,7 +32,7 @@ const noteOn = (node, velocity, time) => {
 		// attack
 		(node.prefs.attack > 0)
 			? [[0, time], [velocity * node.prefs.volume, node.prefs.attack]]
-			: [[velocity * node.prefs.volume, now]],
+			: [[velocity * node.prefs.volume, time]],
 		// decay
 		(node.prefs.decay > 0)
 			? [[node.prefs.sustain * velocity * node.prefs.volume, node.prefs.decay]] : []
@@ -48,9 +46,11 @@ const noteOff = (node, time) => {
 	const now = context.currentTime;
 	time = time || now + 0.0001;
 
-	node.through.gain.cancelScheduledValues(0);
-	node.through.gain.setValueCurveAtTime(new Float32Array([node.through.gain.value, 0]),
-			time, node.prefs.release > 0 && node.prefs.release || 0.00001);
+	setTimeout(() => (
+		node.through.gain.cancelScheduledValues(0),
+		node.through.gain.setValueCurveAtTime(new Float32Array([node.through.gain.value, 0]),
+				time, node.prefs.release > 0 && node.prefs.release || 0.00001)
+	), (time - now) * 1000);
 	return node;
 };
 

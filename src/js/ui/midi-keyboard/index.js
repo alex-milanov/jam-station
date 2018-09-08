@@ -39,7 +39,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 	]),
 	div('.body', [
 		div('.keys', fn.pipe(
-			() => generateKeys('C1', 'C5').map(parseKey),
+			() => generateKeys('C2', 'C6').map(parseKey),
 			allKeys => ({allKeys, whiteKeysLength: allKeys.filter(key => !key.isSharp && !key.isFlat).length}),
 			({allKeys, whiteKeysLength}) => allKeys.map((key, index) =>
 				div(((key.isSharp || key.isFlat) ? '.black' : '.white'), {

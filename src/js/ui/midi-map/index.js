@@ -197,8 +197,8 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 				button('.fa', {
 					class: {
 						'on': state.myo.on,
-						'fa-toggle-on': state.myo.on,
-						'fa-toggle-off': !state.myo.on
+						'fa-link': state.myo.on,
+						'fa-unlink': !state.myo.on
 					},
 					on: {click: () => actions.toggle(['myo', 'on'])}
 				}),
@@ -241,6 +241,53 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					])
 				])
 			]) : []
+		)),
+		div([].concat(
+			br(),
+			div('.header', [].concat(
+				h2([i('.fa.fa-globe'), ' WRLDS Ball']),
+				button('.fa', {
+					class: {
+						'on': state.wrlds.on,
+						'fa-link': state.wrlds.on,
+						'fa-unlink': !state.wrlds.on
+					},
+					on: {click: () => actions.toggle(['wrlds', 'on'])}
+				}),
+				// label('PORT'),
+				// input(`[type=number]`, {
+				// 	on: {
+				// 		change: ev => actions.set(['wrlds', 'port'], ev.target.value)
+				// 	},
+				// 	props: {
+				// 		value: state.wrlds.port
+				// 	}
+				// }),
+				label('Mode'),
+				button('.fa.fa-clock-o', {
+					class: {
+						on: state.wrlds.mode === 0
+					},
+					on: {click: () => actions.set(['wrlds', 'mode'], 0)}
+				}),
+				button('.fa.fa-music', {
+					class: {
+						on: state.wrlds.mode === 1
+					},
+					on: {click: () => actions.set(['wrlds', 'mode'], 1)}
+				}),
+				state.wrlds.mode === 1 ? [
+					label('Threshold'),
+					input(`[type=number]`, {
+						on: {
+							change: ev => actions.set(['wrlds', 'threshold'], ev.target.value)
+						},
+						props: {
+							value: state.wrlds.threshold
+						}
+					})
+				] : []
+			))
 		))
 	))
 ]);

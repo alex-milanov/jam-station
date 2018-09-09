@@ -40,6 +40,12 @@ const initial = Object.assign({
 		osc: {
 
 		}
+	},
+	wrlds: {
+		on: false,
+		port: 8888,
+		mode: 0,
+		threshold: 50
 	}
 });
 

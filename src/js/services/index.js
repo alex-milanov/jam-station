@@ -21,7 +21,7 @@ const hook = ({state$, actions, tapTempo}) => {
 	session.hook({state$, actions});
 	studio.hook({state$, actions});
 	midi.hook({state$, actions, tapTempo});
-	osc.hook({state$, actions});
+	osc.hook({state$, actions, tapTempo});
 	audio.hook({state$, actions, studio, tapTempo});
 	// assets.hook({state$, actions, studio});
 	sampleBank.hook({state$, actions});

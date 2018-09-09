@@ -2,6 +2,7 @@
 // lib
 const Rx = require('rx');
 const $ = Rx.Observable;
+const ws = require('../util/ws');
 
 //
 // let osc = require('osc/src/osc.js');
@@ -10,11 +11,12 @@ const $ = Rx.Observable;
 // require('osc/src/platforms/osc-websocket-client.js');
 
 // const WebSocket = require('ws')
-const ws = new WebSocket('ws://127.0.0.1:10138/myo/3?appid=com.myojs.diagnostics');
+const myoWs = new WebSocket('ws://127.0.0.1:10138/myo/3?appid=com.myojs.diagnostics');
+const wrldsWs = new WebSocket('ws://127.0.0.1:8888');
 
 let unhook = () => {};
 
-const hook = ({state$, actions}) => {
+const hook = ({state$, actions, tapTempo}) => {
 	let subs = [];
 
 	// let oscPort = new osc.WebSocketPort({
@@ -28,12 +30,16 @@ const hook = ({state$, actions}) => {
 	// 	console.log("An OSC message just arrived!", oscMsg);
 	// });
 
-	ws.onopen = () => console.log('osc connected');
-	const dataMsg$ = new Rx.Subject();
-	ws.onmessage = data => dataMsg$.onNext(JSON.parse(data.data));
+	myoWs.onopen = () => console.log('myo osc connected');
+	const myoMsg$ = new Rx.Subject();
+	myoWs.onmessage = data => myoMsg$.onNext(JSON.parse(data.data));
+
+	// wrldsWs.onopen = () => console.log('wrlds osc connected');
+	const wrldsMsg$ = ws.connect({port: 8888, retry: true});
+	// wrldsWs.onmessage = data => wrldsMsg$.onNext(JSON.parse(data.data));
 
 	subs.push(
-		dataMsg$
+		myoMsg$
 			.withLatestFrom(state$, (data, state) => ({data, state}))
 			.filter(({data}) => data[1].type === 'orientation')
 			// .map(data => (console.log(data), data))
@@ -53,6 +59,28 @@ const hook = ({state$, actions}) => {
 							: (data[1].orientation.x + 1).toFixed(2) / 2
 					);
 				}
+			})
+	);
+	subs.push(
+		wrldsMsg$
+			.map(data => JSON.parse(data.data))
+			.withLatestFrom(state$, (data, state) => ({data, state}))
+			.subscribe(({state, data}) => {
+				if (state.wrlds.on) {
+					if (state.wrlds.mode === 0) {
+						tapTempo.tap();
+					}
+					if (state.wrlds.mode === 1) {
+						if (data[0].acc < state.wrlds.threshold) {
+							actions.midiMap.noteOn(10, 'C1', 7);
+							actions.midiMap.noteOn(10, 'C1', 0);
+						} else {
+							actions.midiMap.noteOn(10, 'D1', 7);
+							actions.midiMap.noteOn(10, 'D1', 0);
+						}
+					}
+				}
+				console.log(data);
 			})
 	);
 

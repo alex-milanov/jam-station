@@ -270,11 +270,17 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 					},
 					on: {click: () => actions.set(['wrlds', 'mode'], 0)}
 				}),
-				button('.fa.fa-music', {
+				button('.fa.fa-gavel', {
 					class: {
 						on: state.wrlds.mode === 1
 					},
 					on: {click: () => actions.set(['wrlds', 'mode'], 1)}
+				}),
+				button('.fa.fa-dashboard', {
+					class: {
+						on: state.wrlds.mode === 2
+					},
+					on: {click: () => actions.set(['wrlds', 'mode'], 2)}
 				}),
 				state.wrlds.mode === 1 ? [
 					label('Threshold'),
@@ -287,7 +293,24 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 						}
 					})
 				] : []
-			))
+			)),
+			state.wrlds.on && state.wrlds.mode === 2 ? table([
+				thead([
+					th('[width="40%"]', 'data'),
+					th('[width="20%"]', 'x'),
+					th('[width="20%"]', 'y'),
+					th('[width="20%"]', 'z')
+				]),
+				tbody([
+					tr([
+						td('rotation'),
+						td('[align=right]', state.wrlds.rotation.length > 0 && state.wrlds.rotation[0].toFixed(2)),
+						td('[align=right]', state.wrlds.rotation.length > 0 && state.wrlds.rotation[1].toFixed(2)),
+						td('[align=right]', state.wrlds.rotation.length > 0 && state.wrlds.rotation[2].toFixed(2)),
+						td()
+					])
+				])
+			]) : []
 		))
 	))
 ]);

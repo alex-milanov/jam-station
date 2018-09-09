@@ -67,20 +67,33 @@ const hook = ({state$, actions, tapTempo}) => {
 			.withLatestFrom(state$, (data, state) => ({data, state}))
 			.subscribe(({state, data}) => {
 				if (state.wrlds.on) {
-					if (state.wrlds.mode === 0) {
-						tapTempo.tap();
+					if (data.type === 'wrldsBounce') {
+						if (state.wrlds.mode === 0) {
+							tapTempo.tap();
+						}
+						if (state.wrlds.mode === 1) {
+							if (data[0].acc < state.wrlds.threshold) {
+								actions.midiMap.noteOn(10, 'C1', 7);
+								actions.midiMap.noteOn(10, 'C1', 0);
+							} else {
+								actions.midiMap.noteOn(10, 'D1', 7);
+								actions.midiMap.noteOn(10, 'D1', 0);
+							}
+						}
 					}
-					if (state.wrlds.mode === 1) {
-						if (data[0].acc < state.wrlds.threshold) {
-							actions.midiMap.noteOn(10, 'C1', 7);
-							actions.midiMap.noteOn(10, 'C1', 0);
-						} else {
-							actions.midiMap.noteOn(10, 'D1', 7);
-							actions.midiMap.noteOn(10, 'D1', 0);
+					if (data.type === 'wrldsRotate') {
+						actions.set(['wrlds', 'rotation'], data.rotation);
+						if (state.wrlds.mode === 2) {
+							let cutoff = Number((state.instrument.vcf.cutoff + data.rotation[0] / 10000).toFixed(2));
+							let resonance = Number((state.instrument.vcf.resonance + data.rotation[1] / 10000).toFixed(2));
+							if (cutoff > 0 && cutoff < 1)
+								actions.set(['instrument', 'vcf', 'cutoff'], cutoff);
+							if (resonance > 0 && resonance < 1)
+								actions.set(['instrument', 'vcf', 'resonance'], resonance);
 						}
 					}
 				}
-				console.log(data);
+				// console.log(data);
 			})
 	);
 

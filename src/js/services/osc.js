@@ -72,7 +72,7 @@ const hook = ({state$, actions, tapTempo}) => {
 							tapTempo.tap();
 						}
 						if (state.wrlds.mode === 1) {
-							if (data[0].acc < state.wrlds.threshold) {
+							if (data.acc < state.wrlds.threshold) {
 								actions.midiMap.noteOn(10, 'C1', 7);
 								actions.midiMap.noteOn(10, 'C1', 0);
 							} else {

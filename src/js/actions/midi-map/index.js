@@ -46,7 +46,9 @@ const connect = devices =>
 		devices,
 		data: {
 			...state.midiMap.data,
-			in: arr.add(state.midiMap.data.in, devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/)))
+			in: state.midiMap.data.in.indexOf(devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/))) === -1
+				? arr.add(state.midiMap.data.in, devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/)))
+				: state.midiMap.data.in
 		}
 	});
 
@@ -55,7 +57,7 @@ const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clo
 );
 
 const toggleData = (inOut, index) => state => obj.patch(state, ['midiMap', 'data', inOut],
-	arr.toggle(obj.sub(state, ['midiMap', 'data'])[inOut], index)
+	arr.toggle(obj.sub(state, ['midiMap', 'data', inOut]), index)
 );
 
 const noteOn = (channel, note, velocity = 0) => state => channel !== undefined ? (

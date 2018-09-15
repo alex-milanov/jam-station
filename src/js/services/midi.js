@@ -54,9 +54,12 @@ const hook = ({state$, actions, tapTempo}) => {
 			// .map(midiData => (console.log({midiData}), midiData))
 			.filter(({msg}) => ['noteOn', 'noteOff'].indexOf(msg.state) > -1)
 			.withLatestFrom(state$, (midiData, state) => (Object.assign({}, midiData, {state})))
-			.filter(({raw, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
-				raw.input.id
-			) > -1)
+			.filter(({raw, state}) => (
+				// console.log(raw.input.id, state.midiMap.devices.inputs, state.midiMap.data.in),
+				getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
+					raw.input.id
+				) > -1
+			))
 			.subscribe(({msg, state}) => {
 				actions.midiMap.noteOn(
 					msg.channel,

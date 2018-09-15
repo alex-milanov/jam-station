@@ -3889,46 +3889,61 @@ input, label, body, select {
           cursor: pointer; }
           .session .body fieldset legend span.on {
             color: #333; }
-  .session .body ul.track {
-    margin: 0px;
-    padding: 0px;
+  .session .body .channel {
     margin: 1px;
     display: inline-block;
     height: 100%;
-    width: calc(25% - 2px);
-    list-style: none;
-    vertical-align: top; }
-    .session .body ul.track li {
+    width: calc(25% - 2px); }
+    .session .body .channel ul {
       margin: 0px;
       padding: 0px;
       display: inline-block;
-      box-sizing: border-box;
-      height: 48px;
-      line-height: 48px;
-      user-select: none;
-      margin: 2px 0px;
       width: 100%;
       list-style: none;
-      background: #bbb;
-      text-align: center;
-      border: 1px solid #999; }
-      .session .body ul.track li:hover {
-        background: #c5c5c5; }
-      .session .body ul.track li:first-child {
+      vertical-align: top; }
+      .session .body .channel ul li {
         margin: 0px;
         padding: 0px;
         display: inline-block;
         box-sizing: border-box;
-        height: 24px;
-        line-height: 24px;
-        background: #aaa; }
-      .session .body ul.track li.selected {
-        border-color: #555;
-        border-style: dashed; }
-      .session .body ul.track li.active {
-        background: #b5bfc5; }
-        .session .body ul.track li.active:hover {
-          background: #c5cfd5; }
+        height: 36px;
+        line-height: 36px;
+        user-select: none;
+        margin: 2px 0px;
+        width: 100%;
+        list-style: none;
+        background: #bbb;
+        text-align: center;
+        border: 1px solid #999; }
+        .session .body .channel ul li:hover {
+          background: #c5c5c5; }
+        .session .body .channel ul li.selected {
+          border-color: #555;
+          border-style: dashed; }
+        .session .body .channel ul li.active {
+          background: #b5bfc5; }
+          .session .body .channel ul li.active:hover {
+            background: #c5cfd5; }
+    .session .body .channel .track li:first-child {
+      margin: 0px;
+      padding: 0px;
+      display: inline-block;
+      box-sizing: border-box;
+      height: 24px;
+      line-height: 24px;
+      background: #aaa; }
+    .session .body .channel .rack {
+      margin-top: 20px; }
+      .session .body .channel .rack li {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 26px;
+        line-height: 26px;
+        margin: 1px 0px; }
+        .session .body .channel .rack li:first-child {
+          background: #aaa; }
 
 .sequencer {
   display: block;

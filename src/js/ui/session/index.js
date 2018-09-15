@@ -13,7 +13,7 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 	]),
 	div('.body', [].concat(
 		state.session.tracks
-			.map((track, trackIndex) =>
+			.map((track, trackIndex) => div('.channel', [
 				ul('.track', [].concat(
 					li(span(track.name)),
 					loop(4).map(rowIndex =>
@@ -37,7 +37,25 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 								: ''
 						]))
 					)
-			))
-		)
+				)),
+				ul('.rack', [].concat(
+					li(span([
+						track.type === 'seq' ? 'Sequencer' : 'Synth'
+					])),
+					track.type === 'seq'
+						? [
+							li(span(`Reverb`)),
+							li(span(`...`)),
+							li(span(`...`)),
+							li(span(`...`))
+						]
+						: [
+							li(span(`VCF`)),
+							li(span(`LFO`)),
+							li(span(`Reverb`)),
+							li(span(`...`))
+						]
+				))
+			]))
 	))
 ]);

@@ -1,33 +1,43 @@
 .session
-	+editor(560px, 0px)
+	+editor(640px, 0px)
 	.body
-		ul.track
-			+no-margin-padding
+		.channel
 			margin: 1px
 			display: inline-block
 			height: 100%
 			width: calc(25% - 2px)
-			list-style: none
-			vertical-align: top
-			li
-				+header-height(48px)
-				user-select: none
-				margin: 2px 0px
+			ul
+				+no-margin-padding
+				display: inline-block
 				width: 100%
 				list-style: none
-				background: #bbb
-				text-align: center
-				border: 1px solid #999
-				&:hover
-					background: #c5c5c5
-				&:first-child
-					+header-height(24px)
-					background: #aaa
-				&.selected
-					border-color: #555
-					border-style: dashed
-				&.active
-					// background: #a5afaa
-					background: #b5bfc5
+				vertical-align: top
+				li
+					+header-height(36px)
+					user-select: none
+					margin: 2px 0px
+					width: 100%
+					list-style: none
+					background: #bbb
+					text-align: center
+					border: 1px solid #999
 					&:hover
-						background: #c5cfd5
+						background: #c5c5c5
+					&.selected
+						border-color: #555
+						border-style: dashed
+					&.active
+						// background: #a5afaa
+						background: #b5bfc5
+						&:hover
+							background: #c5cfd5
+			.track li:first-child
+				+header-height(24px)
+				background: #aaa
+			.rack
+				margin-top: 20px
+				li
+					+header-height(26px)
+					margin: 1px 0px
+					&:first-child
+						background: #aaa

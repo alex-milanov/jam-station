@@ -4,6 +4,7 @@ const {obj, fn} = require('iblokz-data');
 
 const {
 	context, set, isSet, isGet,
+	schedule: _schedule,
 	create: _create,
 	connect: _connect, disconnect: _disconnect
 } = require('./core');
@@ -48,8 +49,11 @@ const update = (node, prefs) => obj.switch(node.type, {
 	),
 	vcf: () => (
 		isSet(prefs.type) && set(node.through, 'type', prefs.type),
-		isSet(prefs.cutoff) && set(node.through.frequency, 'value', cutoffToFreq(prefs.cutoff)),
-		isSet(prefs.resonance) && set(node.through.Q, 'value', prefs.resonance * 30),
+		isSet(prefs.cutoff)
+			&& _schedule(node.through, 'frequency', [cutoffToFreq(prefs.cutoff)], [context.currentTime + 0.0001]),
+			// set(node.through.frequency, 'value', cutoffToFreq(prefs.cutoff)),
+		isSet(prefs.resonance)
+			&& _schedule(node.through, 'Q', [prefs.resonance * 30], [context.currentTime + 0.0001]),
 		Object.assign(node, {prefs})
 	),
 	reverb: () => reverb.update(node, prefs),

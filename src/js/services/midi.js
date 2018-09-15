@@ -109,11 +109,12 @@ const hook = ({state$, actions, tapTempo}) => {
 			)
 	);
 
+	// controller
 	subs.push(
 		midiState$
 			.filter(({data}) => data.msg.state === 'controller')
 			.distinctUntilChanged(({data}) => data.msg.value)
-			.throttle(50)
+			.throttle(10)
 			.subscribe(({data, state}) => {
 				let mmap = state.midiMap.map.find(m =>
 					m[0] === data.msg.state

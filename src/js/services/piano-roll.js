@@ -3,6 +3,8 @@
 const Rx = require('rx');
 const $ = Rx.Observable;
 
+const {obj} = require('iblokz-data');
+
 // const time = require('../util/time');
 const audio = require('../util/audio');
 const gfxCanvas = require('../util/gfx/canvas');
@@ -16,6 +18,7 @@ const prepCanvas = ctx => (
 const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 const drawGrid = (ctx, dim = [42, 14], pos = [0, 60]) => {
+	console.log('drawing grid');
 	prepCanvas(ctx);
 	const pattern = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
 	const colCount = parseInt(ctx.canvas.width / dim[0], 10) + 1;
@@ -38,6 +41,7 @@ const drawGrid = (ctx, dim = [42, 14], pos = [0, 60]) => {
 };
 
 const drawEvents = (ctx, events, dim = [42, 14], bar, pos = [0, 60]) => {
+	console.log('drawing events');
 	prepCanvas(ctx);
 	const colCount = parseInt(ctx.canvas.width / dim[0], 10) + 1;
 	const rowCount = parseInt(ctx.canvas.height / dim[1], 10);
@@ -51,6 +55,19 @@ const drawEvents = (ctx, events, dim = [42, 14], bar, pos = [0, 60]) => {
 			}, '#eee', '#555');
 		});
 };
+
+// state.session.selection.
+const prepPressed = (channels, track) => track.input.device > -1
+	? channels[track.input.device] && channels[track.input.device][track.input.channel] || {}
+	: Object.keys(channels)
+		.reduce((cn, d) =>
+			Object.keys(channels[d][track.input.channel] || {})
+				.reduce((cn, note) =>
+					obj.patch(cn, note, channels[d][track.input.channel][note] || cn[note]),
+					cn
+				),
+			{}
+		);
 
 let unhook = {};
 
@@ -120,11 +137,18 @@ const hook = ({state$, actions}) => {
 			.filter(state => state.studio.recording)
 			.map(state => ({
 				state,
-				pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
-					(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
-					{}
+				pressed: prepPressed(
+					state.midiMap.channels,
+					state.session.tracks[state.session.selection.piano[0]]
 				)
 			}))
+			// .map(({state, channels}) => ({
+			// 	state,
+			// 	pressed: Object.keys(channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
+			// 		(pressed, ch) => Object.assign({}, pressed, channels[ch]),
+			// 		{}
+			// 	)
+			// }))
 			// .map(({state, pressed}) => (console.log(pressed), ({state, pressed})))
 			.subscribe(({state, pressed}) => actions.pianoRoll.record(pressed, state.studio.tick, audio.context.currentTime))
 	);

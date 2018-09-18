@@ -1,8 +1,9 @@
 'use strict';
 
 const {
-	div, img, h2, i, span, p, input, label, hr, button,
-	ul, li, form
+	div, img, h2, i, span, p, hr,
+	ul, li, form, fieldset, label, input, button,
+	select, option, legend
 } = require('iblokz-snabbdom-helpers');
 
 const loop = (times, fn = i => i) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
@@ -38,6 +39,42 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 						]))
 					)
 				)),
+				fieldset('.midi', [
+					legend('MIDI'),
+					div('.prop', [
+						// label('device'),
+						select({
+							on: {
+								change: ev =>
+									actions.session.updateTrackInput(trackIndex, 'device', Number(ev.target.value))
+							}
+						}, [].concat(
+							option({attrs: {
+								selected: track.input && (track.input.device === -1 || !track.input.device),
+								value: -1
+							}}, 'All Devices'),
+							state.midiMap.devices.inputs.map((inp, device) =>
+								option({
+									attrs: {
+										selected: track.input && track.input.device === device,
+										value: device
+									}
+								}, inp.name)
+							)
+						))
+					]),
+					div('.prop', [
+						input(`[type=number]`, {
+							on: {
+								change: ev =>
+									actions.session.updateTrackInput(trackIndex, 'channel', ev.target.value)
+							},
+							props: {
+								value: track.input && track.input.channel || (track.type === 'seq' ? 10 : 1)
+							}
+						})
+					])
+				]),
 				ul('.rack', [].concat(
 					li(span([
 						track.type === 'seq' ? 'Sequencer' : 'Synth'

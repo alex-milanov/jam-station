@@ -113,15 +113,18 @@ const parseAccess = access => {
 };
 
 const init = () => {
-	const access$ = $.fromPromise(navigator.requestMIDIAccess())
+	const devices$ = new Rx.Subject();
+	$.fromPromise(navigator.requestMIDIAccess())
 		.flatMap(access => $.create(stream => {
 			access.onstatechange = connection => stream.onNext(connection.currentTarget);
 		}).startWith(access))
 		.map(parseAccess)
 		// .map(data => (console.log('midi access', data), data))
-		.share();
+		.subscribe(device => devices$.onNext(device));
+		// .share();
 
-	const msg$ = access$.flatMap(
+	const msg$ = new Rx.Subject();
+	devices$.flatMap(
 		({access, inputs}) => inputs.reduce(
 				(msgStream, input) => msgStream.merge(
 					$.fromEventPattern(h => {
@@ -129,11 +132,11 @@ const init = () => {
 					})
 					.map(msg => ({access, input, msg}))
 				), $.empty()
-			).share()
-	);
+			)
+	).subscribe(msg => msg$.onNext(msg));
 
 	return {
-		access$,
+		devices$,
 		msg$
 	};
 };

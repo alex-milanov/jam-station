@@ -54,10 +54,10 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 							marginLeft: -(70 / whiteKeysLength / 2) + '%'
 						},
 					on: {
-						mousedown: () => actions.midiMap.noteOn(1, key.key, 0.7),
-						mouseup: () => actions.midiMap.noteOn(1, key.key, 0),
-						mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0.7),
-						mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(1, key.key, 0)
+						mousedown: () => actions.midiMap.noteOn(-1, 1, key.key, 0.7),
+						mouseup: () => actions.midiMap.noteOn(-1, 1, key.key, 0),
+						mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0.7),
+						mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0)
 					},
 					class: {
 						on: Object.keys(state.midiMap.channels).reduce(

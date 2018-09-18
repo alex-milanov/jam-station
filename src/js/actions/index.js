@@ -51,20 +51,43 @@ const initial = Object.assign({
 });
 
 const changesMap = {
-	studio: [[['tick', 'index'], ['tickIndex']]],
+	studio: [
+		[['tick', 'index'], ['tickIndex']]
+	],
 	sequencer: [],
 	instrument: [],
-	session: [],
+	session: [
+		[
+			'tracks', tracks => tracks.map(track => Object.assign({
+				input: {
+					device: -1,
+					channel: track.type === 'seq' ? 10 : 1
+				},
+				inst: instrument.initial
+			}, track))
+		]
+	],
 	pianoRoll: []
 };
 
 // todo merge loaded state
 const load = content => state => obj.patch(
 	Object.keys(changesMap)
-		.reduce((changes, key) => changes.concat([[key, key]], changesMap[key]), [])
+		.reduce((changes, key) =>
+			changes.concat([[key, key]], changesMap[key].map(
+				change => change.map(ch =>
+					(ch instanceof Array || typeof ch === 'string')
+						? [].concat(key, ch) : ch)
+			)),
+			[]
+		)
+		.map(changes => (console.log(changes), changes))
 		.reduce(
 			(state, changes) =>
-				obj.patch(state, changes[0], obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
+				obj.patch(state, changes[0],
+					changes[1] instanceof Function
+						? changes[1](obj.sub(content, changes[0]))
+						: obj.sub(content, changes[1]) || obj.sub(state, changes[1])),
 				state
 		),
 	['studio', 'playing'], false

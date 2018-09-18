@@ -60,13 +60,13 @@ const toggleData = (inOut, index) => state => obj.patch(state, ['midiMap', 'data
 	arr.toggle(obj.sub(state, ['midiMap', 'data', inOut]), index)
 );
 
-const noteOn = (channel, note, velocity = 0) => state => channel !== undefined ? (
+const noteOn = (device = 0, channel, note, velocity = 0) => state => channel !== undefined ? (
 	// console.log(state.midiMap.channels, obj.sub(state, ['midiMap', 'channels', channel, note]), channel, note, velocity),
 	velocity !== 0
-		? obj.patch(state, ['midiMap', 'channels', channel, note], velocity)
-		: obj.patch(state, ['midiMap', 'channels'], {
+		? obj.patch(state, ['midiMap', 'channels', device, channel, note], velocity)
+		: obj.patch(state, ['midiMap', 'channels', device], {
 			[channel]: obj.filter(
-				obj.sub(state, ['midiMap', 'channels', channel]) || {},
+				obj.sub(state, ['midiMap', 'channels', device, channel]) || {},
 				(key, value) => key !== note)
 		})
 	) : state;

@@ -10,6 +10,18 @@ const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
 
+const prepPressed = (channels, track) => track.input.device > -1
+	? channels[track.input.device] && channels[track.input.device][track.input.channel] || {}
+	: Object.keys(channels)
+		.reduce((cn, d) =>
+			Object.keys(channels[d][track.input.channel] || {})
+				.reduce((cn, note) =>
+					obj.patch(cn, note, channels[d][track.input.channel][note] || cn[note]),
+					cn
+				),
+			{}
+		);
+
 const globalVolume = a.connect(a.vca({gain: 0.4}), a.context.destination);
 
 const reverb = a.connect(a.create('reverb', {
@@ -253,14 +265,19 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 
 	// update connections
 	state$
-		.distinctUntilChanged(
-			({instrument}) => instrument.vco1.on + instrument.vco2.on + instrument.vcf.on + instrument.lfo.on
+		.distinctUntilChanged(state => state.session.tracks.map((track, ch) =>
+			// (console.log(track, ch),
+			ch > 0 && [track.inst.vco1.on, track.inst.vco2.on, track.inst.vcf.on, track.inst.lfo.on, track.inst.reverb.on])
 		)
-		.subscribe(({instrument, session}) => updateConnections(instrument, session.selection.piano[0]));
+		.subscribe(({instrument, session}) => session.tracks.forEach(
+			(track, ch) => ch > 0 && updateConnections(track.inst, ch))
+		);
 	// update prefs
 	state$
-		.distinctUntilChanged(state => state.instrument)
-		.subscribe(({instrument, session}) => updatePrefs(instrument, session.selection.piano[0]));
+		.distinctUntilChanged(state => state.session.tracks.map(track => track.inst))
+		.subscribe(({instrument, session}) => session.tracks.forEach(
+			(track, ch) => ch > 0 && updatePrefs(track.inst, ch))
+		);
 
 	// global volume
 	state$
@@ -278,71 +295,70 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			))
 		);
 
+	// note ons
+	let voices = {};
+	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
 	state$
 		.distinctUntilChanged(state => state.midiMap.channels)
 		.map(state => ({
 			state,
-			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
-				(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
-				{}
-			)
+			pressed: state.session.tracks.map(track => (
+				// console.log(track.input),
+				prepPressed(
+					state.midiMap.channels,
+					track
+				)
+			))
 		}))
-		.withLatestFrom(engine$, ({state, pressed}, engine) => ({state, pressed, engine}))
-		.subscribe(({state, pressed, engine: {[state.session.selection.piano[0]]: {voices}}}) => {
-			// console.log(pressed);
-			Object.keys(pressed).filter(note => !voices[note])
-				.forEach(
-					note => noteOn(state.instrument, state.session.selection.piano[0], note, pressed[note])
-				);
-			Object.keys(voices).filter(note => !pressed[note])
-				.forEach(
-					note => noteOff(state.instrument, state.session.selection.piano[0], note)
-				);
-		});
-
-	let voices = {};
-	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-	state$.distinctUntilChanged(state => state.midiMap.channels)
-		.map(state => ({
-			state,
-			pressed: Object.keys(state.midiMap.channels).filter(ch => parseInt(ch, 10) === 10).reduce(
-				(pressed, ch) => Object.assign({}, pressed, state.midiMap.channels[ch]),
-				{}
-			)
-		}))
-		.combineLatest(sampleBank$, ({state, pressed}, sampleBank) => ({state, pressed, sampleBank}))
-		.subscribe(({state, pressed, sampleBank}) => {
-			// console.log(pressed);
-			Object.keys(pressed).filter(note => !voices[note])
-				.forEach(
-					note => {
-						const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
-						if (index > -1 && state.sequencer.channels[index]) {
-							let inst = sampler.clone(sampleBank[
-								state.mediaLibrary.files[
-									state.sequencer.channels[index]
-								]
-							]);
-							a.connect(inst, reverb);
-							setTimeout(() => a.start(inst));
-							voices[note] = inst;
-						}
-					}
-				);
-			Object.keys(voices).filter(note => !pressed[note])
-				.forEach(
-					note => {
-						if (voices[note]) {
-							let inst = voices[note];
-							voices = obj.filter(voices, key => key !== note);
-							setTimeout(() => {
-								a.disconnect(inst, reverb);
-								a.stop(inst);
-							}, 3000);
-						}
-					}
-				);
+		.withLatestFrom(engine$, sampleBank$, ({state, pressed}, engine, sampleBank) => ({state, pressed, engine, sampleBank}))
+		.subscribe(({state, pressed, engine, sampleBank}) => {
+			Object.keys(pressed).forEach(ch => {
+				if (ch > 0) {
+					// console.log(ch, pressed[ch], engine[ch], state.midiMap.channels);
+					let voices = engine[ch].voices;
+					Object.keys(pressed[ch] || [])
+						.filter(note => !obj.sub(voices, [note]))
+						.forEach(
+							note => noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note])
+						);
+					Object.keys(voices)
+						.filter(note => !obj.sub(pressed, [ch, note]))
+						.forEach(
+							note => noteOff(state.session.tracks[ch].inst, ch, note)
+						);
+				} else {
+					Object.keys(pressed[ch]).filter(note => !voices[note])
+						.forEach(
+							note => {
+								const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
+								if (index > -1 && state.sequencer.channels[index]) {
+									let inst = sampler.clone(sampleBank[
+										state.mediaLibrary.files[
+											state.sequencer.channels[index]
+										]
+									]);
+									a.connect(inst, reverb);
+									setTimeout(() => a.start(inst));
+									voices[note] = inst;
+								}
+							}
+						);
+					Object.keys(voices).filter(note => !pressed[ch][note])
+						.forEach(
+							note => {
+								if (voices[note]) {
+									let inst = voices[note];
+									voices = obj.filter(voices, key => key !== note);
+									setTimeout(() => {
+										a.disconnect(inst, reverb);
+										a.stop(inst);
+									}, 3000);
+								}
+							}
+						);
+				}
+			});
 		});
 
 	// pitch bend

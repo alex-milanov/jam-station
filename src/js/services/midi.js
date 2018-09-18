@@ -26,15 +26,16 @@ const hook = ({state$, actions, tapTempo}) => {
 		.distinctUntilChanged(pocket => pocket.clockTick)
 		.map(pocket => pocket.clockTick);
 
-	const {access$, msg$} = midi.init();
+	const {devices$, msg$} = midi.init();
 
 	// midi device access
 	subs.push(
-		access$.subscribe(data => actions.midiMap.connect(data))
+		devices$.subscribe(data => actions.midiMap.connect(data))
 	);
 
 	const parsedMidiMsg$ = msg$
 		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
+		// .map(data => (console.log(data), data))
 		.share();
 
 	const getIds = (inputs, indexes) => inputs
@@ -60,8 +61,11 @@ const hook = ({state$, actions, tapTempo}) => {
 					raw.input.id
 				) > -1
 			))
-			.subscribe(({msg, state}) => {
+			.subscribe(({raw, msg, state}) => {
+				// console.log(state.midiMap.devices.inputs, raw.input);
+
 				actions.midiMap.noteOn(
+					state.midiMap.devices.inputs.indexOf(raw.input),
 					msg.channel,
 					msg.note.key + msg.note.octave,
 					msg.velocity || 0

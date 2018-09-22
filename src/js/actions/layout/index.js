@@ -15,7 +15,7 @@ const initial = {
 	instrument: {
 		visible: true,
 		dim: {
-			width: 240,
+			width: 320,
 			height: '100%'
 		},
 		pos: {

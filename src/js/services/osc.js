@@ -35,7 +35,12 @@ const hook = ({state$, actions, tapTempo}) => {
 	myoWs.onmessage = data => myoMsg$.onNext(JSON.parse(data.data));
 
 	// wrldsWs.onopen = () => console.log('wrlds osc connected');
-	const wrldsMsg$ = ws.connect({port: 8888, retry: true});
+	const wrldsMsg$ = state$
+		.distinctUntilChanged(state => state.wrlds.on)
+		.filter(state => state.wrlds.on)
+		.flatMap(() =>
+			ws.connect({port: 8888, retry: true})
+		);
 	// wrldsWs.onmessage = data => wrldsMsg$.onNext(JSON.parse(data.data));
 
 	subs.push(

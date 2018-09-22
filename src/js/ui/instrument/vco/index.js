@@ -30,10 +30,7 @@ module.exports = ({name, state, actions}) => fieldset([
 				'on': state.instrument[name].on,
 				'fa-circle': state.instrument[name].on
 			}
-		})
-	])
-	/*
-	div('.horizontal', [
+		}),
 		img('[src="assets/tuning-fork.png"]'),
 		div('.knob', {
 			style: {
@@ -51,5 +48,4 @@ module.exports = ({name, state, actions}) => fieldset([
 			on: {input: ev => actions.instrument.updateProp(name, 'detune', ev.target.value)}
 		})
 	])
-	*/
 ]);

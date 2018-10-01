@@ -3131,8 +3131,8 @@ input, label, body, select {
     position: absolute;
     top: 0px;
     left: 50%;
-    width: 340px;
-    margin-left: -170px;
+    width: 380px;
+    margin-left: -190px;
     text-align: center;
     background: #ddd;
     padding: 0px;
@@ -3502,9 +3502,22 @@ input, label, body, select {
     font-size: 14px; }
     .instrument .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .instrument .body fieldset > select, .instrument .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .instrument .body fieldset .on-switch {
         position: absolute;
         top: 1px;
@@ -3841,9 +3854,22 @@ input, label, body, select {
     font-size: 14px; }
     .session .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .session .body fieldset > select, .session .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .session .body fieldset .on-switch {
         position: absolute;
         top: 1px;
@@ -4076,9 +4102,22 @@ input, label, body, select {
     font-size: 14px; }
     .sequencer .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .sequencer .body fieldset > select, .sequencer .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .sequencer .body fieldset .on-switch {
         position: absolute;
         top: 1px;
@@ -4381,9 +4420,22 @@ input, label, body, select {
     font-size: 14px; }
     .midi-map .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .midi-map .body fieldset > select, .midi-map .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .midi-map .body fieldset .on-switch {
         position: absolute;
         top: 1px;
@@ -4601,9 +4653,22 @@ input, label, body, select {
     font-size: 14px; }
     .midi-keyboard .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .midi-keyboard .body fieldset > select, .midi-keyboard .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .midi-keyboard .body fieldset .on-switch {
         position: absolute;
         top: 1px;
@@ -4836,9 +4901,22 @@ input, label, body, select {
     font-size: 14px; }
     .piano-roll .body fieldset {
       position: relative;
-      padding: 0px 10px;
+      padding: 0px;
       border: 0px solid #777;
       border-top-width: 1px; }
+      .piano-roll .body fieldset > select, .piano-roll .body fieldset > input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        margin: 3px 0px;
+        padding: 0px 3px;
+        border: 0px;
+        box-shadow: inset 0px 0px 1px #333;
+        background: #ccc; }
       .piano-roll .body fieldset .on-switch {
         position: absolute;
         top: 1px;

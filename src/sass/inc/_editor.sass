@@ -110,9 +110,17 @@
 		font-size: 14px
 		fieldset
 			position: relative
-			padding: 0px 10px
+			padding: 0px
 			border: 0px solid #777
 			border-top-width: 1px
+			> select, > input:not([type="checkbox"]):not([type="radio"])
+				+header-height(20px)
+				width: 100%
+				margin: 3px 0px
+				padding: 0px 3px
+				border: 0px
+				box-shadow: inset 0px 0px 1px #333
+				background: #ccc
 			.on-switch
 				position: absolute
 				top: 1px

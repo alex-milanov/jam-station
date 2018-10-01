@@ -18,6 +18,9 @@ const initial = {
 		inputs: [],
 		outputs: []
 	},
+	settings: {
+		midiRouteToActive: true
+	},
 	clock: {
 		in: [],
 		out: []

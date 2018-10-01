@@ -48,7 +48,7 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 	]),
 	div('.body', [].concat(
 		fieldset([
-			legend('Devices'),
+			legend('MIDI Devices'),
 			div('.devices', [
 				h('dl', [
 					h('dt', 'Inputs'),
@@ -101,6 +101,22 @@ module.exports = ({state, actions, params = {}}) => div('.midi-map', params, [
 							})
 						])
 					)))
+				]),
+				h('dl', [
+					h('dt', 'Settings'),
+					h('dd', ul([
+						li([
+							'Route midi input data to active tracks',
+							input('.right[type="checkbox"]', {
+								props: {
+									checked: state.midiMap.settings.midiRouteToActive
+								},
+								on: {
+									click: () => actions.toggle(['midiMap', 'settings', 'midiRouteToActive'])
+								}
+							})
+						])
+					]))
 				])
 			])
 		]),

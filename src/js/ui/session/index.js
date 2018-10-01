@@ -55,42 +55,34 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 				)),
 				fieldset('.midi', [
 					legend('MIDI'),
-					div('.prop', [
-						dropdown({
-							opts: {
-								'-1': 'All Devices',
-								...state.midiMap.devices.inputs.reduce(
-									(opts, inp, device) => ({...opts, [device]: inp.name}), {})
-							},
-							cb: ev => actions.session.updateTrackInput(trackIndex, 'device', Number(ev.target.value)),
-							selected: track.input && track.input.device
-						})
-					]),
-					div('.prop', [
-						input(`[type=number]`, {on: {
-							change: ev => actions.session.updateTrackInput(trackIndex, 'channel', ev.target.value)
-						}, props: {
-							value: track.input && track.input.channel || (track.type === 'seq' ? 10 : 1)
-						}})
-					]),
-					div('.prop', [
-						dropdown({
-							opts: {
-								'-1': 'None',
-								...state.midiMap.devices.outputs.reduce(
-									(opts, out, device) => ({...opts, [device]: out.name}), {})
-							},
-							cb: ev => actions.session.updateTrackOutput(trackIndex, 'device', Number(ev.target.value)),
-							selected: track.output && track.output.device
-						})
-					]),
-					div('.prop', [
-						input(`[type=number]`, {on: {
-							change: ev => actions.session.updateTrackOutput(trackIndex, 'channel', ev.target.value)
-						}, props: {
-							value: track.output && track.output.channel || (track.type === 'seq' ? 10 : 1)
-						}})
-					])
+					dropdown({
+						opts: {
+							'-1': 'All Devices',
+							...state.midiMap.devices.inputs.reduce(
+								(opts, inp, device) => ({...opts, [device]: inp.name}), {})
+						},
+						cb: ev => actions.session.updateTrackInput(trackIndex, 'device', Number(ev.target.value)),
+						selected: track.input && track.input.device
+					}),
+					input(`[type=number]`, {on: {
+						change: ev => actions.session.updateTrackInput(trackIndex, 'channel', ev.target.value)
+					}, props: {
+						value: track.input && track.input.channel || (track.type === 'seq' ? 10 : 1)
+					}}),
+					dropdown({
+						opts: {
+							'-1': 'None',
+							...state.midiMap.devices.outputs.reduce(
+								(opts, out, device) => ({...opts, [device]: out.name}), {})
+						},
+						cb: ev => actions.session.updateTrackOutput(trackIndex, 'device', Number(ev.target.value)),
+						selected: track.output && track.output.device
+					}),
+					input(`[type=number]`, {on: {
+						change: ev => actions.session.updateTrackOutput(trackIndex, 'channel', ev.target.value)
+					}, props: {
+						value: track.output && track.output.channel || (track.type === 'seq' ? 10 : 1)
+					}})
 				]),
 				ul('.rack', [].concat(
 					li(span([

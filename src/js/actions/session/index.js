@@ -34,6 +34,10 @@ const initial = {
 				device: -1,
 				channel: 10
 			},
+			output: {
+				device: -1,
+				channel: 10
+			},
 			inst: {},
 			measures: [
 				{
@@ -54,6 +58,10 @@ const initial = {
 		{
 			name: 'Bassline',
 			input: {
+				device: -1,
+				channel: 1
+			},
+			output: {
 				device: -1,
 				channel: 1
 			},
@@ -119,6 +127,10 @@ const initial = {
 				device: -1,
 				channel: 1
 			},
+			output: {
+				device: -1,
+				channel: 1
+			},
 			measures: []
 		},
 		{
@@ -126,6 +138,10 @@ const initial = {
 			type: 'piano',
 			inst: defValues.instrument,
 			input: {
+				device: -1,
+				channel: 1
+			},
+			output: {
 				device: -1,
 				channel: 1
 			},
@@ -175,9 +191,20 @@ const updateTrackInput = (index, type, value) => state => obj.patch(state, 'sess
 	)
 });
 
+const updateTrackOutput = (index, type, value) => state => obj.patch(state, 'session', {
+	tracks: [].concat(
+		state.session.tracks.slice(0, index),
+		obj.patch(state.session.tracks[index], 'output', {
+			[type]: value
+		}),
+		state.session.tracks.slice(index + 1)
+	)
+});
+
 module.exports = {
 	initial,
 	select,
 	activate,
-	updateTrackInput
+	updateTrackInput,
+	updateTrackOutput
 };

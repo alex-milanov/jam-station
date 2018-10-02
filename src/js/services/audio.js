@@ -6,6 +6,7 @@ const Subject = Rx.Subject;
 
 const {obj, fn, arr} = require('iblokz-data');
 const a = require('../util/audio');
+const m = require('../util/midi');
 const sampler = require('../util/audio/sources/sampler');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
@@ -141,7 +142,7 @@ const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch
 	// 	: a.disconnect(engine[ch].lfo)
 }));
 
-const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine => {
+const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.onNext(engine => {
 	let {voices, vcf, lfo, volume, context, reverb} = engine[ch];
 	time = time || context.currentTime;
 
@@ -155,7 +156,8 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 		arr.remove(buffer, voice.vco1);
 		a.stop(voice.vco1);
 	}
-	let vco1 = a.start(a.vco(Object.assign({}, instr.vco1, {freq})), time);
+	let vco1 = a.vco(Object.assign({}, instr.vco1, {freq}));
+	if (!mute) vco1 = a.start(vco1, time);
 	let adsr1 = voice ? voice.adsr1 : a.adsr(instr.vca1);
 	vco1 = a.connect(vco1, adsr1);
 	adsr1 = !(instr.vco1.on)
@@ -166,7 +168,8 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 		arr.remove(buffer, voice.vco2);
 		a.stop(voice.vco2);
 	}
-	let vco2 = a.start(a.vco(Object.assign({}, instr.vco2, {freq})), time);
+	let vco2 = a.vco(Object.assign({}, instr.vco2, {freq}));
+	if (!mute) vco2 = a.start(vco2, time);
 	let adsr2 = voice ? voice.adsr2 : a.adsr(instr.vca2);
 	vco2 = a.connect(vco2, adsr2);
 	adsr2 = !(instr.vco2.on)
@@ -207,7 +210,7 @@ const noteOn = (instr, ch = 1, note, velocity, time) => changes$.onNext(engine =
 		context});
 });
 
-const noteOff = (instr, ch = 1, note, time) => changes$.onNext(engine => {
+const noteOff = (instr, ch = 1, note, time, mute = false) => changes$.onNext(engine => {
 	const {voices, context} = engine[ch];
 	const now = context.currentTime;
 	time = time || now + 0.0001;
@@ -217,12 +220,13 @@ const noteOff = (instr, ch = 1, note, time) => changes$.onNext(engine => {
 	if (voice) {
 		let {vco1, adsr1, vco2, adsr2} = voice;
 
-		a.noteOff(adsr1, time);
-		a.noteOff(adsr2, time);
+		if (!mute) {
+			a.noteOff(adsr1, time);
+			a.noteOff(adsr2, time);
 
-		a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
-		a.stop(vco2, time + (instr.vca2.release > 0 && instr.vca2.release || 0.00001));
-
+			a.stop(vco1, time + (instr.vca1.release > 0 && instr.vca1.release || 0.00001));
+			a.stop(vco2, time + (instr.vca2.release > 0 && instr.vca2.release || 0.00001));
+		}
 		setTimeout(() => {
 			a.disconnect(vco1);
 			a.disconnect(adsr1);
@@ -316,17 +320,35 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			Object.keys(pressed).forEach(ch => {
 				if (ch > 0) {
 					// console.log(ch, pressed[ch], engine[ch], state.midiMap.channels);
-					let voices = engine[ch].voices;
-					Object.keys(pressed[ch] || [])
-						.filter(note => !obj.sub(voices, [note]))
-						.forEach(
-							note => noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note])
-						);
-					Object.keys(voices)
-						.filter(note => !obj.sub(pressed, [ch, note]))
-						.forEach(
-							note => noteOff(state.session.tracks[ch].inst, ch, note)
-						);
+					if (!state.midiMap.settings.midiRouteToActive || Number(state.session.selection.piano[0]) === Number(ch)) {
+						let voices = engine[ch].voices;
+						Object.keys(pressed[ch] || [])
+							.filter(note => !obj.sub(voices, [note]))
+							.forEach(
+								note =>
+									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
+										? (
+											state.midiMap.devices.outputs[
+												state.session.tracks[ch].output.device
+											].send([0x90, m.noteToNumber(note), 0x7f]),
+											noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note], null, true)
+										)
+										: noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note])
+							);
+						Object.keys(voices)
+							.filter(note => !obj.sub(pressed, [ch, note]))
+							.forEach(
+								note =>
+									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
+										? (
+											state.midiMap.devices.outputs[
+												state.session.tracks[ch].output.device
+											].send([0x90, m.noteToNumber(note), 0]),
+											noteOff(state.session.tracks[ch].inst, ch, note, null, true)
+										)
+										: noteOff(state.session.tracks[ch].inst, ch, note)
+							);
+					}
 				} else {
 					Object.keys(pressed[ch]).filter(note => !voices[note])
 						.forEach(

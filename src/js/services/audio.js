@@ -152,7 +152,7 @@ const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.o
 
 	let voice = voices[note] || false;
 
-	if (voice.vco1) {
+	if (voice.vco1 && buffer.indexOf(voice.vco1) > -1) {
 		arr.remove(buffer, voice.vco1);
 		a.stop(voice.vco1);
 	}
@@ -164,7 +164,7 @@ const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.o
 		? a.disconnect(adsr1)
 		: a.reroute(adsr1, (instr.reverb.on) ? reverb : (instr.vcf.on) ? vcf : volume);
 
-	if (voice.vco2) {
+	if (voice.vco2 && buffer.indexOf(voice.vco2) > -1) {
 		arr.remove(buffer, voice.vco2);
 		a.stop(voice.vco2);
 	}
@@ -194,9 +194,10 @@ const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.o
 
 	a.noteOn(adsr1, velocity, time);
 	a.noteOn(adsr2, velocity, time);
-
-	buffer.push(vco1);
-	buffer.push(vco2);
+	if (!mute) {
+		buffer.push(vco1);
+		buffer.push(vco2);
+	}
 
 	return obj.patch(engine, ch, {
 		voices: obj.patch(voices, note, {
@@ -395,7 +396,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.distinctUntilChanged(state => state.studio.tick)
 		.filter(state => state.studio.playing)
 		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
-		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument}, sampleBank}) => {
+		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0 || buffer.length === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
@@ -451,15 +452,40 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 								&& track.measures[session.active[ch]].events
 									.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
 									.forEach(event => {
-										let timepos = studio.tick.time + ((event.start - bar.start - start + offset) * bpmToTime(studio.bpm));
-										noteOn(
-											Object.assign({}, instrument, track.inst),
-											ch, event.note, event.velocity || 0.7, timepos
-										);
-										noteOff(
-											Object.assign({}, instrument, track.inst),
-											ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
-										);
+										let timepos = studio.tick.time + ((event.start - bar.start - start + offset) *
+											bpmToTime(studio.bpm));
+										if (track.output && track.output.device > -1) {
+											// note on
+											midiMap.devices.outputs[
+												track.output.device
+											].send([0x90, m.noteToNumber(event.note), 0x7f],
+												window.performance.now() +
+												(timepos - a.context.currentTime) * 1000
+											);
+											noteOn(
+												Object.assign({}, instrument, track.inst),
+												ch, event.note, event.velocity || 0.7, timepos, true
+											);
+											// note off
+											midiMap.devices.outputs[
+												track.output.device
+											].send([0x90, m.noteToNumber(event.note), 0],
+												window.performance.now() + (timepos + event.duration *
+												bpmToTime(studio.bpm) - a.context.currentTime) * 1000);
+											noteOff(
+												Object.assign({}, instrument, track.inst),
+												ch, event.note, timepos + event.duration * bpmToTime(studio.bpm), true
+											);
+										} else {
+											noteOn(
+												Object.assign({}, instrument, track.inst),
+												ch, event.note, event.velocity || 0.7, timepos
+											);
+											noteOff(
+												Object.assign({}, instrument, track.inst),
+												ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
+											);
+										}
 									})
 							)()
 					})()

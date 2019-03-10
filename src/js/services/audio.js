@@ -248,6 +248,14 @@ const pitchBend = (instr, pitchValue, ch = 1) => changes$.onNext(engine =>
 	})))
 );
 
+const sendMIDImsg = (device, note, velocity, delay = 0, channel = 1) => (
+	// console.log(device, note, velocity, delay),
+	device && device.send(
+		[0x90 + (channel - 1), m.noteToNumber(note), `0x${parseInt(velocity * 127, 10).toString(16)}`],
+		window.performance.now() + delay * 1000
+	)
+);
+
 changes$
 	.startWith(() => initial)
 	.scan((engine, change) => change(engine), {})
@@ -319,7 +327,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.withLatestFrom(engine$, sampleBank$, ({state, pressed}, engine, sampleBank) => ({state, pressed, engine, sampleBank}))
 		.subscribe(({state, pressed, engine, sampleBank}) => {
 			Object.keys(pressed).forEach(ch => {
-				if (ch > 0) {
+				if (ch > 0 || state.session.tracks[0].output.device !== -1) {
 					// console.log(ch, pressed[ch], engine[ch], state.midiMap.channels);
 					if (!state.midiMap.settings.midiRouteToActive || Number(state.session.selection.piano[0]) === Number(ch)) {
 						let voices = engine[ch].voices;
@@ -329,9 +337,10 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 								note =>
 									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
 										? (
-											state.midiMap.devices.outputs[
+											// console.log(pressed[ch][note]),
+											sendMIDImsg(state.midiMap.devices.outputs[
 												state.session.tracks[ch].output.device
-											].send([0x90, m.noteToNumber(note), 0x7f]),
+											], note, pressed[ch][note] || 1, 0, state.session.tracks[ch].output.channel),
 											noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note], null, true)
 										)
 										: noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note])
@@ -342,9 +351,9 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 								note =>
 									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
 										? (
-											state.midiMap.devices.outputs[
+											sendMIDImsg(state.midiMap.devices.outputs[
 												state.session.tracks[ch].output.device
-											].send([0x90, m.noteToNumber(note), 0]),
+											], note, 0, 0, state.session.tracks[ch].output.channel),
 											noteOff(state.session.tracks[ch].inst, ch, note, null, true)
 										)
 										: noteOff(state.session.tracks[ch].inst, ch, note)
@@ -355,7 +364,13 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 						.forEach(
 							note => {
 								const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
-								if (index > -1 && state.sequencer.channels[index]) {
+								if (index > -1 && state.sequencer.channels[index]
+									&& sampleBank[
+										state.mediaLibrary.files[
+											state.sequencer.channels[index]
+										]
+									]
+								) {
 									let inst = sampler.clone(sampleBank[
 										state.mediaLibrary.files[
 											state.sequencer.channels[index]
@@ -414,17 +429,36 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 										? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
 										: studio.tick.bar
 								].forEach((row, k) => {
-									if (row[i]) {
-										// console.log(sequencer.channels[k]);
-										let inst = sampler.clone(sampleBank[
+									if (row && row[i]) {
+										if (track.output.device !== -1) {
+											sendMIDImsg(midiMap.devices.outputs[
+												track.output.device
+											], fn.pipe(
+												() => m.numberToNote(60 + k),
+												({key, octave}) => `${key}${octave}`
+											)(), 1, timepos - a.context.currentTime, track.output.channel);
+											sendMIDImsg(midiMap.devices.outputs[
+												track.output.device
+											], fn.pipe(
+												() => m.numberToNote(60 + k),
+												({key, octave}) => `${key}${octave}`
+											)(), 0, timepos + bpmToTime(studio.bpm) / 4 - a.context.currentTime, track.output.channel);
+										} else if (sampleBank[
 											mediaLibrary.files[
 												sequencer.channels[k]
 											]
-										]);
-										inst = a.connect(inst, reverb);
-										a.start(inst, timepos);
-										// inst.trigger({studio}, timepos);
-										buffer.push(inst);
+										]) {
+											// console.log(sequencer.channels[k]);
+											let inst = sampler.clone(sampleBank[
+												mediaLibrary.files[
+													sequencer.channels[k]
+												]
+											]);
+											inst = a.connect(inst, reverb);
+											a.start(inst, timepos);
+											// inst.trigger({studio}, timepos);
+											buffer.push(inst);
+										}
 									}
 								});
 							}
@@ -456,22 +490,19 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 											bpmToTime(studio.bpm));
 										if (track.output && track.output.device > -1) {
 											// note on
-											midiMap.devices.outputs[
+											sendMIDImsg(midiMap.devices.outputs[
 												track.output.device
-											].send([0x90, m.noteToNumber(event.note), 0x7f],
-												window.performance.now() +
-												(timepos - a.context.currentTime) * 1000
-											);
+											], event.note, event.velocity || 1, timepos - a.context.currentTime, track.output.channel);
 											noteOn(
 												Object.assign({}, instrument, track.inst),
 												ch, event.note, event.velocity || 0.7, timepos, true
 											);
 											// note off
-											midiMap.devices.outputs[
+											sendMIDImsg(midiMap.devices.outputs[
 												track.output.device
-											].send([0x90, m.noteToNumber(event.note), 0],
-												window.performance.now() + (timepos + event.duration *
-												bpmToTime(studio.bpm) - a.context.currentTime) * 1000);
+											], event.note, 0,
+												(timepos + event.duration * bpmToTime(studio.bpm) - a.context.currentTime),
+												track.output.channel);
 											noteOff(
 												Object.assign({}, instrument, track.inst),
 												ch, event.note, timepos + event.duration * bpmToTime(studio.bpm), true

@@ -38,6 +38,16 @@ const toggle = (bar, r, c, forceOn = false) =>
 		return obj.patch(state, 'sequencer', {pattern});
 	};
 
+const update = (bar, r, c, v) =>
+	state => {
+		let pattern = [].concat(state.sequencer.pattern.slice());
+		pattern[bar] = pattern[bar] && pattern[bar].slice() || [];
+		pattern[bar][r] = pattern[bar][r] && pattern[bar][r].slice() || [];
+		pattern[bar][r][c] = v > 1 ? 1 : v < 0 ? 0 : v;
+		// console.log(pattern, pattern[bar][r][c]);
+		return obj.patch(state, 'sequencer', {pattern});
+	};
+
 const clear = () => state => {
 	let pattern = state.sequencer.pattern.slice();
 	if (state.sequencer.channel > -1) pattern[state.sequencer.bar][state.sequencer.channel] = [];
@@ -109,6 +119,7 @@ const setBarsLength = barsLength => state =>
 module.exports = {
 	initial,
 	toggle,
+	update,
 	clear,
 	select,
 	prev,

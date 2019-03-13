@@ -118,9 +118,18 @@ const unchain = (...nodes) => (
 	nodes[0]
 );
 
-const start = (node, ...args) => (node.type === 'lfo' && lfo.start(node, ...args) || node.output.start(...args), node);
+const start = (node, ...args) => (node.type === 'lfo'
+	? lfo.start(node, ...args)
+	: node.source
+		? node.source.start(...args)
+		: node.output.start(...args),
+node);
 
-const stop = (node, ...args) => (node.output.stop(...args), node);
+const stop = (node, ...args) => (
+	node.source
+		? node.source.stop(...args)
+		: node.output.stop(...args),
+node);
 
 const schedule = (node, pref, values, times) => (values.length === 1)
 	? node.through[pref].setValueAtTime(values[0], times[0])

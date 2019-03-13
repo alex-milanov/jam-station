@@ -1,10 +1,18 @@
 'use strict';
 
 const {div, h2, i, span, p, input, label, hr, button} = require('iblokz-snabbdom-helpers');
+const {obj} = require('iblokz-data');
 
 const loop = (times, fn) => (times > 0) && [].concat(loop(times - 1, fn), fn(times - 1)) || [];
 
 const isOn = (pattern, bar, channel, tick) => pattern[bar] && pattern[bar][channel] && pattern[bar][channel][tick];
+const velocity = (pattern, bar, channel, tick) => obj.sub(pattern, [bar, channel, tick]) || 0;
+
+const cMap = [
+	[223, 223, 223],
+	[229, 229, 229],
+	[199, 207, 212]
+];
 
 module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 	div('.header', [
@@ -62,11 +70,29 @@ module.exports = ({state, actions, params = {}}) => div('.sequencer', params, [
 				loop(state.studio.beatLength, c =>
 					div(`.bar`, {
 						class: {
-							on: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index !== c),
+							// on: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index !== c),
 							tick: (isOn(state.sequencer.pattern, state.studio.tick.bar, r, c) && state.studio.tick.index === c)
 						},
+						style: {
+							...(state.studio.tick.index !== c
+								? {
+									background: `rgb(
+										${cMap[c % 2][0] + (cMap[2][0] - cMap[c % 2][0]) *
+											velocity(state.sequencer.pattern, state.studio.tick.bar, r, c)},
+										${cMap[c % 2][1] + (cMap[2][1] - cMap[c % 2][1]) *
+											velocity(state.sequencer.pattern, state.studio.tick.bar, r, c)},
+										${cMap[c % 2][2] + (cMap[2][2] - cMap[c % 2][2]) *
+											velocity(state.sequencer.pattern, state.studio.tick.bar, r, c)}
+									)`
+								} : {})
+						},
 						on: {
-							click: ev => actions.sequencer.toggle(state.studio.tick.bar, r, c)
+							click: ev => actions.sequencer.toggle(state.studio.tick.bar, r, c),
+							wheel: ev => (
+								ev.preventDefault(),
+								actions.sequencer.update(state.studio.tick.bar, r, c,
+									state.sequencer.pattern[state.studio.tick.bar][r][c] - ev.deltaY / 200)
+							)
 						}
 					})
 				)

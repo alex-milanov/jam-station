@@ -78,7 +78,8 @@ const hook = ({state$, actions, tapTempo}) => {
 				)
 					&& state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
 					setTimeout(
-						() => actions.sequencer.toggle(state.sequencer.bar, msg.note.number - 60, state.studio.tick.index + 1, true),
+						() => actions.sequencer.update(
+							state.sequencer.bar, msg.note.number - 60, state.studio.tick.index + 1, msg.velocity),
 						100
 					);
 				}

@@ -327,7 +327,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.withLatestFrom(engine$, sampleBank$, ({state, pressed}, engine, sampleBank) => ({state, pressed, engine, sampleBank}))
 		.subscribe(({state, pressed, engine, sampleBank}) => {
 			Object.keys(pressed).forEach(ch => {
-				if (ch > 0 || state.session.tracks[0].output.device !== -1) {
+				if (ch > 0) {
 					// console.log(ch, pressed[ch], engine[ch], state.midiMap.channels);
 					if (!state.midiMap.settings.midiRouteToActive || Number(state.session.selection.piano[0]) === Number(ch)) {
 						let voices = engine[ch].voices;
@@ -338,6 +338,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
 										? (
 											// console.log(pressed[ch][note]),
+											console.log(state.session.tracks[ch].output.device),
 											sendMIDImsg(state.midiMap.devices.outputs[
 												state.session.tracks[ch].output.device
 											], note, pressed[ch][note] || 1, 0, state.session.tracks[ch].output.channel),
@@ -363,22 +364,31 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 					Object.keys(pressed[ch]).filter(note => !voices[note])
 						.forEach(
 							note => {
+								console.log(note);
+								const track = state.session.tracks[ch];
 								const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
-								if (index > -1 && state.sequencer.channels[index]
-									&& sampleBank[
+								if (index > -1 && state.sequencer.channels[index]) {
+									if (track.output.device !== -1) {
+										sendMIDImsg(state.midiMap.devices.outputs[
+											track.output.device
+										], note, pressed[ch][note], 0, track.output.channel);
+										sendMIDImsg(state.midiMap.devices.outputs[
+											track.output.device
+										], note, 0, bpmToTime(state.studio.bpm) / 4, track.output.channel);
+									} else if (sampleBank[
 										state.mediaLibrary.files[
 											state.sequencer.channels[index]
 										]
-									]
-								) {
-									let inst = sampler.clone(sampleBank[
-										state.mediaLibrary.files[
-											state.sequencer.channels[index]
-										]
-									]);
-									a.connect(inst, reverb);
-									setTimeout(() => a.start(inst));
-									voices[note] = inst;
+									]) {
+										let inst = sampler.clone(sampleBank[
+											state.mediaLibrary.files[
+												state.sequencer.channels[index]
+											]
+										], {gain: pressed[ch][note]});
+										a.connect(inst, reverb);
+										setTimeout(() => a.start(inst));
+										voices[note] = inst;
+									}
 								}
 							}
 						);
@@ -436,7 +446,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 											], fn.pipe(
 												() => m.numberToNote(60 + k),
 												({key, octave}) => `${key}${octave}`
-											)(), 1, timepos - a.context.currentTime, track.output.channel);
+											)(), row[i], timepos - a.context.currentTime, track.output.channel);
 											sendMIDImsg(midiMap.devices.outputs[
 												track.output.device
 											], fn.pipe(
@@ -453,7 +463,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 												mediaLibrary.files[
 													sequencer.channels[k]
 												]
-											]);
+											], {gain: row[i]});
 											inst = a.connect(inst, reverb);
 											a.start(inst, timepos);
 											// inst.trigger({studio}, timepos);

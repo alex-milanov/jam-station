@@ -422,7 +422,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		.filter(state => state.studio.playing)
 		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
 		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank}) => {
-			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0 || buffer.length === 0) {
+			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
 				// let start = studio.tick.index;

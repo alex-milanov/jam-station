@@ -69,8 +69,11 @@ const hook = ({state$, actions, tapTempo}) => {
 	subs.push(
 		wrldsMsg$
 			.map(data => JSON.parse(data.data))
+			.map(data => data[0])
+			// .map(data => (console.log(data), data))
 			.withLatestFrom(state$, (data, state) => ({data, state}))
 			.subscribe(({state, data}) => {
+				// console.log(state.wrlds);
 				if (state.wrlds.on) {
 					if (data.type === 'wrldsBounce') {
 						if (state.wrlds.mode === 0) {

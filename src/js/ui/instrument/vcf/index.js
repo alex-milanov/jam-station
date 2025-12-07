@@ -16,16 +16,16 @@ module.exports = ({name, state, actions}) => fieldset([
 			i(`.fa.${state.instrument.vcf.expanded ? 'fa-minus-square-o' : 'fa-plus-square-o'}`),
 			' ',
 			name.toUpperCase()
-		])
+		]),
+		div('.on-switch.fa', {
+			on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+			class: {
+				'fa-circle-thin': !state.instrument[name].on,
+				'on': state.instrument[name].on,
+				'fa-circle': state.instrument[name].on
+			}
+		})
 	]),
-	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
-		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
-		}
-	}),
 	state.instrument.vcf.expanded ? div([
 		div([
 			label(`Type`),

@@ -3,16 +3,16 @@
 	padding: 0px
 
 =reset
-  margin: 0px
-  padding: 0px
-  display: inline-block
-  box-sizing: border-box
+	margin: 0px
+	padding: 0px
+	display: inline-block
+	box-sizing: border-box
 
 
 =header-height($h)
-  +reset
-  height: $h
-  line-height: $h
+	+reset
+	height: $h
+	line-height: $h
 
 @mixin modal($w, $h)
 	display: block
@@ -39,3 +39,24 @@
 	&::-moz-focus-outer
 		border: 0
 		outline: none
+
+
+
+// media queries
+=phone
+	@media (min-width: #{$phone-width}) and (max-width: #{$tablet-width - 1px})
+		@content
+=not-phone
+	@media (min-width: #{$tablet-width})
+		@content
+
+=tablet
+	@media (min-width: #{$tablet-width}) and (max-width: #{$desktop-width - 1px})
+		@content
+
+=desktop
+	@media (min-width: #{$desktop-width})
+		@content
+=not-desktop
+	@media (max-width: #{$desktop-width - 1px})
+		@content

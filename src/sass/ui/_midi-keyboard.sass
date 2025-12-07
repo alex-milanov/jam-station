@@ -7,9 +7,10 @@
 	.body
 		padding: 0px
 		.keys
-			+user-select(none)
+			user-select: none
 			height: 90px
 			vertical-align: top
+			touch-action: none
 			> *
 				display: inline-block
 				vertical-align: top
@@ -19,12 +20,14 @@
 				float: left
 				position: relative
 				cursor: pointer
+				touch-action: none
 				> span
 					position: absolute
 					bottom: 2px
 					width: 100%
 					text-align: center
 					color: #777
+					touch-action: none
 
 			.white
 				width: 3.57%

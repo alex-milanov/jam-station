@@ -26,7 +26,7 @@ const initial = {
 	session: {
 		visible: true,
 		dim: {
-			width: 560,
+			width: 520,
 			height: '100%'
 		},
 		pos: {
@@ -57,7 +57,7 @@ const initial = {
 	midiKeyboard: {
 		visible: true,
 		dim: {
-			width: 600
+			width: 560
 		},
 		pos: {
 			col: 3,

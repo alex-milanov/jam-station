@@ -30,16 +30,16 @@ module.exports = ({name, state, actions}) => fieldset([].concat(
 				},
 				class: {on: (state.instrument[name].type === type)}
 			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
-		]), []))
+		]), [])),
+		div('.on-switch.fa', {
+			on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+			class: {
+				'fa-circle-thin': !state.instrument[name].on,
+				'on': state.instrument[name].on,
+				'fa-circle': state.instrument[name].on
+			}
+		})
 	]),
-	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
-		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
-		}
-	}),
 	state.instrument.lfo.expanded ? div([
 		label(`Frequency`),
 		span('.right', `${state.instrument[name].frequency}`),

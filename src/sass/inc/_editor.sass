@@ -79,7 +79,7 @@
 			text-align: center
 			cursor: pointer
 			outline: none
-			&.on
+			&.on, &.selected
 				box-shadow: inset 0px 0px 1px rgba(33, 77, 55, 0.7)
 				background: $jam-station-color-light
 			&:hover
@@ -123,7 +123,7 @@
 				background: #ccc
 			.on-switch
 				position: absolute
-				top: 1px
+				top: 0px
 				right: 8px
 				height: 30px
 				line-height: 30px
@@ -157,7 +157,7 @@
 					margin-top: -2px
 					vertical-align: middle
 				span
-					+user-select(none)
+					user-select: none
 					color: #777
 					height: 16px
 					line-height: 16px

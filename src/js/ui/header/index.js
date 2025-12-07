@@ -23,7 +23,7 @@ const openDialog = cb => {
 };
 
 module.exports = ({state, actions, tapTempo}) => header([
-	ul([
+	ul('.views', [
 		li([a({
 			class: {on: state.layout.mediaLibrary.visible},
 			on: {click: ev => actions.toggle(['layout', 'mediaLibrary', 'visible'])}
@@ -61,7 +61,7 @@ module.exports = ({state, actions, tapTempo}) => header([
 			img('[src="assets/midi.svg"][height="38px"]')
 		])])
 	]),
-	ul('.center', [
+	ul('.center.controls', [
 		li([
 			img('[src="assets/logo2.png"]')
 		]),
@@ -99,7 +99,7 @@ module.exports = ({state, actions, tapTempo}) => header([
 			})
 		])
 	]),
-	ul('.right', [
+	ul('.right.menu', [
 		li([
 			input('[type="range"]', {
 				attrs: {min: 0, max: 1, step: 0.005},

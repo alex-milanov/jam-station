@@ -38,7 +38,11 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 		// h2([img('[src="/assets/midi-keyboard.svg"]'), span('MIDI Keyboard')])
 	]),
 	div('.body', [
-		div('.keys', fn.pipe(
+		div('.keys', {
+			on: {
+				// pointerdown: e => e.target.releasePointerCapture(e.pointerId)
+			}
+		}, fn.pipe(
 			() => generateKeys('C2', 'C6').map(parseKey),
 			allKeys => ({allKeys, whiteKeysLength: allKeys.filter(key => !key.isSharp && !key.isFlat).length}),
 			({allKeys, whiteKeysLength}) => allKeys.map((key, index) =>
@@ -54,10 +58,16 @@ module.exports = ({state, actions, params = {}}) => div('.midi-keyboard', params
 							marginLeft: -(70 / whiteKeysLength / 2) + '%'
 						},
 					on: {
-						mousedown: () => actions.midiMap.noteOn(-1, 1, key.key, 0.7),
-						mouseup: () => actions.midiMap.noteOn(-1, 1, key.key, 0),
-						mouseenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0.7),
-						mouseleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0)
+						pointerdown: e => (
+							actions.midiMap.noteOn(-1, 1, key.key, 0.7),
+							e.target.releasePointerCapture(e.pointerId)
+						),
+						pointerup: e => (
+							actions.midiMap.noteOn(-1, 1, key.key, 0),
+							e.target.releasePointerCapture(e.pointerId)
+						),
+						pointerenter: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0.7),
+						pointerleave: ev => ev.buttons === 1 && actions.midiMap.noteOn(-1, 1, key.key, 0),
 					},
 					class: {
 						on: Object.keys(state.midiMap.channels).reduce(

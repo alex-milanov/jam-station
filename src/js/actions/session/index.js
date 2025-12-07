@@ -41,7 +41,7 @@ const initial = {
 			inst: {},
 			measures: [
 				{
-					name: 'Sample Beat',
+					name: 'Beat',
 					row: 0,
 					barsLength: 1,
 					loop: true,
@@ -69,7 +69,7 @@ const initial = {
 			type: 'piano',
 			measures: [
 				{
-					name: 'Sample Baseline',
+					name: 'Baseline',
 					row: 0,
 					barsLength: 1,
 					events: [

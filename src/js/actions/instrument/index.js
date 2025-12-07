@@ -1,12 +1,6 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
-
 const {obj} = require('iblokz-data');
-
-const stream = new Subject();
 
 const initial = {
 	vcaOn: 1,

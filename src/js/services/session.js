@@ -1,6 +1,7 @@
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
+const {distinctUntilChanged} = require('rxjs/operators');
 
 const arrPatchAt = (arr, index, patch) => (
 	// console.log(arr, index, patch),
@@ -24,9 +25,9 @@ const hook = ({state$, actions}) => {
 	// on editor change update selected
 	// sequencer
 	subs.push(
-		state$
-			.distinctUntilChanged(state => JSON.stringify(state.sequencer))
-			.subscribe(state =>
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => JSON.stringify(prev.sequencer) === JSON.stringify(curr.sequencer))
+		).subscribe(state =>
 				fn.pipe(([trackNumber, measureRow]) =>
 					actions.set(['session', 'tracks'], arrPatchAt(
 						state.session.tracks, trackNumber, {
@@ -42,9 +43,9 @@ const hook = ({state$, actions}) => {
 	);
 	// piano-roll
 	subs.push(
-		state$
-			.distinctUntilChanged(state => JSON.stringify(state.pianoRoll))
-			.subscribe(state => (
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => JSON.stringify(prev.pianoRoll) === JSON.stringify(curr.pianoRoll))
+		).subscribe(state => (
 				fn.pipe(([trackNumber, measureRow]) =>
 					actions.set(['session', 'tracks'], arrPatchAt(
 						state.session.tracks, trackNumber, {
@@ -60,9 +61,9 @@ const hook = ({state$, actions}) => {
 	);
 	// instrument
 	subs.push(
-		state$
-			.distinctUntilChanged(state => JSON.stringify(state.instrument))
-			.subscribe(state => (
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => JSON.stringify(prev.instrument) === JSON.stringify(curr.instrument))
+		).subscribe(state => (
 				fn.pipe((([trackNumber, measureRow]) =>
 					actions.set(['session', 'tracks'], arrPatchAt(
 						state.session.tracks, trackNumber, Object.assign({},

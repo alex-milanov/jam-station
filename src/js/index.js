@@ -1,8 +1,9 @@
 'use strict';
 // lib
-const Rx = require('rx');
-const $ = Rx.Observable;
 const vdom = require('iblokz-snabbdom-helpers');
+
+// iblokz
+const {createState} = require('iblokz-state');
 
 // util
 const a = require('iblokz-audio');
@@ -17,58 +18,41 @@ vex.defaultOptions.className = 'vex-theme-top';
 const tapTempo = require('tap-tempo')();
 
 // app
-const app = require('./util/app');
-let actions = require('./actions');
+let actionsTree = require('./actions');
+let {actions, state$} = createState(actionsTree);
 let ui = require('./ui');
-let actions$;
-const state$ = new Rx.BehaviorSubject();
 
 // services
 let services = require('./services');
-// actions = studio.attach(actions);
-
-// adapt actions
-actions = app.adapt(actions);
 
 // hot reloading
 if (module.hot) {
 	// actions
-	actions$ = $.fromEventPattern(
-    h => module.hot.accept("./actions", h)
-	).flatMap(() => {
-		actions = app.adapt(require('./actions'));
-		return actions.stream.startWith(state => state);
-	}).merge(actions.stream);
+	module.hot.accept("./actions", function() {
+		actionsTree = require('./actions');
+		const result = createState(actionsTree);
+		actions = result.actions;
+		// Trigger a re-render with current state
+		actions.stream.next({path: ['_reload'], payload: []});
+	});
 	// ui
 	module.hot.accept("./ui", function() {
 		ui = require('./ui');
-		// actions.ping();
+		// Trigger a re-render with current state
+		actions.stream.next({path: ['_reload'], payload: []});
 	});
 	// services
 	module.hot.accept("./services", function() {
 		// services = require('./services');
 		// services.hook({state$, actions, tapTempo});
-		// actions.stream.onNext(state => state);
 	});
-} else {
-	actions$ = actions.stream;
 }
-// reduce actions to state
-actions$
-	/*
-	.map(action => (
-		action.path && console.log(action.path.join('.'), action.payload),
-		console.log(action),
-		action)a
-	)
-	*/
-	.startWith(() => actions.initial)
-	.scan((state, change) => change(state), {})
-	// .map(state => (console.log(state), state))
-	.subscribe(state => state$.onNext(state));
 
 // map state to ui
-const ui$ = state$.map(state => ui({state, actions, tapTempo, context: a.context}));
+const {map} = require('rxjs/operators');
+const ui$ = state$.pipe(
+	map(state => ui({state, actions, tapTempo, context: a.context}))
+);
 
 // services
 services.hook({state$, actions, tapTempo});

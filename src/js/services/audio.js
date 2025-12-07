@@ -1,8 +1,7 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const Subject = Rx.Subject;
+const {combineLatest, Subject, BehaviorSubject} = require('rxjs');
+const {distinctUntilChanged, filter, map, take, scan, startWith, withLatestFrom} = require('rxjs/operators');
 
 const {obj, fn, arr} = require('iblokz-data');
 const a = require('iblokz-audio');
@@ -32,7 +31,7 @@ const reverb = a.connect(a.create('reverb', {
 }), globalVolume);
 
 let changes$ = new Subject();
-const engine$ = new Rx.BehaviorSubject();
+const engine$ = new BehaviorSubject();
 let buffer = [];
 
 const clearBuffer = () => {
@@ -102,7 +101,7 @@ const initial = {
 	}
 };
 
-const updatePrefs = (instr, ch = 1) => changes$.onNext(engine =>
+const updatePrefs = (instr, ch = 1) => changes$.next(engine =>
 	obj.patch(engine, ch,
 		obj.map(engine[ch],
 			(key, node) => (instr[key])
@@ -115,7 +114,7 @@ const updatePrefs = (instr, ch = 1) => changes$.onNext(engine =>
 		)
 	);
 
-const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch(engine, ch, {
+const updateConnections = (instr, ch = 1) => changes$.next(engine => obj.patch(engine, ch, {
 	voices: obj.map(engine[ch].voices, (k, voice) => ({
 		vco1: a.connect(voice.vco1, voice.adsr1),
 		vco2: a.connect(voice.vco2, voice.adsr2),
@@ -142,7 +141,7 @@ const updateConnections = (instr, ch = 1) => changes$.onNext(engine => obj.patch
 	// 	: a.disconnect(engine[ch].lfo)
 }));
 
-const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.onNext(engine => {
+const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.next(engine => {
 	let {voices, vcf, lfo, volume, context, reverb} = engine[ch];
 	time = time || context.currentTime;
 
@@ -211,7 +210,7 @@ const noteOn = (instr, ch = 1, note, velocity, time, mute = false) => changes$.o
 		context});
 });
 
-const noteOff = (instr, ch = 1, note, time, mute = false) => changes$.onNext(engine => {
+const noteOff = (instr, ch = 1, note, time, mute = false) => changes$.next(engine => {
 	const {voices, context} = engine[ch];
 	const now = context.currentTime;
 	time = time || now + 0.0001;
@@ -241,7 +240,7 @@ const noteOff = (instr, ch = 1, note, time, mute = false) => changes$.onNext(eng
 	return engine;
 });
 
-const pitchBend = (instr, pitchValue, ch = 1) => changes$.onNext(engine =>
+const pitchBend = (instr, pitchValue, ch = 1) => changes$.next(engine =>
 	obj.patch(engine, [ch, 'voices'], obj.map(engine[ch].voices, (key, voice) => Object.assign({}, voice, {
 		vco1: a.update(voice.vco1, {detune: instr.vco1.detune + pitchValue * 200}),
 		vco2: a.update(voice.vco2, {detune: instr.vco2.detune + pitchValue * 200})
@@ -256,65 +255,84 @@ const sendMIDImsg = (device, note, velocity, delay = 0, channel = 1) => (
 	)
 );
 
-changes$
-	.startWith(() => initial)
-	.scan((engine, change) => change(engine), {})
-	// .map(engine => (console.log(engine), engine))
-	.subscribe(engine => engine$.onNext(engine));
+changes$.pipe(
+	startWith(() => initial),
+	scan((engine, change) => change(engine), initial)
+	// map(engine => (console.log(engine), engine))
+).subscribe(engine => engine$.next(engine));
 
 const hook = ({state$, actions, studio, tapTempo}) => {
-	const sampleBank$ = pocket.stream
-		.filter(pocket => pocket.sampleBank)
-		.distinctUntilChanged(pocket => pocket.sampleBank)
-		.map(pocket => pocket.sampleBank);
+	const sampleBank$ = pocket.stream.pipe(
+		filter(p => p.sampleBank),
+		distinctUntilChanged((prev, curr) => {
+			const prevBank = prev.sampleBank;
+			const currBank = curr.sampleBank;
+			return prevBank === currBank;
+		}),
+		map(p => p.sampleBank)
+	);
 
-	state$.distinctUntilChanged(state => state.studio.playing)
-		.filter(state => !state.studio.playing)
-		.subscribe(() => clearBuffer());
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => prev.studio.playing === curr.studio.playing),
+		filter(state => !state.studio.playing)
+	).subscribe(() => clearBuffer());
 
-	state$.distinctUntilChanged(state => state.studio.bpm)
-		.filter(state => state.studio.playing)
-		.subscribe(() => clearBuffer());
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => prev.studio.bpm === curr.studio.bpm),
+		filter(state => state.studio.playing)
+	).subscribe(() => clearBuffer());
 
 	// update connections
-	state$
-		.distinctUntilChanged(state => state.session.tracks.map((track, ch) =>
-			// (console.log(track, ch),
-			ch > 0 && [track.inst.vco1.on, track.inst.vco2.on, track.inst.vcf.on, track.inst.lfo.on, track.inst.reverb.on])
-		)
-		.subscribe(({instrument, session}) => session.tracks.forEach(
-			(track, ch) => ch > 0 && updateConnections(track.inst, ch))
-		);
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => {
+			const prevTracks = prev.session.tracks.map((track, ch) =>
+				ch > 0 && [track.inst.vco1.on, track.inst.vco2.on, track.inst.vcf.on, track.inst.lfo.on, track.inst.reverb.on]
+			);
+			const currTracks = curr.session.tracks.map((track, ch) =>
+				ch > 0 && [track.inst.vco1.on, track.inst.vco2.on, track.inst.vcf.on, track.inst.lfo.on, track.inst.reverb.on]
+			);
+			return JSON.stringify(prevTracks) === JSON.stringify(currTracks);
+		})
+	).subscribe(({instrument, session}) => session.tracks.forEach(
+		(track, ch) => ch > 0 && updateConnections(track.inst, ch))
+	);
 	// update prefs
-	state$
-		.distinctUntilChanged(state => state.session.tracks.map(track => track.inst))
-		.subscribe(({instrument, session}) => session.tracks.forEach(
-			(track, ch) => ch > 0 && updatePrefs(track.inst, ch))
-		);
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => {
+			const prevInsts = prev.session.tracks.map(track => track.inst);
+			const currInsts = curr.session.tracks.map(track => track.inst);
+			return JSON.stringify(prevInsts) === JSON.stringify(currInsts);
+		})
+	).subscribe(({instrument, session}) => session.tracks.forEach(
+		(track, ch) => ch > 0 && updatePrefs(track.inst, ch))
+	);
 
 	// global volume
-	state$
-		.distinctUntilChanged(state => state.studio.volume)
-		.subscribe(state => a.update(globalVolume, {gain: state.studio.volume}));
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => prev.studio.volume === curr.studio.volume)
+	).subscribe(state => a.update(globalVolume, {gain: state.studio.volume}));
 
 	// set up once
-	state$.take(1)
-		.subscribe(({instrument, session}) => session.tracks
-			.map((track, ch) => ({track, ch}))
-			.filter(({track}) => track.type === 'piano')
-			.forEach(({track, ch}) => (
-				updateConnections(Object.assign({}, instrument, track.inst), ch),
-				updatePrefs(Object.assign({}, instrument, track.inst), ch)
-			))
-		);
+	state$.pipe(
+		take(1)
+	).subscribe(({instrument, session}) => session.tracks
+		.map((track, ch) => ({track, ch}))
+		.filter(({track}) => track.type === 'piano')
+		.forEach(({track, ch}) => (
+			updateConnections(Object.assign({}, instrument, track.inst), ch),
+			updatePrefs(Object.assign({}, instrument, track.inst), ch)
+		))
+	);
 
 	// note ons
 	let voices = {};
 	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-	state$
-		.distinctUntilChanged(state => state.midiMap.channels)
-		.map(state => ({
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => {
+			return JSON.stringify(prev.midiMap.channels) === JSON.stringify(curr.midiMap.channels);
+		}),
+		map(state => ({
 			state,
 			pressed: state.session.tracks.map(track => (
 				// console.log(track.input),
@@ -323,8 +341,11 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 					track
 				)
 			))
-		}))
-		.withLatestFrom(engine$, sampleBank$, ({state, pressed}, engine, sampleBank) => ({state, pressed, engine, sampleBank}))
+		})),
+		withLatestFrom(engine$, sampleBank$),
+		map(([{state, pressed}, engine, sampleBank]) =>
+			({state, pressed, engine, sampleBank}))
+	)
 		.subscribe(({state, pressed, engine, sampleBank}) => {
 			Object.keys(pressed).forEach(ch => {
 				if (ch > 0) {
@@ -410,17 +431,28 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		});
 
 	// pitch bend
-	state$.distinctUntilChanged(state => state.midiMap.pitch)
+	state$.pipe(
+		distinctUntilChanged((prev, curr) => prev.midiMap.pitch === curr.midiMap.pitch)
+	)
 		.subscribe(state => pitchBend(
 			Object.assign({}, state.instrument, state.session.tracks[
 				state.session.selection.piano[0]
 			].inst), state.midiMap.pitch, state.session.selection.piano[0])
 		);
 
-	state$
-		.distinctUntilChanged(state => state.studio.tick)
-		.filter(state => state.studio.playing)
-		.combineLatest(sampleBank$, (state, sampleBank) => ({state, sampleBank}))
+	combineLatest([
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => {
+				const prevTick = prev.studio.tick;
+				const currTick = curr.studio.tick;
+				return prevTick.index === currTick.index && prevTick.elapsed === currTick.elapsed;
+			}),
+			filter(state => state.studio.playing)
+		),
+		sampleBank$
+	]).pipe(
+		map(([state, sampleBank]) => ({state, sampleBank}))
+	)
 		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;

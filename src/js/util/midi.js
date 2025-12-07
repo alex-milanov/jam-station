@@ -1,7 +1,8 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
+const {Subject, from, EMPTY} = require('rxjs');
+const {flatMap, map, startWith, merge} = require('rxjs/operators');
+const {fromEventPattern} = require('rxjs');
 
 const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -113,27 +114,33 @@ const parseAccess = access => {
 };
 
 const init = () => {
-	const devices$ = new Rx.Subject();
-	$.fromPromise(navigator.requestMIDIAccess())
-		.flatMap(access => $.create(stream => {
-			access.onstatechange = connection => stream.onNext(connection.currentTarget);
-		}).startWith(access))
-		.map(parseAccess)
-		// .map(data => (console.log('midi access', data), data))
-		.subscribe(device => devices$.onNext(device));
-		// .share();
+	const devices$ = new Subject();
+	from(navigator.requestMIDIAccess()).pipe(
+		flatMap(access => new (require('rxjs').Observable)(observer => {
+			access.onstatechange = connection => observer.next(connection.currentTarget);
+			return () => { access.onstatechange = null; };
+		}).pipe(
+			startWith(access)
+		)),
+		map(parseAccess)
+		// map(data => (console.log('midi access', data), data))
+	).subscribe(device => devices$.next(device));
+		// share()
 
-	const msg$ = new Rx.Subject();
-	devices$.flatMap(
-		({access, inputs}) => inputs.reduce(
-				(msgStream, input) => msgStream.merge(
-					$.fromEventPattern(h => {
-						input.onmidimessage = h;
-					})
-					.map(msg => ({access, input, msg}))
-				), $.empty()
-			)
-	).subscribe(msg => msg$.onNext(msg));
+	const msg$ = new Subject();
+	devices$.pipe(
+		flatMap(({access, inputs}) => inputs.reduce(
+			(msgStream, input) => msgStream.pipe(
+				merge(fromEventPattern(
+					h => { input.onmidimessage = h; },
+					() => { input.onmidimessage = null; }
+				).pipe(
+					map(msg => ({access, input, msg}))
+				))
+			),
+			EMPTY
+		))
+	).subscribe(msg => msg$.next(msg));
 
 	return {
 		devices$,

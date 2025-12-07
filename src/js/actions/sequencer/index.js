@@ -1,9 +1,5 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
-
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');

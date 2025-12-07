@@ -1,15 +1,12 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const Subject = Rx.Subject;
-
 const audio = require('iblokz-audio');
 const sampler = require('iblokz-audio').sampler;
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const {obj} = require('iblokz-data');
 const pocket = require('../util/pocket');
 
+const {Subject} = require('rxjs');
 const stream = new Subject();
 
 const reverb = audio.create('reverb', {
@@ -20,11 +17,18 @@ const reverb = audio.create('reverb', {
 
 audio.connect(reverb, audio.context.destination);
 
+const {filter, distinctUntilChanged, map} = require('rxjs/operators');
+
 const hook = ({state$, actions}) => {
-	const sampleBank$ = pocket.stream
-		.filter(pocket => pocket.sampleBank)
-		.distinctUntilChanged(pocket => pocket.sampleBank)
-		.map(pocket => pocket.sampleBank);
+	const sampleBank$ = pocket.stream.pipe(
+		filter(p => p.sampleBank),
+		distinctUntilChanged((prev, curr) => {
+			const prevBank = prev.sampleBank;
+			const currBank = curr.sampleBank;
+			return prevBank === currBank;
+		}),
+		map(p => p.sampleBank)
+	);
 
 	let buffer = [];
 

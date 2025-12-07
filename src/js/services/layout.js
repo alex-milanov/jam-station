@@ -1,7 +1,7 @@
 'use strict';
 // lib
-const Rx = require('rx');
-const $ = Rx.Observable;
+const {interval} = require('rxjs');
+const {map} = require('rxjs/operators');
 
 // const time = require('../util/time');
 
@@ -67,13 +67,15 @@ const refresh = ({layout, state, actions}) => {
 	// midiMap.style.left = sequencer.style.offsetWidth + 20 + 'px';
 };
 
+const {withLatestFrom, filter} = require('rxjs/operators');
+
 const hook = ({state$, actions}) => {
-	$.interval(100 /* ms */)
-    .timeInterval()
-		.map(() => document.querySelector('#layout'))
-		.filter(layout => layout)
-		.withLatestFrom(state$, (layout, state) => ({layout, state, actions}))
-		.subscribe(refresh);
+	interval(100 /* ms */).pipe(
+		map(() => document.querySelector('#layout')),
+		filter(layout => layout),
+		withLatestFrom(state$),
+		map(([layout, state]) => ({layout, state, actions}))
+	).subscribe(refresh);
 };
 
 module.exports = {

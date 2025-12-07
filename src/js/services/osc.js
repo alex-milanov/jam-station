@@ -1,7 +1,8 @@
 'use strict';
 // lib
-const Rx = require('rx');
-const $ = Rx.Observable;
+const {Subject} = require('rxjs');
+const {distinctUntilChanged, filter, flatMap, withLatestFrom, map, throttleTime} = require('rxjs/operators');
+const {interval} = require('rxjs');
 const ws = require('../util/ws');
 
 //
@@ -31,25 +32,27 @@ const hook = ({state$, actions, tapTempo}) => {
 	// });
 
 	myoWs.onopen = () => console.log('myo osc connected');
-	const myoMsg$ = new Rx.Subject();
-	myoWs.onmessage = data => myoMsg$.onNext(JSON.parse(data.data));
+	const myoMsg$ = new Subject();
+	myoWs.onmessage = data => myoMsg$.next(JSON.parse(data.data));
 
 	// wrldsWs.onopen = () => console.log('wrlds osc connected');
-	const wrldsMsg$ = state$
-		.distinctUntilChanged(state => state.wrlds.on)
-		.filter(state => state.wrlds.on)
-		.flatMap(() =>
+	const wrldsMsg$ = state$.pipe(
+		distinctUntilChanged((prev, curr) => prev.wrlds.on === curr.wrlds.on),
+		filter(state => state.wrlds.on),
+		flatMap(() =>
 			ws.connect({port: 8888, retry: true})
-		);
+		)
+	);
 	// wrldsWs.onmessage = data => wrldsMsg$.onNext(JSON.parse(data.data));
 
 	subs.push(
-		myoMsg$
-			.withLatestFrom(state$, (data, state) => ({data, state}))
-			.filter(({data}) => data[1].type === 'orientation')
-			// .map(data => (console.log(data), data))
-			.sample(100)
-			.subscribe(({data, state}) => {
+		myoMsg$.pipe(
+			withLatestFrom(state$),
+			map(([data, state]) => ({data, state})),
+			filter(({data}) => data[1].type === 'orientation'),
+			// map(data => (console.log(data), data))
+			throttleTime(100)
+		).subscribe(({data, state}) => {
 				actions.set(['myo', 'osc'], data[1]);
 				// orientation
 				if (state.myo.on) {
@@ -67,12 +70,13 @@ const hook = ({state$, actions, tapTempo}) => {
 			})
 	);
 	subs.push(
-		wrldsMsg$
-			.map(data => JSON.parse(data.data))
-			.map(data => data[0])
-			// .map(data => (console.log(data), data))
-			.withLatestFrom(state$, (data, state) => ({data, state}))
-			.subscribe(({state, data}) => {
+		wrldsMsg$.pipe(
+			map(data => JSON.parse(data.data)),
+			map(data => data[0]),
+			// map(data => (console.log(data), data))
+			withLatestFrom(state$),
+			map(([data, state]) => ({data, state}))
+		).subscribe(({state, data}) => {
 				// console.log(state.wrlds);
 				if (state.wrlds.on) {
 					if (data.type === 'wrldsBounce') {

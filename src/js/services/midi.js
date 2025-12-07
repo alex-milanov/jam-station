@@ -1,6 +1,7 @@
 'use strict';
 
 const {obj, fn} = require('iblokz-data');
+const {filter, distinctUntilChanged, map, share, withLatestFrom, throttleTime, bufferCount} = require('rxjs/operators');
 
 const midi = require('../util/midi');
 const pocket = require('../util/pocket');
@@ -21,10 +22,15 @@ const clockMsg = [248];    // note on, middle C, full velocity
 const hook = ({state$, actions, tapTempo}) => {
 	let subs = [];
 
-	const tick$ = pocket.stream
-		.filter(pocket => pocket.clockTick)
-		.distinctUntilChanged(pocket => pocket.clockTick)
-		.map(pocket => pocket.clockTick);
+	const tick$ = pocket.stream.pipe(
+		filter(p => p.clockTick),
+		distinctUntilChanged((prev, curr) => {
+			const prevTick = prev.clockTick;
+			const currTick = curr.clockTick;
+			return prevTick && currTick && prevTick.time === currTick.time && prevTick.i === currTick.i;
+		}),
+		map(p => p.clockTick)
+	);
 
 	const {devices$, msg$} = midi.init();
 
@@ -33,35 +39,39 @@ const hook = ({state$, actions, tapTempo}) => {
 		devices$.subscribe(data => actions.midiMap.connect(data))
 	);
 
-	const parsedMidiMsg$ = msg$
-		.map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw}))
-		// .map(data => (console.log(data), data))
-		.share();
+	const parsedMidiMsg$ = msg$.pipe(
+		map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw})),
+		// map(data => (console.log(data), data))
+		share()
+	);
 
 	const getIds = (inputs, indexes) => inputs
 		.map(inp => inp.id)
 		.filter((id, i) => indexes.indexOf(i) > -1);
 
-	const midiState$ = parsedMidiMsg$
-		.withLatestFrom(state$, (data, state) => ({data, state}))
-		.filter(({data, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
+	const midiState$ = parsedMidiMsg$.pipe(
+		withLatestFrom(state$),
+		map(([data, state]) => ({data, state})),
+		filter(({data, state}) => getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
 			data.raw.input.id
-		) > -1)
-		.share();
+		) > -1),
+		share()
+	);
 
 	// midi messages
 	subs.push(
-		parsedMidiMsg$
-			// .map(midiData => (console.log({midiData}), midiData))
-			.filter(({msg}) => ['noteOn', 'noteOff'].indexOf(msg.state) > -1)
-			.withLatestFrom(state$, (midiData, state) => (Object.assign({}, midiData, {state})))
-			.filter(({raw, state}) => (
+		parsedMidiMsg$.pipe(
+			// map(midiData => (console.log({midiData}), midiData))
+			filter(({msg}) => ['noteOn', 'noteOff'].indexOf(msg.state) > -1),
+			withLatestFrom(state$),
+			map(([midiData, state]) => (Object.assign({}, midiData, {state}))),
+			filter(({raw, state}) => (
 				// console.log(raw.input.id, state.midiMap.devices.inputs, state.midiMap.data.in),
 				getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
 					raw.input.id
 				) > -1
 			))
-			.subscribe(({raw, msg, state}) => {
+		).subscribe(({raw, msg, state}) => {
 				// console.log(state.midiMap.devices.inputs, raw.input);
 				const deviceIndex = state.midiMap.devices.inputs.indexOf(raw.input);
 
@@ -86,19 +96,20 @@ const hook = ({state$, actions, tapTempo}) => {
 			})
 	);
 
+	const {throttleTime} = require('rxjs/operators');
 	subs.push(
-		parsedMidiMsg$
-			// .map(midiData => (console.log({midiData}), midiData))
-			.filter(({msg}) => ['pitchBend'].indexOf(msg.state) > -1)
-			.throttle(1)
-			.subscribe(({msg}) => actions.set(['midiMap', 'pitch'], msg.pitchValue))
+		parsedMidiMsg$.pipe(
+			// map(midiData => (console.log({midiData}), midiData))
+			filter(({msg}) => ['pitchBend'].indexOf(msg.state) > -1),
+			throttleTime(1)
+		).subscribe(({msg}) => actions.set(['midiMap', 'pitch'], msg.pitchValue))
 	);
 
 	subs.push(
-		parsedMidiMsg$
-			.filter(({msg}) => msg.state === 'bankSelect')
-			.filter(({msg}) => msg.bank >= 0 && msg.bank < 16)
-			.subscribe(({msg}) =>
+		parsedMidiMsg$.pipe(
+			filter(({msg}) => msg.state === 'bankSelect'),
+			filter(({msg}) => msg.bank >= 0 && msg.bank < 16)
+		).subscribe(({msg}) =>
 				fn.pipe(
 					() => ({
 						track: msg.bank % 4,
@@ -120,11 +131,11 @@ const hook = ({state$, actions, tapTempo}) => {
 
 	// controller
 	subs.push(
-		midiState$
-			.filter(({data}) => data.msg.state === 'controller')
-			.distinctUntilChanged(({data}) => data.msg.value)
-			.throttle(10)
-			.subscribe(({data, state}) => {
+		midiState$.pipe(
+			filter(({data}) => data.msg.state === 'controller'),
+			distinctUntilChanged((prev, curr) => prev.data.msg.value === curr.data.msg.value),
+			throttleTime(10)
+		).subscribe(({data, state}) => {
 				let mmap = state.midiMap.map.find(m =>
 					m[0] === data.msg.state
 					&& m[1] === data.msg.controller
@@ -145,15 +156,16 @@ const hook = ({state$, actions, tapTempo}) => {
 
 	// on access sync clocks
 	subs.push(
-			tick$
-			// .filter(({time, i}) => i % 2 === 0)
-			.withLatestFrom(state$, (time, state) => ({time, state}))
-			.filter(({state}) => state.midiMap.clock.out.length > 0
+		tick$.pipe(
+			// filter(({time, i}) => i % 2 === 0)
+			withLatestFrom(state$),
+			map(([time, state]) => ({time, state})),
+			filter(({state}) => state.midiMap.clock.out.length > 0
 				&& state.midiMap.clock.out.filter(out =>
 					state.midiMap.devices.outputs[out]
 				).length > 0
 			)
-			.subscribe(({time, state}) => {
+		).subscribe(({time, state}) => {
 				// console.log(state.midiMap.clock.out, clockMsg);
 				state.midiMap.clock.out.forEach(out =>
 					state.midiMap.devices.outputs[out].send(clockMsg)
@@ -164,13 +176,13 @@ const hook = ({state$, actions, tapTempo}) => {
 
 	// midi to clock
 	subs.push(
-		midiState$
-			.filter(({data}) => data.msg.binary === '11111000')
-			.filter(({data, state}) =>
+		midiState$.pipe(
+			filter(({data}) => data.msg.binary === '11111000'),
+			filter(({data, state}) =>
 				state.midiMap.clock.in === indexAt(state.midiMap.devices.inputs, 'name', data.raw.input.name)
-			)
-			.bufferWithCount(1, 24)
-			.subscribe(() => tapTempo.tap())
+			),
+			bufferCount(24, 1)
+		).subscribe(() => tapTempo.tap())
 	);
 
 /*

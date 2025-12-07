@@ -1,12 +1,9 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const Subject = Rx.Subject;
-
 const {context} = require('iblokz-audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
+const {distinctUntilChanged, filter, map} = require('rxjs/operators');
 
 // const tick$ = new Rx.Subject();
 let i = 0;
@@ -46,31 +43,35 @@ const hook = ({state$, actions}) => {
 	let subs = [];
 
 	subs.push(
-		state$
-			.distinctUntilChanged(state => state.studio.bpm)
-			.subscribe(state => {
-				setTempo(state.studio.bpm);
-			})
-		);
-
-	subs.push(
-		state$
-			.distinctUntilChanged(state => state.studio.playing)
-			.subscribe(state => {
-				playing = state.studio.playing;
-				if (playing) {
-					play(state.studio.bpm);
-				}
-			})
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => prev.studio.bpm === curr.studio.bpm)
+		).subscribe(state => {
+			setTempo(state.studio.bpm);
+		})
 	);
 
 	subs.push(
-		pocket.stream
-			.filter(pocket => pocket.clockTick)
-			.distinctUntilChanged(pocket => pocket.clockTick)
-			.map(pocket => pocket.clockTick)
-			.filter(({time, i}) => i % modifier === 0)
-			.subscribe(({time}) => (playing) && actions.studio.tick(time))
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => prev.studio.playing === curr.studio.playing)
+		).subscribe(state => {
+			playing = state.studio.playing;
+			if (playing) {
+				play(state.studio.bpm);
+			}
+		})
+	);
+
+	subs.push(
+		pocket.stream.pipe(
+			filter(p => p.clockTick),
+			distinctUntilChanged((prev, curr) => {
+				const prevTick = prev.clockTick;
+				const currTick = curr.clockTick;
+				return prevTick && currTick && prevTick.time === currTick.time && prevTick.i === currTick.i;
+			}),
+			map(p => p.clockTick),
+			filter(({time, i}) => i % modifier === 0)
+		).subscribe(({time}) => (playing) && actions.studio.tick(time))
 	);
 
 	unhook = () => subs.forEach(sub => sub.unsubscribe());

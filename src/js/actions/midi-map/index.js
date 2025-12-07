@@ -1,7 +1,4 @@
 'use strict';
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
 
 // util
 const {measureToBeatLength} = require('../../util/math');

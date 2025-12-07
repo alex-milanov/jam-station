@@ -1,8 +1,7 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const Subject = Rx.Subject;
+const {Subject, concat, from, EMPTY} = require('rxjs');
+const {concatMap, mergeMap, map, filter, catchError} = require('rxjs/operators');
 
 const {obj, fn} = require('iblokz-data');
 const file = require('../util/file');
@@ -38,41 +37,63 @@ const kits = [
 	'samples/junk-drum-kit.zip'
 ];
 
-let sampleBank$ = new Rx.Subject();
+let sampleBank$ = new Subject();
 
 let unhook = () => {};
 
 const hook = ({state$, actions}) => {
 	let subs = [];
 
-	const samples$ = $.concat(
-		$.fromArray(baseKit)
-			.concatMap(url => $.fromPromise(fetch(url)
-				.then(res => res.arrayBuffer()))
-				.concatMap(buffer => $.fromCallback(context.decodeAudioData, context)(buffer))
-				.map(buffer => ({
-					name: url,
-					node: sampler.create(url, buffer)
-				}))
-			),
-		$.fromArray(kits)
-			.concatMap(file.loadZip)
-			.concatMap(opm => $.fromArray(Object.keys(opm))
-				.filter(key => key.match(/.(wav|ogg|opus|mp3|aif)$/))
-				.concatMap(key => $.fromCallback(context.decodeAudioData, context)(opm[key])
-					.map(buffer => ({
+	const {share} = require('rxjs/operators');
+	const samples$ = concat(
+		from(baseKit).pipe(
+			concatMap(url => from(fetch(url)).pipe(
+				concatMap(res => {
+					if (!res.ok) {
+						console.warn(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+						return EMPTY;
+					}
+					return from(res.arrayBuffer());
+				}),
+				concatMap(buffer => from(context.decodeAudioData(buffer)).pipe(
+					map(buffer => ({
+						name: url,
+						node: sampler.create(url, buffer)
+					})),
+					catchError(err => {
+						console.warn(`Failed to decode ${url}:`, err);
+						return EMPTY;
+					})
+				)),
+				catchError(err => {
+					console.warn(`Failed to load ${url}:`, err);
+					return EMPTY;
+				})
+			))
+		),
+		from(kits).pipe(
+			concatMap(file.loadZip),
+			concatMap(opm => from(Object.keys(opm)).pipe(
+				filter(key => key.match(/.(wav|ogg|opus|mp3|aif)$/)),
+				concatMap(key => from(context.decodeAudioData(opm[key])).pipe(
+					map(buffer => ({
 						name: key,
 						node: sampler.create(key, buffer)
-					}))))
-	).share();
+					})),
+					catchError(err => {
+						console.warn(`Failed to decode ${key}:`, err);
+						return EMPTY;
+					})
+				))
+			))
+		)
+	).pipe(share());
 
 	subs.push(
-		samples$
-			.subscribe(sample => actions.mediaLibrary.loadSamples([sample.name]))
+		samples$.subscribe(sample => actions.mediaLibrary.loadSamples([sample.name]))
 	);
 	subs.push(
-		samples$
-			.subscribe(sample => pocket.put(['sampleBank', sample.name], sample.node))
+		samples$.subscribe(sample => pocket.put(['sampleBank', sample.name], sample.node))
 	);
 
 	unhook = () => subs.forEach(sub => sub.unsubscribe());

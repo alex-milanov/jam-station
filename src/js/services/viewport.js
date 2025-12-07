@@ -1,7 +1,6 @@
 'use strict';
 // lib
-const Rx = require('rx');
-const $ = Rx.Observable;
+const {fromEvent} = require('rxjs');
 
 let unhook = () => {};
 
@@ -15,10 +14,11 @@ const hook = ({state$, actions}) => {
 			y: ev.pageY
 		}));
 	*/
+	const {startWith} = require('rxjs/operators');
 	subs.push(
-		$.fromEvent(window, 'resize')
-			.startWith({})
-			.subscribe(ev => actions.set(['viewport', 'screen'], {
+		fromEvent(window, 'resize').pipe(
+			startWith({})
+		).subscribe(ev => actions.set(['viewport', 'screen'], {
 				width: window.innerWidth,
 				height: window.innerHeight,
 				size: window.innerWidth >= 1200

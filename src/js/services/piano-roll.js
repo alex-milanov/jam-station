@@ -1,7 +1,7 @@
 'use strict';
 // lib
-const Rx = require('rx');
-const $ = Rx.Observable;
+const {combineLatest, interval} = require('rxjs');
+const {distinctUntilChanged, map, withLatestFrom, filter} = require('rxjs/operators');
 
 const {obj} = require('iblokz-data');
 
@@ -74,41 +74,51 @@ let unhook = {};
 const hook = ({state$, actions}) => {
 	let subs = [];
 
-	const pianoRollEl$ = $.interval(500 /* ms */)
-			.timeInterval()
-			.map(() => document.querySelector('.piano-roll'))
-			.distinctUntilChanged(el => el)
-			.filter(el => el)
-			.map(el => ({
-				grid: el.querySelector('.piano-roll .grid'),
-				events: el.querySelector('.piano-roll .events')
-			}));
+	const pianoRollEl$ = interval(500 /* ms */).pipe(
+		map(() => document.querySelector('.piano-roll')),
+		distinctUntilChanged((prev, curr) => prev === curr),
+		filter(el => el),
+		map(el => ({
+			grid: el.querySelector('.piano-roll .grid'),
+			events: el.querySelector('.piano-roll .events')
+		}))
+	);
 
 	// grid changes
 	subs.push(
-		$.combineLatest(
-			state$
-				.distinctUntilChanged(state => state.pianoRoll.position),
-			pianoRollEl$,
-			(state, el) => ({state, el})
-		)
-			.subscribe(({el, state}) => {
-				const gridCtx = el.grid.getContext('2d');
-				const dim = [30, 12];
-				drawGrid(gridCtx, dim, state.pianoRoll.position);
-			})
+		combineLatest([
+			state$.pipe(
+				distinctUntilChanged((prev, curr) => {
+					const prevPos = prev.pianoRoll.position;
+					const currPos = curr.pianoRoll.position;
+					return JSON.stringify(prevPos) === JSON.stringify(currPos);
+				})
+			),
+			pianoRollEl$
+		]).pipe(
+			map(([state, el]) => ({state, el}))
+		).subscribe(({el, state}) => {
+			const gridCtx = el.grid.getContext('2d');
+			const dim = [30, 12];
+			drawGrid(gridCtx, dim, state.pianoRoll.position);
+		})
 	);
 
 	// event changes
 	subs.push(
-		state$
-			.distinctUntilChanged(state =>
-				JSON.stringify(state.pianoRoll.position) +
-				JSON.stringify(state.studio.tick.tracks[state.session.selection.piano[0]].bar) +
-				JSON.stringify(state.pianoRoll.events)
-			)
-			.withLatestFrom(pianoRollEl$, (state, el) => ({state, el}))
-			.subscribe(({el, state}) => {
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => {
+				const prevKey = JSON.stringify(prev.pianoRoll.position) +
+					JSON.stringify(prev.studio.tick.tracks[prev.session.selection.piano[0]].bar) +
+					JSON.stringify(prev.pianoRoll.events);
+				const currKey = JSON.stringify(curr.pianoRoll.position) +
+					JSON.stringify(curr.studio.tick.tracks[curr.session.selection.piano[0]].bar) +
+					JSON.stringify(curr.pianoRoll.events);
+				return prevKey === currKey;
+			}),
+			withLatestFrom(pianoRollEl$),
+			map(([state, el]) => ({state, el}))
+		).subscribe(({el, state}) => {
 				const eventsCtx = el.events.getContext('2d');
 				const dim = [30, 12];
 				// ctx.translate(0.5, 0.5);
@@ -132,16 +142,19 @@ const hook = ({state$, actions}) => {
 		);
 
 	subs.push(
-		state$
-			.distinctUntilChanged(state => state.midiMap.channels)
-			.filter(state => state.studio.recording)
-			.map(state => ({
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => {
+				return JSON.stringify(prev.midiMap.channels) === JSON.stringify(curr.midiMap.channels);
+			}),
+			filter(state => state.studio.recording),
+			map(state => ({
 				state,
 				pressed: prepPressed(
 					state.midiMap.channels,
 					state.session.tracks[state.session.selection.piano[0]]
 				)
 			}))
+		)
 			// .map(({state, channels}) => ({
 			// 	state,
 			// 	pressed: Object.keys(channels).filter(ch => parseInt(ch, 10) !== 10).reduce(
@@ -154,10 +167,14 @@ const hook = ({state$, actions}) => {
 	);
 
 	subs.push(
-		state$
-			.distinctUntilChanged(state => state.studio.tick)
-			.filter(state => state.studio.tick.index === 0)
-			.subscribe(state => actions.pianoRoll.clean())
+		state$.pipe(
+			distinctUntilChanged((prev, curr) => {
+				const prevTick = prev.studio.tick;
+				const currTick = curr.studio.tick;
+				return prevTick.index === currTick.index && prevTick.elapsed === currTick.elapsed;
+			}),
+			filter(state => state.studio.tick.index === 0)
+		).subscribe(state => actions.pianoRoll.clean())
 	);
 
 	unhook = () => subs.forEach(sub => sub.unsubscribe());

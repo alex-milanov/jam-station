@@ -1,9 +1,5 @@
 'use strict';
 
-const Rx = require('rx');
-const $ = Rx.Observable;
-const {Subject} = Rx;
-
 const viewport = require('./viewport');
 const layout = require('./layout');
 const studio = require('./studio');

@@ -6,7 +6,7 @@ const $ = Rx.Observable;
 const {obj} = require('iblokz-data');
 
 // const time = require('../util/time');
-const audio = require('../util/audio');
+const audio = require('iblokz-audio');
 const gfxCanvas = require('../util/gfx/canvas');
 const {numberToNote, noteToNumber} = require('../util/midi');
 

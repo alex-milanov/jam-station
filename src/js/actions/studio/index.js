@@ -3,7 +3,7 @@
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../../util/math');
-const {context} = require('../../util/audio');
+const {context} = require('iblokz-audio');
 
 const initial = {
 	bpm: 120,

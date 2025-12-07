@@ -4,8 +4,8 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const audio = require('../util/audio');
-const sampler = require('../util/audio/sources/sampler');
+const audio = require('iblokz-audio');
+const sampler = require('iblokz-audio').sampler;
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const {obj} = require('iblokz-data');
 const pocket = require('../util/pocket');

@@ -5,7 +5,7 @@ const $ = Rx.Observable;
 const vdom = require('iblokz-snabbdom-helpers');
 
 // util
-const a = require('./util/audio');
+const a = require('iblokz-audio');
 window.a = a;
 
 // vex code

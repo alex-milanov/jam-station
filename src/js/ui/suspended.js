@@ -5,7 +5,7 @@ const {
 	a, button, input, label, span
 } = require('iblokz-snabbdom-helpers');
 
-const {context} = require('../util/audio');
+const {context} = require('iblokz-audio');
 
 module.exports = ({state, actions}) => div([
 	p('Due to policy changes in Google Chrome you have to click Resume to use WebAudio'),

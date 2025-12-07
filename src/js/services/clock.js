@@ -4,7 +4,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 const Subject = Rx.Subject;
 
-const {context} = require('../util/audio');
+const {context} = require('iblokz-audio');
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
 

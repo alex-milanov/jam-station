@@ -4,7 +4,7 @@ const Rx = require('rx');
 const $ = Rx.Observable;
 // util
 const file = require('../util/file');
-const audio = require('../util/audio');
+const audio = require('iblokz-audio');
 
 const kits = [
 	'samples/openpathmusic.zip',

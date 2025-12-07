@@ -6,8 +6,8 @@ const Subject = Rx.Subject;
 
 const {obj, fn} = require('iblokz-data');
 const file = require('../util/file');
-const {context} = require('../util/audio');
-const sampler = require('../util/audio/sources/sampler');
+const {context} = require('iblokz-audio');
+const sampler = require('iblokz-audio').sampler;
 const {measureToBeatLength, bpmToTime} = require('../util/math');
 const pocket = require('../util/pocket');
 

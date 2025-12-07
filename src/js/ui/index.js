@@ -2,7 +2,7 @@
 
 const {obj, fn} = require('iblokz-data');
 const {div, p, button, a, ul, li} = require('iblokz-snabbdom-helpers');
-const {context} = require('../util/audio');
+const {context} = require('iblokz-audio');
 // components
 const header = require('./header');
 const layout = require('./layout');

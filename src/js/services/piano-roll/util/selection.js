@@ -9,12 +9,12 @@ const {containsRect, intersects, fromVectors, containsVector} = rect;
  * @param {string} mode - Selection mode: 'containsRect' or 'intersects'
  * @returns {Array} Array of selected item IDs (uuids)
  */
-export const computeSelection = (visible, selectionRect, mode = 'containsRect') => (
-	selectionFn = mode === 'intersects' ? intersects : containsRect,
-	visible
+export const computeSelection = (visible, selectionRect, mode = 'containsRect') => {
+	const selectionFn = mode === 'intersects' ? intersects : containsRect;
+	return visible
 		.filter(({rect: itemRect}) => selectionFn(selectionRect, itemRect))
-		.map(({uuid}) => uuid)
-);
+		.map(({uuid}) => uuid);
+};
 
 /**
  * Finds an item at a specific pixel position

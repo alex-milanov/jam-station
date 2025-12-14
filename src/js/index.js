@@ -61,6 +61,21 @@ const ui$ = state$.pipe(
 // services
 services.hook({state$, actions, tapTempo});
 
+// Request permissions on page load - browser will show native prompts
+// Audio context resume
+if (a.context.state === 'suspended') {
+	a.context.resume().catch(err => {
+		console.error('Failed to resume audio context:', err);
+	});
+}
+
+// MIDI access
+if (navigator.requestMIDIAccess) {
+	navigator.requestMIDIAccess().catch(err => {
+		console.error('Failed to request MIDI access:', err);
+	});
+}
+
 // patch stream to dom
 vdom.patchStream(ui$, '#ui');
 

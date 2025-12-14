@@ -2,11 +2,9 @@
 
 const {obj, fn} = require('iblokz-data');
 const {div, p, button, a, ul, li} = require('iblokz-snabbdom-helpers');
-const {context} = require('iblokz-audio');
 // components
 const header = require('./header');
 const layout = require('./layout');
-const suspended = require('./suspended');
 // panels
 const mediaLibrary = require('./media-library');
 const instrument = require('./instrument');
@@ -26,13 +24,9 @@ const panels = {
 	pianoRoll
 };
 
-module.exports = ({state, actions, tapTempo}) => div('#ui',
-	context.state === 'suspended'
-	? suspended({state, actions})
-	: [
-		header({state, actions, tapTempo}),
-		div('#content',
-			layout({state, actions}, panels)
-		)
-	]
-);
+module.exports = ({state, actions, tapTempo}) => div('#ui', [
+	header({state, actions, tapTempo}),
+	div('#content',
+		layout({state, actions}, panels)
+	)
+]);

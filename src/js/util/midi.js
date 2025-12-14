@@ -115,6 +115,15 @@ const parseAccess = access => {
 
 const init = () => {
 	const devices$ = new Subject();
+	
+	if (!navigator.requestMIDIAccess) {
+		console.warn('Web MIDI API is not supported in this browser');
+		return {
+			devices$,
+			msg$: new Subject()
+		};
+	}
+	
 	from(navigator.requestMIDIAccess()).pipe(
 		flatMap(access => new (require('rxjs').Observable)(observer => {
 			access.onstatechange = connection => observer.next(connection.currentTarget);
@@ -124,7 +133,13 @@ const init = () => {
 		)),
 		map(parseAccess)
 		// map(data => (console.log('midi access', data), data))
-	).subscribe(device => devices$.next(device));
+	).subscribe({
+		next: device => devices$.next(device),
+		error: err => {
+			console.error('Failed to request MIDI access:', err);
+			// MIDI access was denied or failed - user can retry from UI
+		}
+	});
 		// share()
 
 	const msg$ = new Subject();

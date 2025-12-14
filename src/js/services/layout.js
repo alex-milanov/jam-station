@@ -32,6 +32,15 @@ const refresh = ({layout, state, actions}) => {
 				el.style.left = sequencer.style.left;
 				el.style.top = sequencer.offsetTop + sequencer.offsetHeight + distance + 'px';
 				el.style.width = sequencer.offsetWidth + 'px';
+				// Set height from layout config if available
+				// Check both state.layout.pianoRoll and state.layout.pianoRoll (camelCase vs kebab-case)
+				const pianoRollConfig = state?.layout?.pianoRoll || state?.layout?.['piano-roll'];
+				if (pianoRollConfig?.dim?.height && typeof pianoRollConfig.dim.height === 'number') {
+					el.style.setProperty('height', pianoRollConfig.dim.height + 'px', 'important');
+					console.log('[Layout] Setting piano-roll height to', pianoRollConfig.dim.height);
+				} else {
+					console.log('[Layout] Piano-roll height not found in state:', state?.layout);
+				}
 			} else {
 				el.style.left = '50%';
 			}

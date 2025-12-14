@@ -78,6 +78,9 @@ importers:
       '@parcel/transformer-sass':
         specifier: 2.12.0
         version: 2.12.0(@parcel/core@2.12.0(@swc/helpers@0.5.13))(@swc/helpers@0.5.13)
+      '@playwright/test':
+        specifier: ^1.57.0
+        version: 1.57.0
       buffer:
         specifier: ^5.5.0||^6.0.0
         version: 6.0.3
@@ -517,6 +520,11 @@ packages:
     engines: {node: '>= 12.0.0'}
     peerDependencies:
       '@parcel/core': ^2.12.0
+
+  '@playwright/test@1.57.0':
+    resolution: {integrity: sha512-6TyEnHgd6SArQO8UO2OMTxshln3QMWBtPGrOCgs3wVEmQmwyuNtB10IZMfmYDE0riwNR1cu4q+pPcxMVtaG3TA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@serialport/binding-mock@10.2.2':
     resolution: {integrity: sha512-HAFzGhk9OuFMpuor7aT5G1ChPgn5qSsklTFOTUX72Rl6p0xwcSVsRtG/xaGp6bxpN7fI9D/S8THLBWbBgS6ldw==}
@@ -2949,6 +2957,10 @@ snapshots:
       '@parcel/types': 2.12.0(@parcel/core@2.12.0(@swc/helpers@0.5.13))(@swc/helpers@0.5.13)
       '@parcel/utils': 2.12.0
       nullthrows: 1.1.1
+
+  '@playwright/test@1.57.0':
+    dependencies:
+      playwright: 1.57.0
 
   '@serialport/binding-mock@10.2.2':
     dependencies:

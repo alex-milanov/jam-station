@@ -24,6 +24,12 @@ let {actions, state$} = createState(actionsTree);
 const pianoRoll = require('./services/piano-roll');
 actions = attach(actions, 'pianoRoll', pianoRoll.actions);
 
+// Expose actions and state for testing (after they're created)
+if (typeof window !== 'undefined') {
+	window.__jamStationActions = actions;
+	window.__jamStationState$ = state$;
+}
+
 let ui = require('./ui');
 
 // services
@@ -94,7 +100,23 @@ tapTempo.on('tempo', tempo => actions.studio.change('bpm', tempo.toPrecision(5))
 // state$.connect();
 
 // livereload impl.
-if (module.hot) {
-	document.write(`<script src="http://${(location.host || 'localhost').split(':')[0]}` +
-	`:35729/livereload.js?snipver=1"></script>`);
-}
+// if (module.hot) {
+// 	document.write(`<script src="http://${(location.host || 'localhost').split(':')[0]}` +
+// 	`:35729/livereload.js?snipver=1"></script>`);
+// }
+
+const testEvents = [
+	{uuid: 'event-1', note: 'C3', start: 2, duration: 1, velocity: 0.8, startTime: 0}, // Column 2, C3 (snapped)
+	{uuid: 'event-2', note: 'E3', start: 2.3, duration: 1, velocity: 0.8, startTime: 0}, // Column 2, E3 (unsnapped, same column as event-1)
+	{uuid: 'event-3', note: 'D3', start: 4, duration: 1, velocity: 0.8, startTime: 0}, // Column 4, D3 (snapped)
+	{uuid: 'event-4', note: 'G3', start: 6.7, duration: 1, velocity: 0.8, startTime: 0}, // Column 6, G3 (unsnapped)
+	{uuid: 'event-5', note: 'A3', start: 8, duration: 1, velocity: 0.8, startTime: 0}, // Column 8, A3 (snapped)
+	{uuid: 'event-6', note: 'B3', start: 10.2, duration: 1, velocity: 0.8, startTime: 0}, // Column 10, B3 (unsnapped)
+	{uuid: 'event-7', note: 'C3', start: 12, duration: 1, velocity: 0.8, startTime: 0}, // Column 12, C3 (snapped, same note as event-1)
+	{uuid: 'event-8', note: 'F3', start: 14.5, duration: 1, velocity: 0.8, startTime: 0}  // Column 14, F3 (unsnapped)
+];
+
+// setTimeout(() => {
+// 	actions.pianoRoll.clear();
+// 	actions.set('pianoRoll', {events: testEvents});
+// }, 4000);

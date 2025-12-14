@@ -30,7 +30,10 @@ const initial = {
 		type: 'idle', // idle, selecting, moving, resizing
 		start: null, // {x, y}
 		last: null, // {x, y}
-		current: null // {x, y}
+		current: null, // {x, y}
+		anchorEventUuid: null, // UUID of the event being dragged (for multi-event dragging)
+		anchorEventStart: null, // Original start position of anchor event when drag started
+		originalEventPositions: null // Map of {uuid: {start, note}} for all selected events when drag started
 	},
 	selection: [],
 	visible: [],
@@ -130,13 +133,28 @@ const pointerDown = ({x, y}) => state => {
 			
 			// If not near edge, start moving
 			if (!nearLeftEdge && !nearRightEdge) {
+				// Find the anchor event in the events array to get its original start position
+				const anchorEvent = state.pianoRoll.events.find(e => e.uuid === clickedEvent.uuid);
+				// Store original positions for all selected events to avoid accumulation during drag
+				const originalEventPositions = state.pianoRoll.events
+					.filter(e => selection.indexOf(e.uuid) > -1)
+					.reduce((acc, event) => {
+						acc[event.uuid] = {
+							start: event.start,
+							note: event.note
+						};
+						return acc;
+					}, {});
 				return patch(state, 'pianoRoll', {
 					interaction: {
 						...interaction,
 						start: {x, y},
 						current: {x, y},
 						last: {x, y},
-						type: 'moving'
+						type: 'moving',
+						anchorEventUuid: clickedEvent.uuid, // Store the anchor event for snapping
+						anchorEventStart: anchorEvent ? anchorEvent.start : null, // Store original start position
+						originalEventPositions // Store all selected events' original positions
 					}
 				});
 			}
@@ -166,33 +184,29 @@ const pointerMove = ({x, y}) => state => {
 	const {interaction, dim, selection, events} = state.pianoRoll;
 
 	if (interaction.type === 'moving') {
-		// Calculate delta from last position
-		const deltaX = x - interaction.last.x;
-		const deltaY = y - interaction.last.y;
+		// Calculate total movement from start position (not incremental)
+		const totalDeltaX = x - interaction.start.x;
+		const totalDeltaY = y - interaction.start.y;
 		
-		// Convert delta to grid steps
-		const gridDeltaX = Math.round(deltaX / dim[0]);
-		const gridDeltaY = Math.round(deltaY / dim[1]);
+		// Convert total delta to grid steps
+		const totalGridDeltaX = totalDeltaX / dim[0];
+		const totalGridDeltaY = totalDeltaY / dim[1];
 		
-		// Only update if delta is at least one grid step (to avoid jitter)
-		if (gridDeltaX !== 0 || gridDeltaY !== 0) {
-			// Update events immutably
+		// Find the anchor event (the one being dragged)
+		const anchorEvent = events.find(e => e.uuid === interaction.anchorEventUuid);
+		if (!anchorEvent || selection.indexOf(anchorEvent.uuid) === -1) {
+			// Fallback to old behavior if anchor not found
+			const gridDeltaX = Math.round(totalGridDeltaX);
+			const gridDeltaY = Math.round(totalGridDeltaY);
 			const updatedEvents = events.map(event => {
 				if (selection.indexOf(event.uuid) === -1) return event;
-				
-				const newStart = event.start + gridDeltaX;
-				// Fix vertical inversion: dragging up (negative deltaY) should move to higher notes
-				// So we subtract gridDeltaY (invert the sign)
+				const newStart = Math.round(event.start + gridDeltaX);
 				const newNoteNumber = noteToNumber(event.note) - gridDeltaY;
 				const newNoteObj = numberToNote(newNoteNumber);
 				const newNote = `${newNoteObj.key}${newNoteObj.octave}`;
-				
 				return {...event, start: newStart, note: newNote};
 			});
-			
-			// Snap last position to grid
 			const snapped = snapToGrid(x, y, dim[0], dim[1]);
-			
 			return obj.patch(state, 'pianoRoll', {
 				events: updatedEvents,
 				interaction: {
@@ -203,11 +217,78 @@ const pointerMove = ({x, y}) => state => {
 			});
 		}
 		
-		// Update current position even if no grid movement
-		return patch(state, 'pianoRoll', {
+		// Get anchor's original position from when drag started (use stored original, not current event)
+		const originalPositions = interaction.originalEventPositions || {};
+		const anchorOriginalPos = originalPositions[interaction.anchorEventUuid];
+		const anchorOriginalStart = anchorOriginalPos 
+			? anchorOriginalPos.start 
+			: (interaction.anchorEventStart !== null ? interaction.anchorEventStart : anchorEvent.start);
+		const anchorOriginalNote = anchorOriginalPos 
+			? anchorOriginalPos.note 
+			: anchorEvent.note;
+		const anchorOriginalNoteNumber = noteToNumber(anchorOriginalNote);
+		
+		// Calculate the intended movement in grid steps (round to nearest integer for snapping)
+		const roundedGridDeltaX = Math.round(totalGridDeltaX);
+		const roundedGridDeltaY = Math.round(totalGridDeltaY);
+		
+		// Calculate the new position after movement
+		const newAnchorStart = anchorOriginalStart + roundedGridDeltaX;
+		const newAnchorNoteNumber = anchorOriginalNoteNumber - roundedGridDeltaY;
+		
+		// Snap the anchor to the nearest integer grid position
+		const snappedAnchorStart = Math.round(newAnchorStart);
+		const snappedAnchorNoteNumber = Math.round(newAnchorNoteNumber);
+		const snappedAnchorNoteObj = numberToNote(snappedAnchorNoteNumber);
+		const snappedAnchorNote = `${snappedAnchorNoteObj.key}${snappedAnchorNoteObj.octave}`;
+		
+		// Calculate the anchor's actual movement delta (snapped position - original position)
+		// This preserves exact relative positions between events
+		// Note: Events that were at integer positions may become non-integer if the delta is non-integer
+		// Only the anchor event is guaranteed to be at an integer position after snapping
+		const anchorDeltaStart = snappedAnchorStart - anchorOriginalStart;
+		const anchorDeltaNoteNumber = snappedAnchorNoteNumber - anchorOriginalNoteNumber;
+		
+		// Update all selected events by applying the anchor's movement delta to their original positions
+		const updatedEvents = events.map(event => {
+			if (selection.indexOf(event.uuid) === -1) return event;
+			
+			// Special case: anchor event always snaps to grid (integer)
+			if (event.uuid === interaction.anchorEventUuid) {
+				return {
+					...event,
+					start: snappedAnchorStart,
+					note: snappedAnchorNote
+				};
+			}
+			
+			// For other events: use original position + anchor's movement delta
+			const originalPos = originalPositions[event.uuid];
+			if (originalPos) {
+				const newStart = originalPos.start + anchorDeltaStart;
+				const newNoteNumber = noteToNumber(originalPos.note) + anchorDeltaNoteNumber;
+				const newNoteObj = numberToNote(newNoteNumber);
+				const newNote = `${newNoteObj.key}${newNoteObj.octave}`;
+				return {...event, start: newStart, note: newNote};
+			}
+			
+			// Fallback: if original position not stored, use current position + delta
+			const newStart = event.start + anchorDeltaStart;
+			const newNoteNumber = noteToNumber(event.note) + anchorDeltaNoteNumber;
+			const newNoteObj = numberToNote(newNoteNumber);
+			const newNote = `${newNoteObj.key}${newNoteObj.octave}`;
+			return {...event, start: newStart, note: newNote};
+		});
+		
+		// Snap last position to grid
+		const snapped = snapToGrid(x, y, dim[0], dim[1]);
+		
+		return obj.patch(state, 'pianoRoll', {
+			events: updatedEvents,
 			interaction: {
 				...interaction,
-				current: {x, y}
+				current: {x, y},
+				last: snapped
 			}
 		});
 	}
@@ -404,19 +485,14 @@ export const hook = ({state$, actions}) => {
 						}})
 					)
 
-				// Update visible if it actually changed (not just selection)
-				const prevVisible = state.pianoRoll.visible;
-				const visibleChanged = !prevVisible || 
-					prevVisible.length !== visible.length ||
-					prevVisible.some((v, i) => !visible[i] || v.uuid !== visible[i].uuid);
-				
-				if (visibleChanged) {
-					actions.set('pianoRoll', {visible});
-				}
+				// Update visible array - always update when events change (positions, rects, etc.)
+				// The distinctUntilChanged above already ensures we only run when events/position/bar change
+				// So we should always update the visible array here to reflect current positions
+				actions.set('pianoRoll', {visible});
 				
 				// Always render with current selection from state (even if visible didn't change)
 				// This ensures selection changes are immediately reflected
-				console.log('pianoRoll.events', events, visible, selection);
+				console.log('pianoRoll.events - drawing with selection:', selection, 'visible:', visible.map(v => v.uuid));
 				drawEvents(eventsCtx, visible, selection, dim, bar, state.pianoRoll.position);
 			})
 		);
@@ -463,8 +539,9 @@ export const hook = ({state$, actions}) => {
 
 					const selectionRect = computeSelectionRect(interaction.start, interaction.current);
 					const selection = computeSelection(visible, selectionRect, selectionMode);
-					console.log(selection);
-					actions.set(['pianoRoll', 'selection'], selection);
+					console.log('[Interaction] Live selection during drag:', selection);
+					// Don't set selection here - it will be set in pointerUp
+					// This is just for visual feedback during drag
 
 					canvas.rect(ctx, selectionRect, null, '#fff', [10, 10]);
 				}

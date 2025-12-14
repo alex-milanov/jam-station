@@ -47,7 +47,8 @@ const initial = {
 	pianoRoll: {
 		visible: true,
 		dim: {
-			width: 560
+			width: 560,
+			height: 600
 		},
 		pos: {
 			col: 3,

@@ -1,4 +1,4 @@
-# <img src="assets/logo-2.svg" alt="logo" width="32" height="32"> Jam Station
+# <img src="assets/logo-2.svg" alt="logo" width="32" height="32" style="fill: white"> Jam Station
 
 A web-based music production and live performance application built with Web Audio API and Web MIDI API. Create, sequence, and perform music directly in your browser.
 

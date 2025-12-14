@@ -99,11 +99,14 @@ export const drawGrid = (ctx, dim = [42, 14], pos = [0, 60]) => {
  * @param {Array<number>} pos - Current view position [x, y] (y is note number)
  */
 export const drawEvents = (ctx, visible, selection, dim = [42, 14], bar, pos = [0, 60]) => {
-	console.log('drawing events');
+	console.log('drawing events - selection:', selection, 'visible count:', visible.length);
 	prepCanvas(ctx);
-	visible.forEach(({uuid, rect}) =>
+	visible.forEach(({uuid, rect}) => {
+		const isSelected = selection.indexOf(uuid) > -1;
+		console.log(`  Event ${uuid}: selected=${isSelected}, rect:`, rect);
 		canvas.rect(ctx, rect,
-			...(selection.indexOf(uuid) > -1
-				? ['#cfefdf', '#214d37']
-				: ['#eee', '#555'])));
+			...(isSelected
+				? ['#cfefdf', '#214d37'] // Light green fill, dark green border for selected
+				: ['#eee', '#555'])); // Light gray fill, dark gray border for unselected
+	});
 };

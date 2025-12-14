@@ -1,5 +1,5 @@
 {
   "extends": ["@parcel/config-default"],
   "reporters":  ["...", "parcel-reporter-static-files-copy"],
-  "resolvers": ["parcel-resolver-ignore", "..."]
+  "resolvers": ["parcel-resolver-ts-base-url", "parcel-resolver-ignore", "..."]
 }

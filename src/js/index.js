@@ -1,9 +1,8 @@
-'use strict';
 // lib
 const vdom = require('iblokz-snabbdom-helpers');
 
 // iblokz
-const {createState} = require('iblokz-state');
+const {createState, attach} = require('iblokz-state');
 
 // util
 const a = require('iblokz-audio');
@@ -20,6 +19,11 @@ const tapTempo = require('tap-tempo')();
 // app
 let actionsTree = require('./actions');
 let {actions, state$} = createState(actionsTree);
+
+// Attach service actions
+const pianoRoll = require('./services/piano-roll');
+actions = attach(actions, 'pianoRoll', pianoRoll.actions);
+
 let ui = require('./ui');
 
 // services

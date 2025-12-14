@@ -8,8 +8,7 @@ const instrument = require('./instrument');
 const sequencer = require('./sequencer');
 const midiMap = require('./midi-map');
 const mediaLibrary = require('./media-library');
-const pianoRoll = require('./piano-roll');
-
+const pianoRoll = require('../services/piano-roll');
 // util
 const {obj} = require('iblokz-data');
 const {measureToBeatLength} = require('../util/math');
@@ -104,7 +103,7 @@ module.exports = {
 	mediaLibrary,
 	session,
 	sequencer,
-	pianoRoll,
+	pianoRoll: {initial: pianoRoll.actions.initial},
 	midiMap,
 	// actions
 	set,

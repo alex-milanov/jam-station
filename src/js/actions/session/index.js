@@ -3,7 +3,7 @@
 const {obj} = require('iblokz-data');
 
 const defValues = {
-	pianoRoll: require('../piano-roll').initial,
+	pianoRoll: require('../../services/piano-roll').actions.initial,
 	sequencer: require('../sequencer').initial,
 	instrument: require('../instrument').initial
 };

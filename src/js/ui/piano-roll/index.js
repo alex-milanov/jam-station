@@ -5,7 +5,18 @@ const {
 	ul, li, table, thead, tbody, tr, td, th, h, canvas, img
 } = require('iblokz-snabbdom-helpers');
 
+const {cursor} = require('iblokz-gfx');
+const {iconCodeToDataURL} = cursor;
+
 const actionMaps = [];
+
+const editTools = [
+	{name: 'pointer', icon: 'mouse-pointer', cursor: '\uf245'},
+	{name: 'pencil', icon: 'pencil', cursor: '\uf040'},
+	{name: 'eraser', icon: 'eraser', cursor: '\uf12d'}
+]
+
+console.log(editTools);
 
 module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 	div('.header', [
@@ -25,8 +36,14 @@ module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 			}}),
 			button('.right.fa.fa-caret-right', {on: {click: () => actions.pianoRoll.next()}})
 		]),
+		div('.edit-tools', editTools.map(tool =>
+			button(`.fa.fa-${tool.icon}`, {
+				class: {selected: state.pianoRoll.tool === tool.name},
+				on: {click: () => actions.set(['pianoRoll', 'tool'], tool.name)}
+			}),
+		)),
 		div('.right', [
-			button('.fa.fa-eraser', {on: {
+			button('.fa.fa-close', {on: {
 				click: () => actions.pianoRoll.clear()
 			}})
 		])
@@ -36,13 +53,33 @@ module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 		canvas('.events'),
 		canvas('.selection'),
 		canvas('.interaction', {
+			style: {
+				cursor: `url(${
+					iconCodeToDataURL(
+						editTools.find(t => t.name === state.pianoRoll.tool).cursor
+					)
+				}), auto`
+			},
 			on: {
+				pointerdown: ev => (
+					console.log('pointerdown', ev),
+					actions.pianoRoll.pointerDown({x: ev.offsetX, y: ev.offsetY})
+				),
+				pointermove: ev => (
+					// console.log('pointermove', ev),
+					actions.pianoRoll.pointerMove({x: ev.offsetX, y: ev.offsetY})
+				),
+				pointerup: ev => (
+					console.log('pointerup', ev),
+					actions.pianoRoll.pointerUp({x: ev.offsetX, y: ev.offsetY})
+				),
 				mousewheel: ev => (
 					newPos => newPos <= 108 && (newPos - parseInt(ev.target.offsetHeight / 12, 10)) > 21
 						? actions.set(['pianoRoll', 'position'],
 							[state.pianoRoll.position && state.pianoRoll.position[0] || 0, newPos])
 						: true
-				)((state.pianoRoll.position && state.pianoRoll.position[1] || 60) + Math.ceil(Math.abs(ev.deltaY / 60)) * (ev.deltaY > 0 ? -1 : 1))
+				)((state.pianoRoll.position && state.pianoRoll.position[1] || 60)
+					+ Math.ceil(Math.abs(ev.deltaY / 60)) * (ev.deltaY > 0 ? -1 : 1))
 					// console.log(parseInt(ev.target.offsetHeight / 12, 10), Math.ceil(Math.abs(ev.deltaY / 40)) * (ev.deltaY > 0 ? -1 : 1))
 			}
 		})

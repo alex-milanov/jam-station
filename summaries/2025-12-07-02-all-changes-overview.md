@@ -196,3 +196,4 @@ This document summarizes all pending changes in jam-station, including:
 - `summaries/2025-12-07-01-audio-library-reintegration.md` - Detailed audio library summary
 - `docs/audio-library-integration.md` - Usage documentation
 
+

@@ -1,23 +1,36 @@
-'use strict';
-
-const {Subject, from, EMPTY} = require('rxjs');
-const {flatMap, map, startWith, merge} = require('rxjs/operators');
-const {fromEventPattern} = require('rxjs');
+import {Subject, from, EMPTY} from 'rxjs';
+import {flatMap, map, startWith, merge} from 'rxjs/operators';
+import {fromEventPattern} from 'rxjs';
 
 const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-const numberToNote = number => ({
+/**
+ * Convert a MIDI note number to a note object
+ * @param {number} number - The MIDI note number
+ * @returns {Object} The note object
+ */
+export const numberToNote = number => ({
 	key: keys[number % 12],
 	octave: parseInt((number - number % 12) / 12, 10) - 1,
 	number
 });
 
-const noteToNumber = note => (
+/**
+ * Convert a note object to a MIDI note number
+ * @param {Object} note - The note object
+ * @returns {number} The MIDI note number
+ */
+export const noteToNumber = note => (
 	keys.indexOf(note.replace(/[0-9]+/, '')) +
 	(parseInt(note.replace(/[A-Z#b]+/, ''), 10) + 1) * 12
 );
 
-const parseMidiMsg = event => {
+/**
+ * Parse a MIDI message
+ * @param {Object} event - The MIDI message event
+ * @returns {Object} The parsed MIDI message
+ */
+export const parseMidiMsg = event => {
 	// Mask off the lower nibble (MIDI channel, which we don't care about)
 
 	const status = event.data[0] & 0xf0;
@@ -113,7 +126,11 @@ const parseAccess = access => {
 	return {access, inputs, outputs};
 };
 
-const init = () => {
+/**
+ * Initialize the MIDI system
+ * @returns {Object} The MIDI system object
+ */
+export const init = () => {
 	const devices$ = new Subject();
 	
 	if (!navigator.requestMIDIAccess) {
@@ -163,9 +180,4 @@ const init = () => {
 	};
 };
 
-module.exports = {
-	init,
-	numberToNote,
-	noteToNumber,
-	parseMidiMsg
-};
+export default{init, numberToNote, noteToNumber, parseMidiMsg};

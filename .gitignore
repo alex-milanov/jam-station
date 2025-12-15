@@ -8,4 +8,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 .playwright/
+playwright-output/
 test-*.png
+COMMIT_MESSAGE.txt

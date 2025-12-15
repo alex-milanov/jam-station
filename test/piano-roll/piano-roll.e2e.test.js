@@ -3,13 +3,17 @@
  * Tests selection, dragging, and multi-selection scenarios
  */
 
-const {test, expect} = require('@playwright/test');
+import {test, expect} from '@playwright/test';
+import {noteToNumber, numberToNote} from '../../src/js/util/midi.js';
 
 // Detect if we're running in headed mode
 const isHeaded = process.env.HEADED === 'true';
 
 // Screenshot counter for sequential naming
 let screenshotCounter = 0;
+
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Takes a screenshot with a descriptive name (only in headed mode)
@@ -18,8 +22,15 @@ let screenshotCounter = 0;
  */
 async function takeScreenshot(page, name) {
 	if (!isHeaded) return; // Skip screenshots in headless mode
+	
+	// Ensure playwright-output directory exists
+	const outputDir = 'playwright-output';
+	if (!fs.existsSync(outputDir)) {
+		fs.mkdirSync(outputDir, {recursive: true});
+	}
+	
 	screenshotCounter++;
-	const filename = `test-${screenshotCounter.toString().padStart(3, '0')}-${name.replace(/\s+/g, '-').toLowerCase()}.png`;
+	const filename = path.join(outputDir, `test-${screenshotCounter.toString().padStart(3, '0')}-${name.replace(/\s+/g, '-').toLowerCase()}.png`);
 	await page.screenshot({path: filename, fullPage: false});
 	console.log(`Screenshot saved: ${filename}`);
 }
@@ -34,21 +45,6 @@ async function waitForReadability(page, headedMs = 1000, headlessMs = 100) {
 	await page.waitForTimeout(isHeaded ? headedMs : headlessMs);
 }
 
-// Helper functions for note conversion (matching app's util/midi.js)
-const noteToNumber = (note) => {
-	const match = note.match(/^([A-G]#?)(\d+)$/);
-	if (!match) return 60; // Default to C4
-	const [, key, octave] = match;
-	const noteMap = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11};
-	return parseInt(octave, 10) * 12 + noteMap[key] + 12;
-};
-
-const numberToNote = (number) => {
-	const noteMap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-	const octave = Math.floor((number - 12) / 12);
-	const note = noteMap[(number - 12) % 12];
-	return {key: note, octave};
-};
 
 // Helper to create test events
 const createEvent = (note, start, duration = 1, velocity = 0.8) => ({
@@ -427,6 +423,185 @@ async function dragByAnchor(page, canvasElement, anchorEventUuid, dragX, dragY, 
 	// Wait after drag completes (conditional based on mode)
 	const actualWaitAfter = isHeaded ? waitAfter : Math.min(waitAfter, 200); // Cap at 200ms in headless
 	await page.waitForTimeout(actualWaitAfter);
+}
+
+/**
+ * Switches the piano-roll tool
+ * @param {Page} page - Playwright page object
+ * @param {string} toolName - Tool name: 'pointer', 'pencil', or 'eraser'
+ */
+async function switchTool(page, toolName) {
+	const toolIcons = {
+		pointer: 'mouse-pointer',
+		pencil: 'pencil',
+		eraser: 'eraser'
+	};
+	const icon = toolIcons[toolName];
+	if (!icon) {
+		throw new Error(`Unknown tool: ${toolName}`);
+	}
+	
+	// Find and click the tool button
+	const toolButton = page.locator(`.edit-tools button.fa-${icon}`);
+	await toolButton.click();
+	
+	// Wait a bit for state to update
+	await page.waitForTimeout(200);
+	
+	// Verify tool was switched
+	const currentTool = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		return state$?.value?.pianoRoll?.tool;
+	});
+	
+	if (currentTool !== toolName) {
+		throw new Error(`Tool switch failed: expected ${toolName}, got ${currentTool}`);
+	}
+	
+	console.log(`Switched to ${toolName} tool`);
+}
+
+/**
+ * Creates an event at a specific canvas position
+ * @param {Page} page - Playwright page object
+ * @param {Locator} canvasElement - The interaction canvas element
+ * @param {number} canvasX - X coordinate in canvas space
+ * @param {number} canvasY - Y coordinate in canvas space
+ * @param {number} dragToX - Optional: X coordinate to drag to (for custom duration)
+ * @param {number} dragToY - Optional: Y coordinate to drag to (for custom duration)
+ * @returns {Promise<string>} UUID of the created event
+ */
+async function createEventAtPosition(page, canvasElement, canvasX, canvasY, dragToX = null, dragToY = null) {
+	// Switch to pencil tool
+	await switchTool(page, 'pencil');
+	
+	// Get canvas bounding box
+	const canvasBox = await canvasElement.boundingBox();
+	if (!canvasBox) {
+		throw new Error('Canvas not found or not visible');
+	}
+	
+	// Convert canvas coordinates to screen coordinates
+	const screenX = canvasBox.x + canvasX;
+	const screenY = canvasBox.y + canvasY;
+	
+	// Get initial event count
+	const initialEventCount = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		return state$?.value?.pianoRoll?.events?.length || 0;
+	});
+	
+	if (dragToX !== null && dragToY !== null) {
+		// Drag to create event with custom duration
+		const screenDragToX = canvasBox.x + dragToX;
+		const screenDragToY = canvasBox.y + dragToY;
+		await dragCanvasWithWait(page, canvasElement, screenX, screenY, screenDragToX, screenDragToY, 10, 1000);
+	} else {
+		// Click to create event with default duration
+		await clickCanvas(page, canvasElement, screenX, screenY);
+		await waitForReadability(page, 1000, 200);
+	}
+	
+	// Wait for event to be created
+	await page.waitForTimeout(500);
+	
+	// Get new event count and find the new event
+	const newEventCount = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		return state$?.value?.pianoRoll?.events?.length || 0;
+	});
+	
+	if (newEventCount !== initialEventCount + 1) {
+		throw new Error(`Event creation failed: expected ${initialEventCount + 1} events, got ${newEventCount}`);
+	}
+	
+	// Get the newly created event (should be the last one)
+	const createdEvent = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		const events = state$?.value?.pianoRoll?.events || [];
+		return events[events.length - 1];
+	});
+	
+	if (!createdEvent || !createdEvent.uuid) {
+		throw new Error('Created event not found');
+	}
+	
+	console.log(`Created event: ${createdEvent.uuid} at (${canvasX}, ${canvasY})`);
+	return createdEvent.uuid;
+}
+
+/**
+ * Deletes an event at a specific canvas position
+ * @param {Page} page - Playwright page object
+ * @param {Locator} canvasElement - The interaction canvas element
+ * @param {number} canvasX - X coordinate in canvas space
+ * @param {number} canvasY - Y coordinate in canvas space
+ * @returns {Promise<string|null>} UUID of the deleted event, or null if no event was found
+ */
+async function deleteEventAtPosition(page, canvasElement, canvasX, canvasY) {
+	// Switch to eraser tool
+	await switchTool(page, 'eraser');
+	
+	// Get canvas bounding box
+	const canvasBox = await canvasElement.boundingBox();
+	if (!canvasBox) {
+		throw new Error('Canvas not found or not visible');
+	}
+	
+	// Convert canvas coordinates to screen coordinates
+	const screenX = canvasBox.x + canvasX;
+	const screenY = canvasBox.y + canvasY;
+	
+	// Get initial event count and find event at position
+	const eventInfo = await page.evaluate((x, y) => {
+		const state$ = window.__jamStationState$;
+		const pianoRoll = state$?.value?.pianoRoll;
+		const visible = pianoRoll?.visible || [];
+		const eventAtPos = visible.find(v => {
+			const rect = v.rect;
+			return x >= rect.x && x <= rect.x + rect.width &&
+				y >= rect.y && y <= rect.y + rect.height;
+		});
+		return {
+			eventCount: pianoRoll?.events?.length || 0,
+			eventUuid: eventAtPos?.uuid || null
+		};
+	}, canvasX, canvasY);
+	
+	if (!eventInfo.eventUuid) {
+		console.log(`No event found at (${canvasX}, ${canvasY})`);
+		return null;
+	}
+	
+	// Click to delete
+	await clickCanvas(page, canvasElement, screenX, screenY);
+	await waitForReadability(page, 1000, 200);
+	
+	// Wait for event to be deleted
+	await page.waitForTimeout(500);
+	
+	// Verify event was deleted
+	const newEventCount = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		return state$?.value?.pianoRoll?.events?.length || 0;
+	});
+	
+	if (newEventCount !== eventInfo.eventCount - 1) {
+		throw new Error(`Event deletion failed: expected ${eventInfo.eventCount - 1} events, got ${newEventCount}`);
+	}
+	
+	// Verify event is removed from selection if it was selected
+	const selection = await page.evaluate(() => {
+		const state$ = window.__jamStationState$;
+		return state$?.value?.pianoRoll?.selection || [];
+	});
+	
+	if (selection.includes(eventInfo.eventUuid)) {
+		throw new Error(`Event ${eventInfo.eventUuid} still in selection after deletion`);
+	}
+	
+	console.log(`Deleted event: ${eventInfo.eventUuid}`);
+	return eventInfo.eventUuid;
 }
 
 /**
@@ -1935,5 +2110,361 @@ test.describe('Piano Roll Interaction', () => {
 				expect(moved.start).toBe(initial.start + 3);
 			}
 		});
+	});
+
+	// ========== Creating Events Tests (Pencil Tool) ==========
+
+	test('should create single event with click in pencil mode', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Create single event with click'; });
+		await waitForReadability(page, 1000, 100);
+		
+		const canvasElement = page.locator('.piano-roll .interaction');
+		await takeScreenshot(page, '01-before-create-click');
+		
+		// Get initial event count
+		const initialEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		// Create event at column 3, note C3 (approximately)
+		// Column 3: x = dim[0] + 3 * dim[0] = 30 + 3 * 30 = 120
+		// Note C3: need to calculate y based on position
+		const dim = [30, 12];
+		const canvasX = dim[0] + 3 * dim[0]; // Column 3
+		const canvasY = 5 * dim[1]; // Approximately 5 rows from top (adjust based on visible notes)
+		
+		const createdUuid = await createEventAtPosition(page, canvasElement, canvasX, canvasY);
+		await takeScreenshot(page, '02-after-create-click');
+		
+		// Verify event was created
+		const createdEvent = await page.evaluate((uuid) => {
+			const state$ = window.__jamStationState$;
+			const events = state$?.value?.pianoRoll?.events || [];
+			return events.find(e => e.uuid === uuid);
+		}, createdUuid);
+		
+		expect(createdEvent).toBeDefined();
+		expect(createdEvent.duration).toBe(1); // Default duration
+		expect(createdEvent.velocity).toBe(0.8);
+		expect(Number.isInteger(createdEvent.start)).toBe(true); // Should be snapped to grid
+		
+		// Verify event is selected
+		const selection = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.selection || [];
+		});
+		expect(selection).toContain(createdUuid);
+	});
+
+	test('should create event with drag in pencil mode', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Create event with drag'; });
+		await waitForReadability(page, 1000, 100);
+		
+		const canvasElement = page.locator('.piano-roll .interaction');
+		await takeScreenshot(page, '01-before-create-drag');
+		
+		// Get initial event count
+		const initialEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		// Create event by dragging from column 3 to column 6 (3 grid steps duration)
+		const dim = [30, 12];
+		const startX = dim[0] + 3 * dim[0]; // Column 3
+		const startY = 5 * dim[1];
+		const endX = dim[0] + 6 * dim[0]; // Column 6
+		const endY = 5 * dim[1];
+		
+		const createdUuid = await createEventAtPosition(page, canvasElement, startX, startY, endX, endY);
+		await takeScreenshot(page, '02-after-create-drag');
+		
+		// Verify event was created with correct duration
+		const createdEvent = await page.evaluate((uuid) => {
+			const state$ = window.__jamStationState$;
+			const events = state$?.value?.pianoRoll?.events || [];
+			return events.find(e => e.uuid === uuid);
+		}, createdUuid);
+		
+		expect(createdEvent).toBeDefined();
+		expect(createdEvent.duration).toBeGreaterThanOrEqual(3); // Should be at least 3 grid steps
+		expect(Number.isInteger(createdEvent.start)).toBe(true); // Should be snapped to grid
+	});
+
+	test('should create multiple events in sequence', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Create multiple events'; });
+		await waitForReadability(page, 1000, 100);
+		
+		const canvasElement = page.locator('.piano-roll .interaction');
+		await takeScreenshot(page, '01-before-create-multiple');
+		
+		const dim = [30, 12];
+		const events = [];
+		
+		// Create 3 events at different positions
+		events.push(await createEventAtPosition(page, canvasElement, dim[0] + 2 * dim[0], 3 * dim[1]));
+		await waitForReadability(page, 500, 100);
+		events.push(await createEventAtPosition(page, canvasElement, dim[0] + 4 * dim[0], 4 * dim[1]));
+		await waitForReadability(page, 500, 100);
+		events.push(await createEventAtPosition(page, canvasElement, dim[0] + 6 * dim[0], 5 * dim[1]));
+		
+		await takeScreenshot(page, '02-after-create-multiple');
+		
+		// Verify all events exist
+		const allEvents = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events || [];
+		});
+		
+		events.forEach(uuid => {
+			const event = allEvents.find(e => e.uuid === uuid);
+			expect(event).toBeDefined();
+		});
+		
+		// Verify events don't overlap
+		const eventData = await page.evaluate((uuids) => {
+			const state$ = window.__jamStationState$;
+			const events = state$?.value?.pianoRoll?.events || [];
+			return uuids.map(uuid => {
+				const event = events.find(e => e.uuid === uuid);
+				return event ? {uuid: event.uuid, start: event.start, note: event.note} : null;
+			}).filter(Boolean);
+		}, events);
+		
+		// Check that events are at different positions
+		const starts = eventData.map(e => e.start);
+		const uniqueStarts = [...new Set(starts)];
+		expect(uniqueStarts.length).toBe(events.length); // All should have unique start positions
+	});
+
+	test('should not create duplicate event when clicking on existing event in pencil mode', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: No duplicate on existing event'; });
+		await waitForReadability(page, 1000, 100);
+		
+		// Setup: Create an initial event
+		const canvasElement = page.locator('.piano-roll .interaction');
+		const dim = [30, 12];
+		const initialUuid = await createEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		await takeScreenshot(page, '01-after-initial-create');
+		
+		// Get initial event count
+		const initialEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		// Try to create another event at the same position
+		await switchTool(page, 'pencil');
+		const canvasBox = await canvasElement.boundingBox();
+		const screenX = canvasBox.x + dim[0] + 3 * dim[0];
+		const screenY = canvasBox.y + 5 * dim[1];
+		await clickCanvas(page, canvasElement, screenX, screenY);
+		await waitForReadability(page, 1000, 200);
+		
+		await takeScreenshot(page, '02-after-click-on-existing');
+		
+		// Verify event count didn't change
+		const finalEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		expect(finalEventCount).toBe(initialEventCount);
+	});
+
+	// ========== Deleting Events Tests (Eraser Tool) ==========
+
+	test('should delete single event in eraser mode', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Delete single event'; });
+		await waitForReadability(page, 1000, 100);
+		
+		// Setup: Create an event first
+		const canvasElement = page.locator('.piano-roll .interaction');
+		const dim = [30, 12];
+		const createdUuid = await createEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		await takeScreenshot(page, '01-after-create');
+		
+		// Get initial event count
+		const initialEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		// Delete the event
+		const deletedUuid = await deleteEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		await takeScreenshot(page, '02-after-delete');
+		
+		expect(deletedUuid).toBe(createdUuid);
+		
+		// Verify event was deleted
+		const finalEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		expect(finalEventCount).toBe(initialEventCount - 1);
+		
+		// Verify event no longer exists
+		const deletedEvent = await page.evaluate((uuid) => {
+			const state$ = window.__jamStationState$;
+			const events = state$?.value?.pianoRoll?.events || [];
+			return events.find(e => e.uuid === uuid);
+		}, createdUuid);
+		
+		expect(deletedEvent).toBeUndefined();
+	});
+
+	test('should delete selected event and remove from selection', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Delete selected event'; });
+		await waitForReadability(page, 1000, 100);
+		
+		// Setup: Create and select an event
+		const canvasElement = page.locator('.piano-roll .interaction');
+		const dim = [30, 12];
+		const createdUuid = await createEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		
+		// Verify it's selected
+		const selectionBefore = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.selection || [];
+		});
+		expect(selectionBefore).toContain(createdUuid);
+		await takeScreenshot(page, '01-after-create-and-select');
+		
+		// Delete the selected event
+		const deletedUuid = await deleteEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		await takeScreenshot(page, '02-after-delete-selected');
+		
+		expect(deletedUuid).toBe(createdUuid);
+		
+		// Verify it's removed from selection
+		const selectionAfter = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.selection || [];
+		});
+		
+		expect(selectionAfter).not.toContain(createdUuid);
+		expect(selectionAfter.length).toBe(0);
+	});
+
+	test('should delete event from multi-selection', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Delete from multi-selection'; });
+		await waitForReadability(page, 1000, 100);
+		
+		// Setup: Create 3 events and select all
+		const canvasElement = page.locator('.piano-roll .interaction');
+		const dim = [30, 12];
+		const uuid1 = await createEventAtPosition(page, canvasElement, dim[0] + 2 * dim[0], 3 * dim[1]);
+		await waitForReadability(page, 300, 100);
+		const uuid2 = await createEventAtPosition(page, canvasElement, dim[0] + 4 * dim[0], 4 * dim[1]);
+		await waitForReadability(page, 300, 100);
+		const uuid3 = await createEventAtPosition(page, canvasElement, dim[0] + 6 * dim[0], 5 * dim[1]);
+		
+		// Select all 3 events
+		await switchTool(page, 'pointer');
+		await execSelection(page, canvasElement, [uuid1, uuid2, uuid3]);
+		await takeScreenshot(page, '01-after-select-all');
+		
+		// Verify all are selected
+		const selectionBefore = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.selection || [];
+		});
+		expect(selectionBefore.length).toBe(3);
+		
+		// Delete one of the selected events
+		const deletedUuid = await deleteEventAtPosition(page, canvasElement, dim[0] + 4 * dim[0], 4 * dim[1]);
+		await takeScreenshot(page, '02-after-delete-one');
+		
+		expect(deletedUuid).toBe(uuid2);
+		
+		// Verify it's removed from selection
+		const selectionAfter = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.selection || [];
+		});
+		
+		expect(selectionAfter).not.toContain(uuid2);
+		expect(selectionAfter.length).toBe(2);
+		expect(selectionAfter).toContain(uuid1);
+		expect(selectionAfter).toContain(uuid3);
+	});
+
+	test('should do nothing when clicking empty space in eraser mode', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Eraser on empty space'; });
+		await waitForReadability(page, 1000, 100);
+		
+		const canvasElement = page.locator('.piano-roll .interaction');
+		await takeScreenshot(page, '01-before-erase-empty');
+		
+		// Get initial event count
+		const initialEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		// Try to delete at empty space
+		const dim = [30, 12];
+		const deletedUuid = await deleteEventAtPosition(page, canvasElement, dim[0] + 10 * dim[0], 10 * dim[1]);
+		await takeScreenshot(page, '02-after-erase-empty');
+		
+		expect(deletedUuid).toBeNull();
+		
+		// Verify event count didn't change
+		const finalEventCount = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.events?.length || 0;
+		});
+		
+		expect(finalEventCount).toBe(initialEventCount);
+	});
+
+	test('should switch tools correctly and maintain behavior', async ({page}) => {
+		await page.evaluate(() => { document.title = 'Test: Tool switching'; });
+		await waitForReadability(page, 1000, 100);
+		
+		const canvasElement = page.locator('.piano-roll .interaction');
+		const dim = [30, 12];
+		
+		// Test pointer tool: should be able to select
+		await switchTool(page, 'pointer');
+		let currentTool = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.tool;
+		});
+		expect(currentTool).toBe('pointer');
+		await takeScreenshot(page, '01-pointer-tool');
+		
+		// Test pencil tool: should be able to create
+		await switchTool(page, 'pencil');
+		currentTool = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.tool;
+		});
+		expect(currentTool).toBe('pencil');
+		const createdUuid = await createEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		expect(createdUuid).toBeDefined();
+		await takeScreenshot(page, '02-pencil-tool-create');
+		
+		// Test eraser tool: should be able to delete
+		await switchTool(page, 'eraser');
+		currentTool = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.tool;
+		});
+		expect(currentTool).toBe('eraser');
+		const deletedUuid = await deleteEventAtPosition(page, canvasElement, dim[0] + 3 * dim[0], 5 * dim[1]);
+		expect(deletedUuid).toBe(createdUuid);
+		await takeScreenshot(page, '03-eraser-tool-delete');
+		
+		// Switch back to pointer
+		await switchTool(page, 'pointer');
+		currentTool = await page.evaluate(() => {
+			const state$ = window.__jamStationState$;
+			return state$?.value?.pianoRoll?.tool;
+		});
+		expect(currentTool).toBe('pointer');
+		await takeScreenshot(page, '04-back-to-pointer');
 	});
 });

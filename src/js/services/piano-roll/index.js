@@ -15,7 +15,7 @@ import {patch, patchAt} from '~/util/data/object';
 import {measureToBeatLength, bpmToTime} from '~/util/math';
 
 // piano-roll utils
-import {drawGrid, drawEvents, snapToGrid, prepCanvas} from './util/grid';
+import {drawGrid, drawEvents, snapToGrid, prepCanvas, pixelToGrid} from './util/grid';
 import {computeSelection, computeSelectionRect, findEventAtPosition} from './util/selection';
 
 // Actions
@@ -27,13 +27,14 @@ const initial = {
 	tool: 'pointer', // pointer, pen, eraser
 	selectionMode: 'containsRect', // 'containsRect' or 'intersects'
 	interaction: {
-		type: 'idle', // idle, selecting, moving, resizing
+		type: 'idle', // idle, selecting, moving, resizing, creating, deleting
 		start: null, // {x, y}
 		last: null, // {x, y}
 		current: null, // {x, y}
 		anchorEventUuid: null, // UUID of the event being dragged (for multi-event dragging)
 		anchorEventStart: null, // Original start position of anchor event when drag started
-		originalEventPositions: null // Map of {uuid: {start, note}} for all selected events when drag started
+		originalEventPositions: null, // Map of {uuid: {start, note}} for all selected events when drag started
+		creatingEvent: null // Event being created (for pencil tool) {uuid, note, start, duration, velocity}
 	},
 	selection: [],
 	visible: [],
@@ -118,9 +119,66 @@ const record = (pressed, tick, currentTime) => state =>
  * @returns {Object} The new state
  */
 const pointerDown = ({x, y}) => state => {
-	const {interaction, tool, visible, selection} = state.pianoRoll;
+	const {interaction, tool, visible, selection, dim, position} = state.pianoRoll;
 	
-	// Check if clicking on a selected event (for moving)
+	// Eraser tool: delete event at click position
+	if (tool === 'eraser') {
+		const clickedEvent = findEventAtPosition(visible, {x, y});
+		if (clickedEvent) {
+			// Remove event from events array
+			const updatedEvents = state.pianoRoll.events.filter(e => e.uuid !== clickedEvent.uuid);
+			// Remove from selection if it was selected
+			const updatedSelection = selection.filter(uuid => uuid !== clickedEvent.uuid);
+			return patch(state, 'pianoRoll', {
+				events: updatedEvents,
+				selection: updatedSelection,
+				interaction: {
+					...initial.interaction
+				}
+			});
+		}
+		// If no event found, do nothing
+		return state;
+	}
+	
+	// Pencil tool: create event at click position (if empty space)
+	if (tool === 'pen' || tool === 'pencil') {
+		// Check if clicking on existing event - if so, don't create
+		const clickedEvent = findEventAtPosition(visible, {x, y});
+		if (clickedEvent) {
+			// Clicking on existing event in pencil mode - do nothing (or could select it)
+			return state;
+		}
+		
+		// Convert pixel coordinates to grid position
+		const bar = state.studio.tick.tracks[state.session.selection.piano[0]]
+			&& state.studio.tick.tracks[state.session.selection.piano[0]].bar || 0;
+		const beatLength = state.studio.beatLength;
+		const gridPos = pixelToGrid(x, y, dim, position, bar, beatLength);
+		
+		// Create initial event with default duration (1 grid step)
+		const newEvent = {
+			uuid: uuid(),
+			note: gridPos.note,
+			start: gridPos.time,
+			duration: 1, // Default duration: 1 grid step
+			velocity: 0.8,
+			startTime: 0 // Not needed for manual creation
+		};
+		
+		return patch(state, 'pianoRoll', {
+			interaction: {
+				...interaction,
+				start: {x, y},
+				current: {x, y},
+				last: {x, y},
+				type: 'creating',
+				creatingEvent: newEvent
+			}
+		});
+	}
+	
+	// Pointer tool: check if clicking on a selected event (for moving)
 	if (tool === 'pointer' && selection.length > 0) {
 		const clickedEvent = findEventAtPosition(visible, {x, y});
 		if (clickedEvent && selection.indexOf(clickedEvent.uuid) > -1) {
@@ -181,7 +239,39 @@ const pointerMove = ({x, y}) => state => {
 		return state;
 	}
 
-	const {interaction, dim, selection, events} = state.pianoRoll;
+	const {interaction, dim, selection, events, position} = state.pianoRoll;
+
+	if (interaction.type === 'creating') {
+		// Calculate duration based on drag distance
+		if (!interaction.creatingEvent || !interaction.start) {
+			return state;
+		}
+		
+		// Convert current position to grid
+		const bar = state.studio.tick.tracks[state.session.selection.piano[0]]
+			&& state.studio.tick.tracks[state.session.selection.piano[0]].bar || 0;
+		const beatLength = state.studio.beatLength;
+		const startGridPos = pixelToGrid(interaction.start.x, interaction.start.y, dim, position, bar, beatLength);
+		const currentGridPos = pixelToGrid(x, y, dim, position, bar, beatLength);
+		
+		// Calculate duration in grid steps (minimum 1)
+		const duration = Math.max(1, currentGridPos.gridX - startGridPos.gridX + 1);
+		
+		// Update the creating event with new duration
+		const updatedCreatingEvent = {
+			...interaction.creatingEvent,
+			duration: duration
+		};
+		
+		return patch(state, 'pianoRoll', {
+			interaction: {
+				...interaction,
+				current: {x, y},
+				last: {x, y},
+				creatingEvent: updatedCreatingEvent
+			}
+		});
+	}
 
 	if (interaction.type === 'moving') {
 		// Calculate total movement from start position (not incremental)
@@ -352,6 +442,31 @@ const pointerUp = ({x, y}) => state => {
 				selection
 			});
 		}
+	}
+
+	if (interaction.type === 'creating') {
+		// Finalize creation - add event to events array
+		if (!interaction.creatingEvent) {
+			return obj.patch(state, 'pianoRoll', {
+				interaction: {
+					...initial.interaction
+				}
+			});
+		}
+		
+		// Add the created event to the events array
+		const updatedEvents = [...state.pianoRoll.events, interaction.creatingEvent];
+		
+		// Optionally select the newly created event
+		const newSelection = [interaction.creatingEvent.uuid];
+		
+		return obj.patch(state, 'pianoRoll', {
+			events: updatedEvents,
+			selection: newSelection,
+			interaction: {
+				...initial.interaction
+			}
+		});
 	}
 
 	if (interaction.type === 'moving') {
@@ -537,16 +652,44 @@ export const hook = ({state$, actions}) => {
 							}})
 						);
 
-					const selectionRect = computeSelectionRect(interaction.start, interaction.current);
-					const selection = computeSelection(visible, selectionRect, selectionMode);
-					console.log('[Interaction] Live selection during drag:', selection);
-					// Don't set selection here - it will be set in pointerUp
-					// This is just for visual feedback during drag
+				const selectionRect = computeSelectionRect(interaction.start, interaction.current);
+				const selection = computeSelection(visible, selectionRect, selectionMode);
+				console.log('[Interaction] Live selection during drag:', selection);
+				// Don't set selection here - it will be set in pointerUp
+				// This is just for visual feedback during drag
 
-					canvas.rect(ctx, selectionRect, null, '#fff', [10, 10]);
-				}
+				canvas.rect(ctx, selectionRect, null, '#fff', [10, 10]);
+			}
 
-			})
+			if (interaction.type === 'creating' && interaction.creatingEvent && interaction.start) {
+				// Draw preview of the event being created
+				const eventsCtx = el.events.getContext('2d');
+				const dim = [30, 12];
+				const bar = {
+					start: state.studio.beatLength *
+						((state.studio.tick.tracks[state.session.selection.piano[0]]
+						&& state.studio.tick.tracks[state.session.selection.piano[0]].bar) || 0),
+					end: state.studio.beatLength *
+						(state.studio.tick.tracks[state.session.selection.piano[0]]
+						&& (state.studio.tick.tracks[state.session.selection.piano[0]].bar + 1) || 1)
+				};
+				const pos = state.pianoRoll.position;
+				const noteNumber = noteToNumber(interaction.creatingEvent.note);
+				const gridY = pos[1] - noteNumber;
+				const gridX = interaction.creatingEvent.start - bar.start;
+				
+				const previewRect = {
+					x: (gridX + 1) * dim[0],
+					y: gridY * dim[1],
+					width: interaction.creatingEvent.duration * dim[0],
+					height: dim[1]
+				};
+				
+				// Draw preview on interaction canvas (semi-transparent)
+				canvas.rect(ctx, previewRect, 'rgba(200, 200, 255, 0.5)', 'rgba(100, 100, 200, 0.8)', [5, 5]);
+			}
+
+		})
 		);
 
 	// record action

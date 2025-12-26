@@ -65,6 +65,9 @@ importers:
       vex-js:
         specifier: ^4.1.0
         version: 4.1.0
+      wavesurfer.js:
+        specifier: ^7.8.3
+        version: 7.12.1
       ws:
         specifier: ^6.0.0
         version: 6.2.3
@@ -2173,6 +2176,9 @@ packages:
   void-elements@3.1.0:
     resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
     engines: {node: '>=0.10.0'}
+
+  wavesurfer.js@7.12.1:
+    resolution: {integrity: sha512-NswPjVHxk0Q1F/VMRemCPUzSojjuHHisQrBqQiRXg7MVbe3f5vQ6r0rTTXA/a/neC/4hnOEC4YpXca4LpH0SUg==}
 
   weak-lru-cache@1.2.2:
     resolution: {integrity: sha512-DEAoo25RfSYMuTGc9vPJzZcZullwIqRDSI9LOy+fkCJPi6hykCnfKaXTuPBDuXAUcqHXyOgFtHNp/kB2FjYHbw==}
@@ -4622,6 +4628,8 @@ snapshots:
       vex-dialog: 1.1.0
 
   void-elements@3.1.0: {}
+
+  wavesurfer.js@7.12.1: {}
 
   weak-lru-cache@1.2.2: {}
 

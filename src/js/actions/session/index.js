@@ -2,6 +2,16 @@
 
 const {obj} = require('iblokz-data');
 
+const synthInstrument = {
+	...require('../instrument').initial,
+	source: require('../instrument').synthSource
+};
+
+const samplerInstrument = {
+	...require('../instrument').initial,
+	source: require('../instrument').samplerSource
+};
+
 const defValues = {
 	pianoRoll: require('../../services/piano-roll').actions.initial,
 	sequencer: require('../sequencer').initial,
@@ -38,7 +48,7 @@ const initial = {
 				device: -1,
 				channel: 10
 			},
-			inst: {},
+			inst: samplerInstrument,
 			measures: [
 				{
 					name: 'Beat',
@@ -65,7 +75,7 @@ const initial = {
 				device: -1,
 				channel: 1
 			},
-			inst: defValues.instrument,
+			inst: synthInstrument,
 			type: 'piano',
 			measures: [
 				{
@@ -122,7 +132,7 @@ const initial = {
 		{
 			name: 'Comp 1',
 			type: 'piano',
-			inst: defValues.instrument,
+			inst: synthInstrument,
 			input: {
 				device: -1,
 				channel: 1
@@ -136,7 +146,7 @@ const initial = {
 		{
 			name: 'Lead 1',
 			type: 'piano',
-			inst: defValues.instrument,
+			inst: synthInstrument,
 			input: {
 				device: -1,
 				channel: 1

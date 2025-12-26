@@ -6,31 +6,34 @@ const {
 	select, option
 } = require('iblokz-snabbdom-helpers');
 
-module.exports = ({name, state, actions}) => fieldset([
+module.exports = ({effect, index, updateProp, toggleExpanded}) => fieldset({key: effect.id, attrs: {
+	'data-id': effect.id
+}}, [
 	legend([
 		span('.on', {
 			on: {
-				click: () => actions.toggle(['instrument', 'vcf', 'expanded'])
+				click: () => toggleExpanded()
 			}
 		}, [
-			i(`.fa.${state.instrument.vcf.expanded ? 'fa-minus-square-o' : 'fa-plus-square-o'}`),
+			i(`.fa.${effect.expanded ? 'fa-minus-square-o' : 'fa-plus-square-o'}`),
 			' ',
-			name.toUpperCase()
+			effect.type.toUpperCase()
 		]),
+		// button('.drop-down.fa.fa-ellipsis-v'),
 		div('.on-switch.fa', {
-			on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+			on: {click: ev => updateProp('on', !effect.on)},
 			class: {
-				'fa-circle-thin': !state.instrument[name].on,
-				'on': state.instrument[name].on,
-				'fa-circle': state.instrument[name].on
+				'fa-circle-thin': !effect.on,
+				'on': effect.on,
+				'fa-circle': effect.on
 			}
 		})
 	]),
-	state.instrument.vcf.expanded ? div([
+	effect.expanded ? div([
 		div([
 			label(`Type`),
 			select({
-				on: {change: ev => actions.instrument.updateProp(name, 'type', ev.target.value)}
+				on: {change: ev => updateProp('type', ev.target.value)}
 			}, [
 				'lowpass', 'highpass'
 				// 'bandpass', 'lowshelf', 'highshelf', 'peaking', 'notch', 'allpass'
@@ -40,33 +43,26 @@ module.exports = ({name, state, actions}) => fieldset([
 						value: type
 					},
 					props: {
-						selected: state.instrument.vcf.type === type
+						selected: effect.type === type
 					}
 				}, type)
 			))
 		]),
 		div([
 			label(`Cutoff`),
-			span('.right', `${state.instrument[name].cutoff}`),
+			span('.right', `${effect.cutoff}`),
 			input('[type="range"]', {
 				attrs: {min: 0, max: 1, step: 0.01},
-				props: {value: state.instrument[name].cutoff},
-				on: {change: ev => actions.instrument.updateProp(name, 'cutoff', parseFloat(ev.target.value))}
+				props: {value: effect.cutoff},
+				on: {change: ev => updateProp('cutoff', parseFloat(ev.target.value))}
 			})
 		]),
 		label(`Resonance`),
-		span('.right', `${state.instrument[name].resonance}`),
+		span('.right', `${effect.resonance}`),
 		input('[type="range"]', {
 			attrs: {min: 0, max: 1, step: 0.01},
-			props: {value: state.instrument[name].resonance},
-			on: {change: ev => actions.instrument.updateProp(name, 'resonance', parseFloat(ev.target.value))}
+			props: {value: effect.resonance},
+			on: {change: ev => updateProp('resonance', parseFloat(ev.target.value))}
 		})
-		// label(`Gain`),
-		// span('.right', `${state.instrument[name].gain}`),
-		// input('[type="range"]', {
-		// 	attrs: {min: 0, max: 1, step: 0.005},
-		// 	props: {value: state.instrument[name].gain},
-		// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
-		// })
 	]) : ''
 ]);

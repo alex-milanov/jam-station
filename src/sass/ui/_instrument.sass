@@ -4,10 +4,45 @@
 	min-width: 225px
 	.body
 		form
+			h3
+				+header-height(24px)
+				width: 100%
+				font-size: 16px
+				font-weight: normal
+				margin: 8px 0px
+				padding: 0px
+				text-align: center
+				color: #333
+				border-bottom: 1px solid #aaa
+				background: #ccc
+			> button
+				+header-height(32px)
+				width: 100%
+				font-size: 16px
+				font-weight: normal
+				margin: 8px 0px
+				padding: 0px
+				background: #ccc
+				text-align: center
+				cursor: pointer
+				outline: none
+				border: 0px
+				&:hover
+					text-shadow: 0px 0px 7px rgba(127, 127, 127, 0.1)
+					outline: none
+				&:active, &:focus, &::-moz-focus-inner
+					outline: none
+					border-image: none
+					border: 0px
+				i.fa
+					margin-right: 4px
+					font-size: 16px
+					font-weight: normal
 			+no-margin-padding
 			label, input[type=radio]
 				cursor: pointer
 			legend
+				cursor: move
 				div
 					display: inline-block
 					margin: 0px

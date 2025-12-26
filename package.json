@@ -52,6 +52,7 @@
     "uuid": "^10.0.0",
     "vex-dialog": "^1.1.0",
     "vex-js": "^4.1.0",
+    "wavesurfer.js": "^7.8.3",
     "ws": "^6.0.0"
   },
   "staticFiles": [

@@ -5,42 +5,42 @@ const {
 	form, label, input, fieldset, legend, i, img
 } = require('iblokz-snabbdom-helpers');
 
-module.exports = ({name, state, actions}) => fieldset([
-	legend([span('.on', name.toUpperCase())]),
+module.exports = ({effect, index, updateProp, toggleExpanded}) => fieldset([
+	legend([span('.on', effect.type.toUpperCase())]),
 	div('.on-switch.fa', {
-		on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+		on: {click: ev => updateProp('on', !effect.on)},
 		class: {
-			'fa-circle-thin': !state.instrument[name].on,
-			'on': state.instrument[name].on,
-			'fa-circle': state.instrument[name].on
+			'fa-circle-thin': !effect.on,
+			'on': effect.on,
+			'fa-circle': effect.on
 		}
 	}),
 	label(`Time`),
-	span('.right', `${state.instrument[name].time}`),
+	span('.right', `${effect.time}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 3, step: 0.01},
-		props: {value: state.instrument[name].cutoff},
-		on: {change: ev => actions.instrument.updateProp(name, 'time', parseFloat(ev.target.value))}
+		props: {value: effect.time},
+		on: {change: ev => updateProp('time', parseFloat(ev.target.value))}
 	}),
 	label(`Dry`),
-	span('.right', `${state.instrument[name].dry}`),
+	span('.right', `${effect.dry}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].dry},
-		on: {change: ev => actions.instrument.updateProp(name, 'dry', parseFloat(ev.target.value))}
+		props: {value: effect.dry},
+		on: {change: ev => updateProp('dry', parseFloat(ev.target.value))}
 	}),
 	label(`Wet`),
-	span('.right', `${state.instrument[name].wet}`),
+	span('.right', `${effect.wet}`),
 	input('[type="range"]', {
 		attrs: {min: 0, max: 1, step: 0.01},
-		props: {value: state.instrument[name].wet},
-		on: {change: ev => actions.instrument.updateProp(name, 'wet', parseFloat(ev.target.value))}
+		props: {value: effect.wet},
+		on: {change: ev => updateProp('wet', parseFloat(ev.target.value))}
 	})
 	// label(`Gain`),
-	// span('.right', `${state.instrument[name].gain}`),
+	// span('.right', `${effect.gain}`),
 	// input('[type="range"]', {
 	// 	attrs: {min: 0, max: 1, step: 0.005},
-	// 	props: {value: state.instrument[name].gain},
-	// 	on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+	// 	props: {value: effect.gain},
+	// 	on: {change: ev => updateProp('gain', parseFloat(ev.target.value))}
 	// })
 ]);

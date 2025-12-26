@@ -12,53 +12,55 @@ const types = [
 	'triangle'
 ];
 
-module.exports = ({name, state, actions}) => fieldset([].concat(
+module.exports = ({effect, index, updateProp, toggleExpanded}) => fieldset({key: effect.id, attrs: {
+	'data-id': effect.id
+}}, [].concat(
 	legend([
 		span('.on', {
 			on: {
-				click: () => actions.toggle(['instrument', 'lfo', 'expanded'])
+				click: () => toggleExpanded()
 			}
 		}, [
-			i(`.fa.${state.instrument.lfo.expanded ? 'fa-minus-square-o' : 'fa-plus-square-o'}`),
+			i(`.fa.${effect.expanded ? 'fa-minus-square-o' : 'fa-plus-square-o'}`),
 			' ',
-			name.toUpperCase()
+			effect.type.toUpperCase()
 		]),
 		div(types.reduce((list, type) => list.concat([
 			button(`.btn-opt`, {
 				on: {
-					click: ev => actions.instrument.updateProp(name, 'type', type)
+					click: ev => updateProp('type', type)
 				},
-				class: {on: (state.instrument[name].type === type)}
+				class: {on: (effect.type === type)}
 			}, [img(`[src="assets/icons/wave-${type}.svg"]`)])
 		]), [])),
 		div('.on-switch.fa', {
-			on: {click: ev => actions.instrument.updateProp(name, 'on', !state.instrument[name].on)},
+			on: {click: ev => updateProp('on', !effect.on)},
 			class: {
-				'fa-circle-thin': !state.instrument[name].on,
-				'on': state.instrument[name].on,
-				'fa-circle': state.instrument[name].on
+				'fa-circle-thin': !effect.on,
+				'on': effect.on,
+				'fa-circle': effect.on
 			}
 		})
 	]),
-	state.instrument.lfo.expanded ? div([
+	effect.expanded ? div([
 		label(`Frequency`),
-		span('.right', `${state.instrument[name].frequency}`),
+		span('.right', `${effect.frequency}`),
 		input('[type="range"]', {
 			attrs: {min: 0, max: 100, step: 0.05},
-			props: {value: state.instrument[name].frequency},
-			on: {change: ev => actions.instrument.updateProp(name, 'frequency', parseFloat(ev.target.value))}
+			props: {value: effect.frequency},
+			on: {change: ev => updateProp('frequency', parseFloat(ev.target.value))}
 		}),
 		label(`Gain`),
-		span('.right', `${state.instrument[name].gain}`),
+		span('.right', `${effect.gain}`),
 		input('[type="range"]', {
 			attrs: {min: 0, max: 1000, step: 1},
-			props: {value: state.instrument[name].gain},
-			on: {change: ev => actions.instrument.updateProp(name, 'gain', parseFloat(ev.target.value))}
+			props: {value: effect.gain},
+			on: {change: ev => updateProp('gain', parseFloat(ev.target.value))}
 		}),
 		div([
 			label(`Target`),
 			select({
-				on: {change: ev => actions.instrument.updateProp(name, 'target', ev.target.value)}
+				on: {change: ev => updateProp('target', ev.target.value)}
 			}, [
 				'volume', 'pitch'
 			].map(target =>
@@ -67,7 +69,7 @@ module.exports = ({name, state, actions}) => fieldset([].concat(
 						value: target
 					},
 					props: {
-						selected: state.instrument.lfo.target === target
+						selected: effect.target === target
 					}
 				}, target)
 				))

@@ -22,13 +22,23 @@ const dropdown = ({opts, selected, cb}) => select({
 	)
 );
 
-module.exports = ({state, actions, params = {}}) => div('.session', params, [
-	div('.header', [
-		h2([img('[src="assets/session.svg"][height="20"]', {style: {margin: '9px 7px 9px 0px'}}), span('Session')])
-	]),
-	div('.body', [].concat(
-		state.session.tracks
-			.map((track, trackIndex) => div('.channel', [
+module.exports = ({state, actions, params = {}}) => {
+	if (!state.session || !state.session.tracks) {
+		return div('.session', params, [
+			div('.header', [
+				h2([img('[src="assets/session.svg"][height="20"]', {style: {margin: '9px 7px 9px 0px'}}), span('Session')])
+			]),
+			div('.body', [div('.error', 'Session tracks not available')])
+		]);
+	}
+	
+	return div('.session', params, [
+		div('.header', [
+			h2([img('[src="assets/session.svg"][height="20"]', {style: {margin: '9px 7px 9px 0px'}}), span('Session')])
+		]),
+		div('.body', [].concat(
+			state.session.tracks
+				.map((track, trackIndex) => div('.channel', [
 				ul('.track', [].concat(
 					li(span(track.name)),
 					loop(4).map(rowIndex =>
@@ -103,5 +113,6 @@ module.exports = ({state, actions, params = {}}) => div('.session', params, [
 						]
 				))
 			]))
-	))
-]);
+		))
+	]);
+};

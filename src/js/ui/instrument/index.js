@@ -48,7 +48,7 @@ const synth = ({state, actions}) => [
 
 module.exports = ({state, actions, params = {}}) => div('.instrument', params, [
 	div('.header', [
-		h2([i('.fa.fa-sliders'), ' Instrument']),
+		h2([i('.fa.fa-sliders'), ' Instrument [', state.session.selection.instr.join(':'), ']']),
 		div('.right', [
 			button('.fa.fa-eraser', {on: {
 				click: () => actions.instrument.applyPatch(

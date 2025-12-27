@@ -17,26 +17,54 @@ const initWavesurfer = (containerId, sampleUrl, sampleBuffer) => {
 		wavesurferInstance = null;
 	}
 
-	// Wait for container to exist
-	setTimeout(() => {
+	// Wait for container to exist and WaveSurfer to be available
+	const tryInit = () => {
 		const container = document.querySelector(`#${containerId}`);
-		if (!container) return;
+		if (!container) {
+			setTimeout(tryInit, 10);
+			return;
+		}
+
+		// Check if WaveSurfer is available
+		if (!WaveSurfer) {
+			console.warn('WaveSurfer not available');
+			return;
+		}
 
 		// Create wavesurfer instance
-		wavesurferInstance = WaveSurfer.create({
-			container: `#${containerId}`,
-			waveColor: '#000',
-			progressColor: '#111516',
-			height: 128
-		});
+		// WaveSurfer v7 uses create() method
+		try {
+			if (typeof WaveSurfer.create === 'function') {
+				wavesurferInstance = WaveSurfer.create({
+					container: `#${containerId}`,
+					waveColor: '#000',
+					progressColor: '#111516',
+					height: 128
+				});
+			} else if (typeof WaveSurfer === 'function') {
+				// Fallback for older API
+				wavesurferInstance = new WaveSurfer({
+					container: `#${containerId}`,
+					waveColor: '#000',
+					progressColor: '#111516',
+					height: 128
+				});
+			}
 
-		// Load sample
-		if (sampleBuffer) {
-			wavesurferInstance.loadDecodedBuffer(sampleBuffer);
-		} else if (sampleUrl) {
-			wavesurferInstance.load(sampleUrl);
+			// Load sample
+			if (wavesurferInstance) {
+				if (sampleBuffer) {
+					wavesurferInstance.loadDecodedBuffer(sampleBuffer);
+				} else if (sampleUrl) {
+					wavesurferInstance.load(sampleUrl);
+				}
+			}
+		} catch (err) {
+			console.error('Error creating WaveSurfer instance:', err);
 		}
-	}, 0);
+	};
+
+	setTimeout(tryInit, 0);
 };
 
 module.exports = ({state, actions}) => {

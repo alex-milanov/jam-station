@@ -25,12 +25,6 @@ const prepPressed = (channels, track) => track.input.device > -1
 
 const globalVolume = a.connect(a.vca({gain: 0.4}), a.context.destination);
 
-const reverb = a.connect(a.create('reverb', {
-	on: true,
-	wet: 0.1,
-	dry: 0.9
-}), globalVolume);
-
 /**
  * The changes$ Subject is used to emit changes to the engine state
  * @type {Subject}
@@ -287,12 +281,40 @@ const updatePrefs = (instr, ch = 1) => changes$.next(engine =>
 );
 
 /**
+ * Get the first active effect node for a channel (or volume if no effects)
+ * @param {Object} engine - The engine state
+ * @param {Object} instr - The instrument object
+ * @param {number} ch - The channel/track number
+ * @returns {Object} The first effect node or volume
+ */
+const getFirstEffectNode = (engine, instr, ch) => {
+	const effectsChain = engine[ch].effectsChain || [];
+	const effectNodeMap = {};
+	effectsChain.forEach(node => {
+		if (node.id) effectNodeMap[node.id] = node;
+	});
+	
+	if (instr.effectsChain) {
+		for (const effect of instr.effectsChain) {
+			if (effect.on && effect.type !== 'lfo' && effect.id) {
+				const node = effectNodeMap[effect.id];
+				if (node) {
+					return node;
+				}
+			}
+		}
+	}
+	
+	return engine[ch].volume;
+};
+
+/**
  * Update the connections for the instrument on the given channel/track
  * @param {Object} instr - The instrument object
  * @param {number} ch - The channel/track number
  */
 const updateConnections = (instr, ch = 1) => changes$.next(engine => {
-	// Get source properties
+	// Get source properties (only for synth tracks, ch > 0)
 	const source = instr.source || {};
 	const vco1On = source.vco1?.on ?? false;
 	const vco2On = source.vco2?.on ?? false;
@@ -322,10 +344,12 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 	// Get first active effect node or volume
 	const firstEffectNode = audioEffects.length > 0 ? audioEffects[0] : engine[ch].volume;
 	
-	// Disconnect all effects from each other and from volume
-	// This ensures clean reconnection
-	audioEffects.forEach(node => {
-		a.disconnect(node);
+	// Disconnect ALL effects from each other and from volume
+	// This ensures clean reconnection and removes inactive effects from the chain
+	effectsChain.forEach(node => {
+		if (node && node.type !== 'lfo') {
+			a.disconnect(node);
+		}
 	});
 	
 	// Build the audio chain: effect1 → effect2 → ... → volume → globalVolume
@@ -353,8 +377,15 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 		});
 	}
 	
-	return obj.patch(engine, ch, {
-		voices: obj.map(engine[ch].voices, (k, voice) => ({
+	// For synth tracks (ch > 0), update voice connections
+	// For sampler track (ch === 0), only update effectsChain and volume
+	const patch = {
+		effectsChain: effectsChain, // Keep effectsChain as-is (connections handled above)
+		volume: engine[ch].volume
+	};
+	
+	if (ch > 0 && engine[ch].voices) {
+		patch.voices = obj.map(engine[ch].voices, (k, voice) => ({
 			vco1: a.connect(voice.vco1, voice.adsr1),
 			vco2: a.connect(voice.vco2, voice.adsr2),
 			adsr1: (!vco1On)
@@ -363,10 +394,10 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 			adsr2: (!vco2On)
 				? a.disconnect(voice.adsr2)
 				: a.reroute(voice.adsr2, firstEffectNode)
-		})),
-		effectsChain: effectsChain, // Keep effectsChain as-is (connections handled above)
-		volume: engine[ch].volume
-	});
+		}));
+	}
+	
+	return obj.patch(engine, ch, patch);
 });
 
 /**
@@ -588,14 +619,14 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			return JSON.stringify(prevChains) === JSON.stringify(currChains);
 		})
 	).subscribe(({instrument, session}) => session.tracks.forEach(
-		(track, ch) => ch > 0 && track.inst && syncEffectsChain(track.inst, ch))
+		(track, ch) => track.inst && syncEffectsChain(track.inst, ch))
 	);
 
 	// update connections
 	state$.pipe(
 		distinctUntilChanged((prev, curr) => {
 			const prevTracks = prev.session.tracks.map((track, ch) => {
-				if (ch === 0 || !track.inst) return null;
+				if (!track.inst) return null;
 				const source = track.inst.source || {};
 				const effectsChain = track.inst.effectsChain || [];
 				return [
@@ -605,7 +636,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 				];
 			});
 			const currTracks = curr.session.tracks.map((track, ch) => {
-				if (ch === 0 || !track.inst) return null;
+				if (!track.inst) return null;
 				const source = track.inst.source || {};
 				const effectsChain = track.inst.effectsChain || [];
 				return [
@@ -617,7 +648,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			return JSON.stringify(prevTracks) === JSON.stringify(currTracks);
 		})
 	).subscribe(({instrument, session}) => session.tracks.forEach(
-		(track, ch) => ch > 0 && track.inst && updateConnections(track.inst, ch))
+		(track, ch) => track.inst && updateConnections(track.inst, ch))
 	);
 	
 	// update prefs
@@ -628,7 +659,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			return JSON.stringify(prevInsts) === JSON.stringify(currInsts);
 		})
 	).subscribe(({instrument, session}) => session.tracks.forEach(
-		(track, ch) => ch > 0 && updatePrefs(track.inst, ch))
+		(track, ch) => track.inst && updatePrefs(track.inst, ch))
 	);
 
 	// global volume
@@ -641,7 +672,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		take(1)
 	).subscribe(({instrument, session}) => session.tracks
 		.map((track, ch) => ({track, ch}))
-		.filter(({track}) => track.type === 'piano')
+		.filter(({track}) => track.inst)
 		.forEach(({track, ch}) => (
 			syncEffectsChain(track.inst, ch),
 			updateConnections(Object.assign({}, instrument, track.inst), ch),
@@ -707,11 +738,14 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 							);
 					}
 				} else {
+					// Channel 0: sampler track
+					const track = state.session.tracks[ch];
+					const firstEffectNode = getFirstEffectNode(engine, track.inst || {}, ch);
+					
 					Object.keys(pressed[ch]).filter(note => !voices[note])
 						.forEach(
 							note => {
 								console.log(note);
-								const track = state.session.tracks[ch];
 								const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
 								if (index > -1 && state.sequencer.channels[index]) {
 									if (track.output.device !== -1) {
@@ -731,7 +765,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 												state.sequencer.channels[index]
 											]
 										], {gain: pressed[ch][note]});
-										a.connect(inst, reverb);
+										a.connect(inst, firstEffectNode);
 										setTimeout(() => a.start(inst));
 										voices[note] = inst;
 									}
@@ -745,7 +779,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 									let inst = voices[note];
 									voices = obj.filter(voices, key => key !== note);
 									setTimeout(() => {
-										a.disconnect(inst, reverb);
+										a.disconnect(inst);
 										a.stop(inst);
 									}, 3000);
 								}
@@ -774,11 +808,12 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			}),
 			filter(state => state.studio.playing)
 		),
-		sampleBank$
+		sampleBank$,
+		engine$
 	]).pipe(
-		map(([state, sampleBank]) => ({state, sampleBank}))
+		map(([state, sampleBank, engine]) => ({state, sampleBank, engine}))
 	)
-		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank}) => {
+		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank, engine}) => {
 			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0) {
 				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
 				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
@@ -816,12 +851,13 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 											]
 										]) {
 											// console.log(sequencer.channels[k]);
+											const firstEffectNode = getFirstEffectNode(engine, track.inst || {}, ch);
 											let inst = sampler.clone(sampleBank[
 												mediaLibrary.files[
 													sequencer.channels[k]
 												]
 											], {gain: row[i]});
-											inst = a.connect(inst, reverb);
+											inst = a.connect(inst, firstEffectNode);
 											a.start(inst, timepos);
 											// inst.trigger({studio}, timepos);
 											buffer.push(inst);

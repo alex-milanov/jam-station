@@ -66,7 +66,7 @@ const hook = ({state$, actions}) => {
 				)(state.session.selection.piano)
 			))
 	);
-	// instrument
+	// instrument - sync to track based on selection.instr
 	subs.push(
 		state$.pipe(
 			distinctUntilChanged((prev, curr) => JSON.stringify(prev.instrument) === JSON.stringify(curr.instrument))
@@ -79,7 +79,7 @@ const hook = ({state$, actions}) => {
 								inst: state.instrument
 							}
 					)))
-				))(state.session.selection.piano)
+				))(state.session.selection.instr)
 			))
 	);
 

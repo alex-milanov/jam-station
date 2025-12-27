@@ -41,12 +41,16 @@ module.exports = ({state, actions, params = {}}) => {
 				.map((track, trackIndex) => div('.channel', [
 				ul('.track', [].concat(
 					li(span(track.name)),
-					loop(4).map(rowIndex =>
-						li({
+					loop(4).map(rowIndex => {
+						const isSelectedForType = state.session.selection[track.type].join('.') === [trackIndex, rowIndex].join('.');
+						const isSelectedForInstr = state.session.selection.instr.join('.') === [trackIndex, rowIndex].join('.');
+						
+						return li({
 							class: {
 								measure: (track.measures[rowIndex]),
 								empty: !(track.measures[rowIndex]),
-								selected: state.session.selection[track.type].join('.') === [trackIndex, rowIndex].join('.'),
+								selected: isSelectedForType,
+								'instr-selected': isSelectedForInstr,
 								active: state.session.active[trackIndex] === rowIndex
 							},
 							on: {
@@ -60,8 +64,8 @@ module.exports = ({state, actions, params = {}}) => {
 							state.session.active[trackIndex] === rowIndex
 								? span(` [ ${state.studio.tick.tracks[trackIndex].bar || 0} ]`)
 								: ''
-						]))
-					)
+						]));
+					})
 				)),
 				fieldset('.midi', [
 					legend('MIDI'),

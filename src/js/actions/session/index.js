@@ -4,12 +4,14 @@ const {obj} = require('iblokz-data');
 
 const synthInstrument = {
 	...require('../instrument').initial,
-	source: require('../instrument').synthSource
+	source: require('../instrument').synthSource,
+	sourceType: 'synth'
 };
 
 const samplerInstrument = {
 	...require('../instrument').initial,
-	source: require('../instrument').samplerSource
+	source: require('../instrument').samplerSource,
+	sourceType: 'sampler'
 };
 
 const defValues = {
@@ -24,6 +26,7 @@ const initial = {
 	bpm: 104,
 	ticks: 128,
 	selection: {
+		instr: [1, 0],
 		piano: [1, 0],
 		seq: [0, 0]
 	},
@@ -163,29 +166,40 @@ const initial = {
 	]
 };
 
-const select = (trackNumber, measureRow) => state =>
-	Object.assign(
-		obj.patch(state, ['session', 'selection', state.session.tracks[trackNumber].type], [trackNumber, measureRow]),
-		(state.session.tracks[trackNumber].type === 'seq')
-			? {
-				sequencer: Object.assign(
-					{}, state.session.tracks[trackNumber].measures[measureRow] || defValues.sequencer
-				)
-			}
-			: {
-				pianoRoll: Object.assign(
-					{}, state.session.tracks[trackNumber].measures[measureRow] || defValues.pianoRoll
-				),
-				instrument: Object.assign(
-					{}, state.session.tracks[trackNumber].inst || defValues.instrument
-				)
-			}
-	/*
-		(obj.sub(state, ['session', 'selection', type]).join('.') === [trackIndex, rowIndex].join('.'))
-			? []
-			: [trackIndex, rowIndex]
-	*/
-	);
+const select = (trackNumber, measureRow) => state => {
+	const track = state.session.tracks[trackNumber];
+	const trackType = track.type;
+	
+	// Update selection for the track type (piano or seq)
+	const updatedState = obj.patch(state, ['session', 'selection', trackType], [trackNumber, measureRow]);
+	
+	// Always update selection.instr (for instrument UI)
+	const stateWithInstr = obj.patch(updatedState, ['session', 'selection', 'instr'], [trackNumber, measureRow]);
+	
+	// Update sequencer or pianoRoll based on track type
+	const trackInstrument = track.inst || defValues.instrument;
+	// Ensure effectsChain exists and is an array
+	const instrument = Object.assign({}, trackInstrument, {
+		effectsChain: (trackInstrument.effectsChain || defValues.instrument.effectsChain || []).filter(e => e && e.type)
+	});
+	
+	if (trackType === 'seq') {
+		return Object.assign(stateWithInstr, {
+			sequencer: Object.assign(
+				{}, track.measures[measureRow] || defValues.sequencer
+			),
+			instrument
+		});
+	} else {
+		// piano/synth track
+		return Object.assign(stateWithInstr, {
+			pianoRoll: Object.assign(
+				{}, track.measures[measureRow] || defValues.pianoRoll
+			),
+			instrument
+		});
+	}
+};
 
 const activate = (track, ch) => state => obj.patch(state, ['session', 'active'],
 	state.session.active.map((c, i) => i === track ? ch : c)

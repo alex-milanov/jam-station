@@ -1,11 +1,9 @@
-'use strict';
-
-const {
+import {
 	div, span, button, i
-} = require('iblokz-snabbdom-helpers');
-const {obj} = require('iblokz-data');
-const WaveSurfer = require('wavesurfer.js');
-const pocket = require('../../../util/pocket');
+} from 'iblokz-snabbdom-helpers';
+import {obj} from 'iblokz-data';
+import WaveSurfer from 'wavesurfer.js';
+import pocket from '../../../util/pocket';
 
 let wavesurferInstance = null;
 let currentSampleFile = null;
@@ -17,7 +15,7 @@ const initWavesurfer = (containerId, sampleUrl, sampleBuffer) => {
 		wavesurferInstance = null;
 	}
 
-	// Wait for container to exist and WaveSurfer to be available
+	// Wait for container to exist (similar to xAmplR pattern)
 	const tryInit = () => {
 		const container = document.querySelector(`#${containerId}`);
 		if (!container) {
@@ -31,25 +29,18 @@ const initWavesurfer = (containerId, sampleUrl, sampleBuffer) => {
 			return;
 		}
 
-		// Create wavesurfer instance
-		// WaveSurfer v7 uses create() method
+		// Create wavesurfer instance (xAmplR uses WaveSurfer.create directly)
 		try {
-			if (typeof WaveSurfer.create === 'function') {
-				wavesurferInstance = WaveSurfer.create({
-					container: `#${containerId}`,
-					waveColor: '#000',
-					progressColor: '#111516',
-					height: 128
-				});
-			} else if (typeof WaveSurfer === 'function') {
-				// Fallback for older API
-				wavesurferInstance = new WaveSurfer({
-					container: `#${containerId}`,
-					waveColor: '#000',
-					progressColor: '#111516',
-					height: 128
-				});
-			}
+			// Clear container like xAmplR does
+			container.innerHTML = '';
+			
+			// WaveSurfer v7 uses create() method (same as xAmplR v2)
+			wavesurferInstance = WaveSurfer.create({
+				container: `#${containerId}`,
+				waveColor: '#000',
+				progressColor: '#111516',
+				height: 128
+			});
 
 			// Load sample
 			if (wavesurferInstance) {
@@ -67,7 +58,7 @@ const initWavesurfer = (containerId, sampleUrl, sampleBuffer) => {
 	setTimeout(tryInit, 0);
 };
 
-module.exports = ({state, actions}) => {
+export default ({state, actions}) => {
 	// Get selected sequencer channel
 	const selectedChannel = state.sequencer.channel;
 	const channelSampleIndex = selectedChannel > -1 && state.sequencer.channels[selectedChannel];
@@ -105,8 +96,18 @@ module.exports = ({state, actions}) => {
 			div(`#${containerId}`, {
 				hook: {
 					insert: (vnode) => {
-						if (sampleBuffer || sampleUrl) {
-							initWavesurfer(containerId, sampleUrl, sampleBuffer);
+						// Initialize wavesurfer when container is inserted (like xAmplR)
+						initWavesurfer(containerId, sampleUrl, sampleBuffer);
+					},
+					update: (oldVnode, vnode) => {
+						// Update sample when it changes
+						if (sampleFileName !== currentSampleFile && wavesurferInstance) {
+							currentSampleFile = sampleFileName;
+							if (sampleBuffer) {
+								wavesurferInstance.loadDecodedBuffer(sampleBuffer);
+							} else if (sampleUrl) {
+								wavesurferInstance.load(sampleUrl);
+							}
 						}
 					},
 					destroy: (vnode) => {

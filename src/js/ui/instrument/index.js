@@ -22,7 +22,7 @@ const vcf = require('./vcf');
 const lfo = require('./lfo');
 const reverb = require('./reverb');
 const delay = require('./delay');
-const sampler = require('./sampler');
+const sampler = require('./sampler').default || require('./sampler');
 
 const vcas = ['vca1', 'vca2'];
 

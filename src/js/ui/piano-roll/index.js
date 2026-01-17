@@ -11,9 +11,9 @@ const {iconCodeToDataURL} = cursor;
 const actionMaps = [];
 
 const editTools = [
-	{name: 'pointer', icon: 'mouse-pointer', cursor: '\uf245'},
-	{name: 'pencil', icon: 'pencil', cursor: '\uf040'},
-	{name: 'eraser', icon: 'eraser', cursor: '\uf12d'}
+	{name: 'pointer', icon: 'mouse-pointer', cursor: '\uf245', hotspot: '6 3'},
+	{name: 'pencil', icon: 'pencil', cursor: '\uf040', hotspot: '5 20'},
+	{name: 'eraser', icon: 'eraser', cursor: '\uf12d', hotspot: '5 17'}
 ]
 
 console.log(editTools);
@@ -54,11 +54,11 @@ module.exports = ({state, actions, params = {}}) => div('.piano-roll', params, [
 		canvas('.selection'),
 		canvas('.interaction', {
 			style: {
-				cursor: `url(${
-					iconCodeToDataURL(
-						editTools.find(t => t.name === state.pianoRoll.tool).cursor
-					)
-				}), auto`
+				cursor: editTools
+					.filter(t => t.name === state.pianoRoll.tool)
+					.map(tool => `url(${
+							iconCodeToDataURL(tool.cursor)
+						}) ${tool.hotspot}, auto`).pop()
 			},
 			on: {
 				pointerdown: ev => (

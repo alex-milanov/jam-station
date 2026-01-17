@@ -107,6 +107,4 @@ The app uses several `iblokz` libraries:
 
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
-**Commercial Licensing**: Commercial licensing is available for organizations that wish to use this software in proprietary applications or provide it as a service without the source code disclosure requirements of the AGPL. For commercial licensing inquiries, please contact: alex@i4web.biz
-
 See [LICENSE](LICENSE) for the full license text.

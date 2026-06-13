@@ -1,28 +1,34 @@
-'use strict';
+import {Observable} from 'rxjs';
+import {filter, share, withLatestFrom, map} from 'rxjs/operators';
 
-const {Observable} = require('rxjs');
-const {filter, share, withLatestFrom, map} = require('rxjs/operators');
-const raf = require('raf-stream');
+/**
+ * RAF delta-time stream. Optional `node` is accepted for API compatibility
+ * (raf-stream used it); native rAF ignores it.
+ */
+export const frame = node => new Observable(obs => {
+	let id;
+	let last = 0;
 
-const frame = node => new Observable(observer => {
-	const stream = raf(node);
-	stream.on('data', dt => observer.next(dt));
-	stream.on('error', err => observer.error(err));
-	stream.on('end', () => observer.complete());
-	return () => {
-		stream.destroy();
+	const onFrame = timestamp => {
+		const dt = last > 0 ? timestamp - last : 0;
+		last = timestamp;
+		obs.next(dt);
+		id = requestAnimationFrame(onFrame);
 	};
+
+	id = requestAnimationFrame(onFrame);
+	return () => cancelAnimationFrame(id);
 }).pipe(
 	filter(dt => dt !== 0),
 	share()
 );
 
-const loop = (state$, node) => frame(node).pipe(
+export const loop = (state$, node) => frame(node).pipe(
 	withLatestFrom(state$),
 	map(([dt, state]) => ({dt, state}))
 );
 
-module.exports = {
+export default {
 	frame,
 	loop
 };

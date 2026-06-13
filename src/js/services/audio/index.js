@@ -1,6 +1,6 @@
 'use strict';
 
-const {combineLatest, Subject, BehaviorSubject} = require('rxjs');
+const {Subject, BehaviorSubject} = require('rxjs');
 const {distinctUntilChanged, filter, map, take, scan, startWith, withLatestFrom} = require('rxjs/operators');
 
 const {obj, fn, arr} = require('iblokz-data');
@@ -571,13 +571,23 @@ const pitchBend = (instr, pitchValue, ch = 1) => changes$.next(engine => {
 	})));
 });
 
-const sendMIDImsg = (device, note, velocity, delay = 0, channel = 1) => (
-	// console.log(device, note, velocity, delay),
-	device && device.send(
+/**
+ * Schedule a MIDI message at an absolute AudioContext time.
+ * @param {Object} device - MIDI output device
+ * @param {string} note - Note name
+ * @param {number} velocity - Velocity 0–1
+ * @param {number} audioTime - Absolute AudioContext time
+ * @param {number} channel - MIDI channel 1–16
+ */
+const sendMIDImsg = (device, note, velocity, audioTime = 0, channel = 1) => {
+	if (!device) return;
+	const perfTime = window.performance.now()
+		+ (audioTime - a.context.currentTime) * 1000;
+	device.send(
 		[0x90 + (channel - 1), m.noteToNumber(note), `0x${parseInt(velocity * 127, 10).toString(16)}`],
-		window.performance.now() + delay * 1000
-	)
-);
+		perfTime
+	);
+};
 
 /**
  * The engine$ is a BehaviorSubject that emits the current engine state
@@ -686,8 +696,8 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		))
 	);
 
-	// note ons
-	let voices = {};
+	// note ons — edge-triggered from MIDI key press/release only (not voice map sync)
+	let prevPressed = null;
 	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 	
 	state$.pipe(
@@ -713,9 +723,9 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 				if (ch > 0) {
 					// console.log(ch, pressed[ch], engine[ch], state.midiMap.channels);
 					if (!state.midiMap.settings.midiRouteToActive || Number(state.session.selection.piano[0]) === Number(ch)) {
-						let voices = engine[ch].voices;
+						const prevCh = (prevPressed && prevPressed[ch]) || {};
 						Object.keys(pressed[ch] || [])
-							.filter(note => !obj.sub(voices, [note]))
+							.filter(note => !obj.sub(prevCh, [note]))
 							.forEach(
 								note =>
 									(state.session.tracks[ch].output && state.session.tracks[ch].output.device > -1)
@@ -729,7 +739,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 										)
 										: noteOn(state.session.tracks[ch].inst, ch, note, pressed[ch][note])
 							);
-						Object.keys(voices)
+						Object.keys(prevCh)
 							.filter(note => !obj.sub(pressed, [ch, note]))
 							.forEach(
 								note =>
@@ -747,20 +757,24 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 					// Channel 0: sampler track
 					const track = state.session.tracks[ch];
 					const firstEffectNode = getFirstEffectNode(engine, track.inst || {}, ch);
-					
-					Object.keys(pressed[ch]).filter(note => !voices[note])
+					let voices = engine[ch].voices || {};
+					const prevCh = (prevPressed && prevPressed[ch]) || {};
+					Object.keys(pressed[ch] || {})
+						.filter(note => !prevCh[note])
 						.forEach(
 							note => {
 								console.log(note);
 								const index = notesPattern.indexOf(note.replace(/[0-9]/, ''));
 								if (index > -1 && state.sequencer.channels[index]) {
 									if (track.output.device !== -1) {
+										const now = a.context.currentTime;
+										const gate = bpmToTime(state.studio.bpm) / 4;
 										sendMIDImsg(state.midiMap.devices.outputs[
 											track.output.device
-										], note, pressed[ch][note], 0, track.output.channel);
+										], note, pressed[ch][note], now + 0.001, track.output.channel);
 										sendMIDImsg(state.midiMap.devices.outputs[
 											track.output.device
-										], note, 0, bpmToTime(state.studio.bpm) / 4, track.output.channel);
+										], note, 0, now + gate, track.output.channel);
 									} else if (sampleBank[
 										state.mediaLibrary.files[
 											state.sequencer.channels[index]
@@ -772,13 +786,14 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 											]
 										], {gain: pressed[ch][note]});
 										a.connect(inst, firstEffectNode);
-										setTimeout(() => a.start(inst));
+										a.start(inst, a.context.currentTime + 0.001);
 										voices[note] = inst;
 									}
 								}
 							}
 						);
-					Object.keys(voices).filter(note => !pressed[ch][note])
+					Object.keys(prevCh)
+						.filter(note => !pressed[ch][note])
 						.forEach(
 							note => {
 								if (voices[note]) {
@@ -793,6 +808,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 						);
 				}
 			});
+			prevPressed = pressed;
 		});
 
 	// pitch bend
@@ -805,135 +821,15 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 			].inst), state.midiMap.pitch, state.session.selection.piano[0])
 		);
 
-	combineLatest([
-		state$.pipe(
-			distinctUntilChanged((prev, curr) => {
-				const prevTick = prev.studio.tick;
-				const currTick = curr.studio.tick;
-				return prevTick.index === currTick.index && prevTick.elapsed === currTick.elapsed;
-			}),
-			filter(state => state.studio.playing)
-		),
-		sampleBank$,
-		engine$
-	]).pipe(
-		map(([state, sampleBank, engine]) => ({state, sampleBank, engine}))
-	)
-		.subscribe(({state: {studio, session, sequencer, mediaLibrary, instrument, midiMap}, sampleBank, engine}) => {
-			if (studio.tick.index === studio.beatLength - 1 || studio.tick.elapsed === 0) {
-				let start = (studio.tick.index === studio.beatLength - 1) ? 0 : studio.tick.index;
-				let offset = (studio.tick.index === studio.beatLength - 1) ? 1 : 0;
-				// let start = studio.tick.index;
-				session.tracks
-					.map((track, ch) => ({track, ch}))
-					// .filter(({track}) => track.type === 'piano')
-					.forEach(({track, ch}) => obj.switch(track.type, {
-						seq: () => {
-							for (let i = start; i < studio.beatLength; i++) {
-								let timepos = studio.tick.time + ((i - start + offset) * bpmToTime(studio.bpm));
-								// console.log({timepos, start, offset, i});
-								sequencer.pattern[
-									(studio.tick.index === studio.beatLength - 1)
-										? (studio.tick.bar < sequencer.barsLength - 1) ? studio.tick.bar + 1 : 0
-										: studio.tick.bar
-								].forEach((row, k) => {
-									if (row && row[i]) {
-										if (track.output.device !== -1) {
-											sendMIDImsg(midiMap.devices.outputs[
-												track.output.device
-											], fn.pipe(
-												() => m.numberToNote(60 + k),
-												({key, octave}) => `${key}${octave}`
-											)(), row[i], timepos - a.context.currentTime, track.output.channel);
-											sendMIDImsg(midiMap.devices.outputs[
-												track.output.device
-											], fn.pipe(
-												() => m.numberToNote(60 + k),
-												({key, octave}) => `${key}${octave}`
-											)(), 0, timepos + bpmToTime(studio.bpm) / 4 - a.context.currentTime, track.output.channel);
-										} else if (sampleBank[
-											mediaLibrary.files[
-												sequencer.channels[k]
-											]
-										]) {
-											// console.log(sequencer.channels[k]);
-											const firstEffectNode = getFirstEffectNode(engine, track.inst || {}, ch);
-											let inst = sampler.clone(sampleBank[
-												mediaLibrary.files[
-													sequencer.channels[k]
-												]
-											], {gain: row[i]});
-											inst = a.connect(inst, firstEffectNode);
-											a.start(inst, timepos);
-											// inst.trigger({studio}, timepos);
-											buffer.push(inst);
-										}
-									}
-								});
-							}
-						},
-						piano: () => fn.pipe(
-							() => ({
-								barIndex: studio.tick.tracks[ch].bar,
-								barsLength: parseInt(track.measures[session.active[ch]]
-									&& track.measures[session.active[ch]].barsLength || 1, 10)
-							}),
-							({barIndex, barsLength}) => ({
-								barIndex: (barIndex < barsLength - 1 && studio.tick.elapsed > 1) ? barIndex + 1 : 0,
-								barsLength
-							}),
-							({barIndex, barsLength}) => ({
-								barIndex,
-								barsLength,
-								bar: {
-									start: studio.beatLength * barIndex,
-									end: studio.beatLength * (barIndex + 1)
-								}
-							}),
-							// data => (console.log(studio.tick.tracks[ch], data), data),
-							({bar}) => track.measures[session.active[ch]] && track.measures[session.active[ch]].events
-								&& track.measures[session.active[ch]].events
-									.filter(event => event.start >= bar.start + start && event.start < bar.end && event.duration > 0)
-									.forEach(event => {
-										let timepos = studio.tick.time + ((event.start - bar.start - start + offset) *
-											bpmToTime(studio.bpm));
-										if (track.output && track.output.device > -1) {
-											// note on
-											sendMIDImsg(midiMap.devices.outputs[
-												track.output.device
-											], event.note, event.velocity || 1, timepos - a.context.currentTime, track.output.channel);
-											noteOn(
-												Object.assign({}, instrument, track.inst),
-												ch, event.note, event.velocity || 0.7, timepos, true
-											);
-											// note off
-											sendMIDImsg(midiMap.devices.outputs[
-												track.output.device
-											], event.note, 0,
-												(timepos + event.duration * bpmToTime(studio.bpm) - a.context.currentTime),
-												track.output.channel);
-											noteOff(
-												Object.assign({}, instrument, track.inst),
-												ch, event.note, timepos + event.duration * bpmToTime(studio.bpm), true
-											);
-										} else {
-											noteOn(
-												Object.assign({}, instrument, track.inst),
-												ch, event.note, event.velocity || 0.7, timepos
-											);
-											noteOff(
-												Object.assign({}, instrument, track.inst),
-												ch, event.note, timepos + event.duration * bpmToTime(studio.bpm)
-											);
-										}
-									})
-							)()
-					})()
-				);
-			}
-		});
 };
 
 module.exports = {
-	hook
+	hook,
+	engine$,
+	clearBuffer,
+	noteOn,
+	noteOff,
+	sendMIDImsg,
+	getFirstEffectNode,
+	pushBuffer: inst => buffer.push(inst)
 };

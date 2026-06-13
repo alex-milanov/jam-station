@@ -56,10 +56,10 @@ export const samplerSource = {
 
 export const defaultEffectConfigs = {
 	vcf: {type: 'vcf', on: true, expanded: true, cutoff: 0.64, resonance: 0, gain: 0},
-	reverb: {type: 'reverb', on: true, expanded: true, seconds: 3, decay: 2, reverse: false, dry: 0.8, wet: 0.7},
+	reverb: {type: 'reverb', on: true, expanded: true, seconds: 3, decay: 2, reverse: false, dry: 0.8, wet: 0.3},
 	lfo: {type: 'lfo', on: false, expanded: false, lfoType: 'sawtooth', frequency: 5, gain: 0.15},
 	delay: {type: 'delay', on: false, expanded: false, time: 1, dry: 1, wet: 0}
-}
+};
 
 export const initial = {
 	sourceType: 'synth', // 'synth' or 'sampler'

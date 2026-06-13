@@ -48,10 +48,18 @@ const hook = ({state$, actions}) => {
 				)(state.session.selection.seq)
 			)
 	);
-	// piano-roll
+	// piano-roll — sync only musical data to the measure, not UI state
 	subs.push(
 		state$.pipe(
-			distinctUntilChanged((prev, curr) => JSON.stringify(prev.pianoRoll) === JSON.stringify(curr.pianoRoll))
+			distinctUntilChanged((prev, curr) =>
+				JSON.stringify({
+					events: prev.pianoRoll && prev.pianoRoll.events,
+					barsLength: prev.pianoRoll && prev.pianoRoll.barsLength
+				}) === JSON.stringify({
+					events: curr.pianoRoll && curr.pianoRoll.events,
+					barsLength: curr.pianoRoll && curr.pianoRoll.barsLength
+				})
+			)
 		).subscribe(state => (
 				fn.pipe(([trackNumber, measureRow]) =>
 					actions.set(['session', 'tracks'], arrPatchAt(
@@ -59,7 +67,10 @@ const hook = ({state$, actions}) => {
 							measures: arrPatchAt(
 								state.session.tracks[trackNumber].measures,
 								measureRow,
-								state.pianoRoll
+								measure => Object.assign({}, measure, {
+									events: state.pianoRoll.events,
+									barsLength: state.pianoRoll.barsLength
+								})
 							)
 						}
 					))

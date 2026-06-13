@@ -41,16 +41,28 @@ const initial = {
 	]
 };
 
+const findAutoConnectMpkIndex = inputs => {
+	const ivMidi = inputs.findIndex(dev => /MPK Mini IV MIDI Port/i.test(dev.name));
+	if (ivMidi > -1) return ivMidi;
+	const mk2 = inputs.findIndex(dev => /MPKmini2/i.test(dev.name));
+	if (mk2 > -1) return mk2;
+	return inputs.findIndex(dev => /MPK Mini IV/i.test(dev.name));
+};
+
 const connect = devices =>
-	state => obj.patch(state, 'midiMap', {
-		devices,
-		data: {
-			...state.midiMap.data,
-			in: state.midiMap.data.in.indexOf(devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/))) === -1
-				? arr.add(state.midiMap.data.in, devices.inputs.findIndex(dev => dev.name.match(/MPKmini2/)))
-				: state.midiMap.data.in
-		}
-	});
+	state => {
+		const mpkIndex = findAutoConnectMpkIndex(devices.inputs);
+		const dataIn = mpkIndex > -1 && state.midiMap.data.in.indexOf(mpkIndex) === -1
+			? arr.add(state.midiMap.data.in, mpkIndex)
+			: state.midiMap.data.in;
+		return obj.patch(state, 'midiMap', {
+			devices,
+			data: {
+				...state.midiMap.data,
+				in: dataIn
+			}
+		});
+	};
 
 const toggleClock = (inOut, index) => state => obj.patch(state, ['midiMap', 'clock', inOut],
 	arr.toggle(obj.sub(state, ['midiMap', 'clock'])[inOut], index)

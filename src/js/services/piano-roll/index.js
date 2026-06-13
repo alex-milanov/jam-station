@@ -12,7 +12,8 @@ import {canvas} from 'iblokz-gfx';
 // project utils
 import {numberToNote, noteToNumber} from '~/util/midi';
 import {patch, patchAt} from '~/util/data/object';
-import {measureToBeatLength, bpmToTime} from '~/util/math';
+import {measureToBeatLength, bpmToTime, calculateProgress} from '~/util/math';
+import {derivePosition, stepTimeOffset, MODIFIER} from '~/util/position';
 
 // piano-roll utils
 import {drawGrid, drawEvents, snapToGrid, prepCanvas, pixelToGrid} from './util/grid';
@@ -66,16 +67,27 @@ const clear = () => state => obj.patch(state, ['pianoRoll', 'events'], []);
  */
 const record = (pressed, tick, currentTime) => state =>
 	fn.pipe(
-		() => ({
-			timeOffset: prepTime(tick.time, currentTime, bpmToTime(state.studio.bpm)),
-			barStart: tick.tracks[state.session.selection.piano[0]]
-				&& (tick.tracks[state.session.selection.piano[0]].bar * state.studio.beatLength) || 0,
-			beatIndex: tick.tracks[state.session.selection.piano[0]]
-				&& tick.tracks[state.session.selection.piano[0]].index || 0,
-			bar: tick.tracks[state.session.selection.piano[0]]
-				&& (tick.tracks[state.session.selection.piano[0]].bar) || 0,
-			barsLength: state.pianoRoll.barsLength
-		}),
+		() => {
+			const ch = state.session.selection.piano[0];
+			const trackTick = tick.tracks[ch] || tick;
+			const beatIndex = trackTick.index ?? tick.index ?? 0;
+			const bar = trackTick.bar ?? tick.bar ?? 0;
+			const barStart = bar * state.studio.beatLength;
+			const barsLength = state.pianoRoll.barsLength;
+
+			let timeOffset = 0;
+			if (state.studio.playing && state.studio.startTime != null) {
+				const progress = calculateProgress(
+					state.studio.startTime, currentTime, state.studio.cycleOffset,
+					state.studio.bpm, state.studio.beatLength, MODIFIER
+				);
+				timeOffset = stepTimeOffset(progress, state.studio.beatLength);
+			} else {
+				timeOffset = prepTime(tick.time, currentTime, bpmToTime(state.studio.bpm));
+			}
+
+			return {timeOffset, barStart, beatIndex, barsLength, bar};
+		},
 		({timeOffset, barStart, beatIndex, barsLength, bar}) => obj.patch(state, 'pianoRoll', {
 			events: [].concat(
 				// already recorded events
@@ -707,10 +719,20 @@ export const hook = ({state$, actions}) => {
 				)
 			}))
 		)
-			.subscribe(({state, pressed}) =>
-				actions.pianoRoll.record(pressed, state.studio.tick, audio.context.currentTime))
+			.subscribe(({state, pressed}) => {
+				const tick = derivePosition(
+					state.studio, state.sequencer, state.session, audio.context.currentTime
+				);
+				actions.pianoRoll.record(pressed, tick, audio.context.currentTime);
+			})
 	);
 
 };
 
 export let unhook = () => subs.forEach(sub => sub.unsubscribe());
+
+export default {
+	actions,
+	hook,
+	unhook
+};

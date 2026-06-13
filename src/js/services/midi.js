@@ -4,9 +4,11 @@ const {obj, fn} = require('iblokz-data');
 const {filter, distinctUntilChanged, map, share, withLatestFrom, throttleTime, bufferCount} = require('rxjs/operators');
 
 const midi = require('../util/midi');
-const pocket = require('../util/pocket');
+const time = require('../util/time');
+const {derivePosition, stepIndex, MODIFIER} = require('../util/position');
+const {calculateProgress} = require('../util/math');
+const a = require('iblokz-audio');
 
-// util
 const indexAt = (a, k, v) => a.reduce((index, e, i) => ((obj.sub(e, k) === v) ? i : index), -1);
 const prepVal = (min = 0, max = 1, digits = 3) => val =>
 	[(min + val * max - val * min).toFixed(digits)]
@@ -17,31 +19,19 @@ const prepVal = (min = 0, max = 1, digits = 3) => val =>
 
 let unhook = () => {};
 
-const clockMsg = [248];    // note on, middle C, full velocity
+const clockMsg = [248];
 
 const hook = ({state$, actions, tapTempo}) => {
 	let subs = [];
 
-	const tick$ = pocket.stream.pipe(
-		filter(p => p.clockTick),
-		distinctUntilChanged((prev, curr) => {
-			const prevTick = prev.clockTick;
-			const currTick = curr.clockTick;
-			return prevTick && currTick && prevTick.time === currTick.time && prevTick.i === currTick.i;
-		}),
-		map(p => p.clockTick)
-	);
-
 	const {devices$, msg$} = midi.init();
 
-	// midi device access
 	subs.push(
 		devices$.subscribe(data => actions.midiMap.connect(data))
 	);
 
 	const parsedMidiMsg$ = msg$.pipe(
 		map(raw => ({msg: midi.parseMidiMsg(raw.msg), raw})),
-		// map(data => (console.log(data), data))
 		share()
 	);
 
@@ -58,21 +48,17 @@ const hook = ({state$, actions, tapTempo}) => {
 		share()
 	);
 
-	// midi messages
 	subs.push(
 		parsedMidiMsg$.pipe(
-			// map(midiData => (console.log({midiData}), midiData))
 			filter(({msg}) => ['noteOn', 'noteOff'].indexOf(msg.state) > -1),
 			withLatestFrom(state$),
 			map(([midiData, state]) => (Object.assign({}, midiData, {state}))),
 			filter(({raw, state}) => (
-				// console.log(raw.input.id, state.midiMap.devices.inputs, state.midiMap.data.in),
 				getIds(state.midiMap.devices.inputs, state.midiMap.data.in).indexOf(
 					raw.input.id
 				) > -1
 			))
 		).subscribe(({raw, msg, state}) => {
-				// console.log(state.midiMap.devices.inputs, raw.input);
 				const deviceIndex = state.midiMap.devices.inputs.indexOf(raw.input);
 
 				actions.midiMap.noteOn(
@@ -86,20 +72,22 @@ const hook = ({state$, actions, tapTempo}) => {
 					[-1, deviceIndex].indexOf(state.session.tracks[0].input.device) > -1
 					&& msg.channel === state.session.tracks[0].input.channel
 				)
-					&& state.studio.playing && state.studio.recording && state.studio.tick.index > -1) {
-					setTimeout(
-						() => actions.sequencer.update(
-							state.sequencer.bar, msg.note.number - 60, state.studio.tick.index + 1, msg.velocity),
-						100
+					&& state.studio.playing && state.studio.recording && state.studio.startTime != null) {
+					const {startTime, cycleOffset, bpm, beatLength} = state.studio;
+					const progress = calculateProgress(
+						startTime, a.context.currentTime, cycleOffset, bpm, beatLength, MODIFIER
 					);
+					const step = stepIndex(progress, beatLength);
+					const bar = derivePosition(
+						state.studio, state.sequencer, state.session
+					).bar;
+					actions.sequencer.update(bar, msg.note.number - 60, step, msg.velocity);
 				}
 			})
 	);
 
-	const {throttleTime} = require('rxjs/operators');
 	subs.push(
 		parsedMidiMsg$.pipe(
-			// map(midiData => (console.log({midiData}), midiData))
 			filter(({msg}) => ['pitchBend'].indexOf(msg.state) > -1),
 			throttleTime(1)
 		).subscribe(({msg}) => actions.set(['midiMap', 'pitch'], msg.pitchValue))
@@ -129,7 +117,6 @@ const hook = ({state$, actions, tapTempo}) => {
 			)
 	);
 
-	// controller
 	subs.push(
 		midiState$.pipe(
 			filter(({data}) => data.msg.state === 'controller'),
@@ -140,41 +127,44 @@ const hook = ({state$, actions, tapTempo}) => {
 					m[0] === data.msg.state
 					&& m[1] === data.msg.controller
 				);
-				// console.log(mmap);
 				if (mmap) {
 					let [msgType, msgVal, propPath, ...valMods] = mmap;
-					// vca
 					if (propPath[0] === 'instrument' && propPath[1] === 'eg')
 						propPath = ['instrument', `vca${state.instrument.vcaOn + 1}`, propPath[2]];
-					// value
 					let val = prepVal(...valMods)(data.msg.value);
-					// console.log(propPath, val);
 					actions.change(propPath[0], propPath.slice(1), val);
 				}
 			})
 		);
 
-	// on access sync clocks
+	// MIDI clock out — 6 pulses per 16th note (24 per quarter)
 	subs.push(
-		tick$.pipe(
-			// filter(({time, i}) => i % 2 === 0)
+		time.frame().pipe(
 			withLatestFrom(state$),
-			map(([time, state]) => ({time, state})),
-			filter(({state}) => state.midiMap.clock.out.length > 0
+			filter(([, state]) => state.studio.playing && state.studio.startTime != null),
+			filter(([, state]) => state.midiMap.clock.out.length > 0
 				&& state.midiMap.clock.out.filter(out =>
 					state.midiMap.devices.outputs[out]
 				).length > 0
-			)
-		).subscribe(({time, state}) => {
-				// console.log(state.midiMap.clock.out, clockMsg);
-				state.midiMap.clock.out.forEach(out =>
-					state.midiMap.devices.outputs[out].send(clockMsg)
+			),
+			map(([, state]) => {
+				const {startTime, cycleOffset, bpm, beatLength} = state.studio;
+				const progress = calculateProgress(
+					startTime, a.context.currentTime, cycleOffset, bpm, beatLength, MODIFIER
 				);
-				// output.send(clockMsg);
-			})
+				return {
+					pulse: Math.floor(progress * beatLength * 6),
+					state
+				};
+			}),
+			distinctUntilChanged((prev, curr) => prev.pulse === curr.pulse)
+		).subscribe(({state}) => {
+			state.midiMap.clock.out.forEach(out =>
+				state.midiMap.devices.outputs[out].send(clockMsg)
+			);
+		})
 	);
 
-	// midi to clock
 	subs.push(
 		midiState$.pipe(
 			filter(({data}) => data.msg.binary === '11111000'),
@@ -185,32 +175,6 @@ const hook = ({state$, actions, tapTempo}) => {
 		).subscribe(() => tapTempo.tap())
 	);
 
-/*
-	// studio controls
-	subs.push(
-		midiState$
-			.filter(({data}) =>
-				data.msg.state === 'controller'
-				&& [41, 42, 45].indexOf(data.msg.controller) > -1
-				&& data.msg.value === 1
-			)
-			.subscribe(({data}) => {
-				switch (data.msg.controller) {
-					case 41:
-						actions.studio.play();
-						break;
-					case 42:
-						actions.studio.stop();
-						break;
-					case 45:
-						actions.studio.record();
-						break;
-					default:
-
-				}
-			})
-		);
-*/
 	unhook = () => subs.forEach(sub => sub.unsubscribe());
 };
 

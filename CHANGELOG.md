@@ -7,8 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-13
+
+### Added
+- Anchor-and-derive transport scheduling ported from world-metronome (`startTime`, `cycleOffset`, `cycleBase`)
+- Scheduler service with RAF-based lookahead scheduling for sequencer and piano-roll playback
+- Transport service for derived playhead sync during playback
+- Position utilities (`derivePosition`, `reanchor`, `stepIndex`, `stepTimeOffset`, `barIndex`)
+- Audio scheduling projection helper (`util/scheduler.js`)
+- Planning doc for the scheduling rework (`planning/2026-06-13-01-scheduling-world-metronome-port.md`)
+- Auto-connect for Akai MPK mini IV MIDI input (alongside existing MPK mini MKII support)
+- Aggregated `unhook()` in services registry for teardown on hot reload
+
+### Changed
+- Retired `setTimeout` clock pipeline; MIDI clock output now driven from the RAF time frame
+- Piano-roll recording uses derived transport position and sub-step timing offsets
+- Session sync writes only `events` and `barsLength` from the piano roll into measures (not full editor UI state)
+- MIDI output scheduling uses absolute AudioContext times instead of performance-relative delays
+- Live MIDI input is edge-triggered (press/release) so scheduled voices are not cut off during recording
+- `util/time.js` uses native `requestAnimationFrame` while preserving the original `frame` / `loop` API
+- Scheduling utilities and new services migrated to ESM (`util/position`, `util/scheduler`, `util/time`, scheduler, transport)
+- Default reverb wet mix reduced from 0.7 to 0.3
+
 ### Fixed
-- Fixed effect chain routing updates on state changes by expanding the nodes helper with iblokz-audio node-level routing logic
+- Effect chain routing updates on state changes via expanded node-level routing helpers
+- Pause/resume and mid-play BPM/measure changes re-anchor transport without dropping unscheduled steps
+- Piano-roll playback timing for fractional grid positions and newly recorded notes on the next cycle
+- Recording no longer cuts off backing track notes when pressing keys on the same channel
 
 ## [1.0.1] - 2026-01-17
 

@@ -11,8 +11,11 @@ const {measureToBeatLength, bpmToTime} = require('../../util/math');
 const pocket = require('../../util/pocket');
 const nodes = require('./util/nodes');
 
+// creates a map of pressed notes for the given track
 const prepPressed = (channels, track) => track.input.device > -1
+	// if the track has an input device selected get the notes from there
 	? channels[track.input.device] && channels[track.input.device][track.input.channel] || {}
+	// otherwise get the notes from all devices
 	: Object.keys(channels)
 		.reduce((cn, d) =>
 			Object.keys(channels[d][track.input.channel] || {})
@@ -180,6 +183,7 @@ const syncEffectsChain = (instr, ch = 1) => changes$.next(engine => {
 			// Node exists - check if type changed
 			if (oldNode.type !== effect.type) {
 				// Type changed - destroy old, create new
+
 				nodes.destroy(oldNode);
 				const {type, on, expanded, id, ...effectProps} = effect;
 				const newNode = nodes.create(type, effectProps, id);
@@ -327,7 +331,7 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 	effectsChain.forEach(node => {
 		if (node.id) effectNodeMap[node.id] = node;
 	});
-	
+
 	// Build audio routing chain: filter active effects (excluding LFO which modulates, doesn't route audio)
 	const audioEffects = [];
 	if (instr.effectsChain) {
@@ -340,7 +344,7 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 			}
 		});
 	}
-	
+
 	// Get first active effect node or volume
 	const firstEffectNode = audioEffects.length > 0 ? audioEffects[0] : engine[ch].volume;
 	
@@ -348,7 +352,7 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 	// This ensures clean reconnection and removes inactive effects from the chain
 	effectsChain.forEach(node => {
 		if (node && node.type !== 'lfo') {
-			a.disconnect(node);
+			nodes.disconnect(node);
 		}
 	});
 	
@@ -356,9 +360,9 @@ const updateConnections = (instr, ch = 1) => changes$.next(engine => {
 	// Connect effects in sequence
 	if (audioEffects.length > 0) {
 		// Chain effects together
-		a.chain(...audioEffects);
+		nodes.chain(...audioEffects, engine[ch].volume);
 		// Connect last effect to volume
-		a.connect(audioEffects[audioEffects.length - 1], engine[ch].volume);
+		// nodes.connect(audioEffects[audioEffects.length - 1], );
 	}
 	
 	// Connect volume to globalVolume
@@ -597,11 +601,13 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 		map(p => p.sampleBank)
 	);
 
+	// clear buffer when playing is stopped
 	state$.pipe(
 		distinctUntilChanged((prev, curr) => prev.studio.playing === curr.studio.playing),
 		filter(state => !state.studio.playing)
 	).subscribe(() => clearBuffer());
 
+	// clear buffer when bpm changes
 	state$.pipe(
 		distinctUntilChanged((prev, curr) => prev.studio.bpm === curr.studio.bpm),
 		filter(state => state.studio.playing)
@@ -683,7 +689,7 @@ const hook = ({state$, actions, studio, tapTempo}) => {
 	// note ons
 	let voices = {};
 	const notesPattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
+	
 	state$.pipe(
 		distinctUntilChanged((prev, curr) => {
 			return JSON.stringify(prev.midiMap.channels) === JSON.stringify(curr.midiMap.channels);
